@@ -92,6 +92,33 @@ label{font-size:13px;color:var(--parch-dim)}
 .line.me .st{display:block;margin-top:4px;font-size:12px;color:var(--parch-dim)}
 .line.me .st.win{color:var(--good)}
 .line.me .st.lose{color:var(--bad)}
+/* live status chips (online page): what the game made of each line, from chat.py through the database */
+.line.ch{display:flex;align-items:flex-start;gap:8px}
+.line.ch .tx{flex:1 1 auto;min-width:0}
+.chip{flex:0 0 auto;position:relative;width:26px;height:26px;margin:-2px 0;display:flex;align-items:center;justify-content:center;border-radius:3px;
+  color:var(--parch-dim);transition:color .3s,background .3s}
+.chip svg{width:16px;height:16px;display:block;image-rendering:pixelated}
+.chip .dots{display:flex;gap:3px}
+.chip .dots i{width:4px;height:4px;background:currentColor;animation:dot 1.2s infinite ease-in-out}
+.chip .dots i:nth-child(2){animation-delay:.2s} .chip .dots i:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+.chip.s-queued{color:var(--parch);animation:pop .35s cubic-bezier(.3,1.6,.6,1)}
+.chip.s-chosen{color:var(--flame);background:rgba(255,178,58,.12);animation:pop .35s cubic-bezier(.3,1.6,.6,1),wig .5s .35s 3}
+.chip.s-building{color:var(--flame);background:rgba(255,178,58,.14);animation:flick .45s infinite alternate}
+.chip.s-building::after{content:"";position:absolute;inset:-1px;border:2px dashed rgba(255,178,58,.75);border-radius:50%;animation:spin 1.6s linear infinite}
+.chip.s-spawned{color:#ffe9a6;background:linear-gradient(#e2531b,#ffb23a);box-shadow:0 0 10px rgba(255,178,58,.7);animation:pop .4s cubic-bezier(.3,1.8,.6,1)}
+.chip.s-spawned::after{content:"";position:absolute;inset:0;border-radius:3px;animation:burst .8s ease-out 1 forwards}
+.chip.s-spawned svg{filter:drop-shadow(0 1px 0 #1a1205)}
+.chip.s-passed{opacity:.45}
+.chip.s-failed{color:var(--bad)}
+@keyframes pop{0%{transform:scale(.2);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes wig{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+@keyframes flick{0%{opacity:.75;transform:scale(.95)}100%{opacity:1;transform:scale(1.06)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes burst{0%{box-shadow:0 0 0 0 rgba(255,214,120,.9)}100%{box-shadow:0 0 0 16px rgba(255,214,120,0)}}
+.line.won{background:linear-gradient(90deg,rgba(255,178,58,.16),rgba(255,178,58,0) 70%);border-radius:3px;box-shadow:inset 3px 0 0 var(--flame)}
+.line.won:not(.me){padding:4px 6px;margin:0 -6px}
+@media (prefers-reduced-motion:reduce){.chip,.chip::after,.chip .dots i{animation:none!important}}
 .say{display:flex;gap:8px}
 .say input{flex:1 1 auto}
 .say .plaque{min-height:48px;flex:0 0 auto}
@@ -342,7 +369,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   /* ---------- online mode: the published page. Chat goes through the online database (send_chat), never to Mott's PC
      directly: chat.py on the PC takes it from there (Tools/chat.py online_requests) and says what became of each line.
      The room is open only while Mott's game runs. ---------- */
-  var seen={}, minePending={}, lastId=0, roomOpen=null;
+  var seen={}, lastId=0, roomOpen=null;
   function rpc(name,args){
     var h={'Content-Type':'application/json','apikey':ON.key}; if(ON.key.indexOf('eyJ')===0) h.Authorization='Bearer '+ON.key;
     return fetch(ON.url+'/rest/v1/rpc/'+name,{method:'POST',headers:h,body:JSON.stringify(args)}).then(function(r){
@@ -359,33 +386,67 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
         sys(!r?'There is no room with that code.':open?'Mott\'s game is live. What you send goes straight into it.':'Mott\'s game isn\'t running right now. Chat opens when it is.'); }
     }).catch(function(){ $('clock').textContent='Offline'; });
   }
-  function onlineStatus(st,row){
-    if(row.answered_ok===true){ st.className='st win'; st.textContent='In the dungeon. Watch the stream'; return true; }
-    if(row.answered_ok===false){ st.className='st lose'; st.textContent=row.answer||'The game didn\'t take that'; return true; }
-    st.className='st'; st.textContent=row.taken?'The dungeon is reading it':'Waiting for the dungeon'; return false;
+  /* ---- status chips: the little icon right of each line ---- */
+  var ICONS={
+    enemy:['.######.','########','#..##..#','#..##..#','########','.##..##.','.######.','.#.##.#.'],
+    weapon:['......##','.....###','....###.','#..###..','.####...','..##....','.#.#....','#.......'],
+    armor:['########','#......#','#......#','#......#','.#....#.','.#....#.','..#..#..','...##...'],
+    powerup:['..####..','...##...','...##...','.######.','########','########','########','.######.'],
+    throwable:['.....#..','....#.#.','..####..','.######.','########','########','.######.','..####..'],
+    ally:['.##..##.','########','########','########','.######.','..####..','...##...','........'],
+    curse:['....###.','...###..','..###...','.######.','...###..','..###...','.##.....','#.......'],
+    talk:['########','#......#','#.#.#..#','#......#','########','.#......','#.......','........'],
+    ok:['.......#','......##','#....##.','##..##..','.####...','..##....','........','........'],
+    x:['##....##','###..###','.######.','..####..','..####..','.######.','###..###','##....##']};
+  var KIND={enemy:'enemy',thing:'enemy',spawn:'enemy',ritual:'enemy',boss_add:'enemy',rescue:'enemy',boss:'enemy',weapon:'weapon',armor:'armor',gear:'armor',
+    powerup:'powerup',ammo:'powerup',throwable:'throwable',grenade:'throwable',bomb:'throwable',nuke:'throwable',ally:'ally',curse:'curse',wish:'curse',happening:'curse',event:'curse'};
+  var NAMES={enemy:'an enemy',weapon:'a weapon',armor:'armor',powerup:'a powerup',throwable:'something to throw',ally:'an ally',curse:'a curse or wish'};
+  function icon(k){ var g=ICONS[k]||ICONS.curse, r=''; for(var y=0;y<8;y++) for(var x=0;x<8;x++) if(g[y][x]==='#') r+='<rect x="'+x+'" y="'+y+'" width="1" height="1"/>';
+    return '<svg viewBox="0 0 8 8" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true">'+r+'</svg>'; }
+  function chipState(r){
+    var st=r.status||'', k=KIND[r.kind]||'';
+    if(!st&&r.answered_ok===false) st='failed';
+    if(st==='spawned'||st==='chosen'||st==='building'||st==='queued') return {s:st,i:k||'curse',t:
+      st==='spawned'?'In the game'+(r.thing?': '+r.thing:'')+'!':st==='building'?'The dungeon is building it':st==='chosen'?'Picked! The dungeon is about to build it':'Read as '+(NAMES[k]||'a request')};
+    if(st==='passed') return {s:'passed',i:'talk',t:r.answer&&r.answer!=='sent'?r.answer:'Just chat, or not picked this time'};
+    if(st==='failed') return {s:'failed',i:'x',t:r.answer||'The game didn\'t take that'};
+    if(r.answered_ok===true) return {s:'queued',i:'ok',t:'The game has it. Watch the stream'};
+    return {s:'wait',i:'',t:r.taken?'The dungeon is reading it':'On its way to the game'};
+  }
+  function setChip(line,r){
+    var c=chipState(r), key=c.s+'|'+c.i+'|'+c.t; if(line.key===key) return; line.key=key;
+    var chip=line.chip; chip.className='chip s-'+c.s; chip.title=c.t; chip.setAttribute('aria-label',c.t);
+    chip.innerHTML=c.s==='wait'?'<span class="dots"><i></i><i></i><i></i></span>':icon(c.i);
+    line.el.classList.toggle('won',c.s==='spawned');
+  }
+  function chatLine(cls,who,color,text){
+    var d=add('ch '+cls,'<span class="tx"><span class="n"'+(color?' style="color:'+color+'"':'')+'>'+esc(who)+'</span> '+esc(text)+'<span class="st" hidden></span></span><span class="chip s-wait"><span class="dots"><i></i><i></i><i></i></span></span>');
+    return {el:d,chip:d.querySelector('.chip'),st:d.querySelector('.st'),key:''};
   }
   function onlineFeed(){
     if(document.hidden) return;
-    var after=lastId; for(var k in minePending){ after=Math.min(after,(+k)-1); }
-    rpc('room_chats',{q_code:code,after_id:after}).then(function(rows){
+    rpc('room_chats',{q_code:code,after_id:0}).then(function(rows){
       (rows||[]).forEach(function(r){
-        if(minePending[r.id]){ if(onlineStatus(minePending[r.id].st,r)) delete minePending[r.id]; }
-        else if(!seen[r.id]){ seen[r.id]=1; add('','<span class="n" style="color:'+nameColor(r.chatter)+'">'+esc(r.chatter)+'</span> '+esc(r.text)); }
+        var line=seen[r.id];
+        if(!line){ line=seen[r.id]=chatLine('',r.chatter,nameColor(r.chatter),r.text); }
+        if(line.el) setChip(line,r);
         if(r.id>lastId) lastId=r.id;
       });
-      var now=Date.now(); for(var k in minePending){ if(now-minePending[k].at>120000){ var st=minePending[k].st; st.className='st lose'; st.textContent='The game never picked it up. Send it again?'; delete minePending[k]; } }
+      var now=Date.now(); for(var k in seen){ var l=seen[k]; if(l.at&&now-l.at>120000&&l.key.indexOf('wait')===0){ l.st.hidden=false; l.st.className='st lose'; l.st.textContent='The game never picked it up. Send it again?'; l.at=0; } }
     }).catch(function(){});
   }
-  function onlineStart(){ seen={}; minePending={}; lastId=0; roomOpen=null;
+  function onlineStart(){ seen={}; lastId=0; roomOpen=null;
     $('drawlabel').textContent='Mott\'s dungeon'; $('clock').textContent='...'; $('fuse').style.transform='scaleX(0)';
     sys('Type anything: an enemy, a weapon, a wish, a curse. It goes into Mott\'s game and the dungeon builds it on stream.');
     onlineRoom(); onlineFeed(); timers.push(setInterval(onlineRoom,10000)); timers.push(setInterval(onlineFeed,2500)); }
   function onlineSend(box,t){
-    var d=add('me','<span class="n">'+esc(me)+'</span> '+esc(t)+'<span class="st">Sending...</span>'), st=d.querySelector('.st');
+    var line=chatLine('me',me,'',t), st=line.st; line.at=Date.now();
     box.value=''; feed.scrollTop=feed.scrollHeight;
     rpc('send_chat',{q_code:code,q_name:me,q_text:t}).then(function(id){
-      seen[id]=1; minePending[id]={st:st,at:Date.now()}; st.textContent='Waiting for the dungeon';
+      if(seen[id]&&seen[id].el&&seen[id]!==line){ seen[id].el.remove(); }  /* (the feed got to it first) */
+      seen[id]=line;
     }).catch(function(e){
+      line.chip.remove(); st.hidden=false; line.at=0;
       var m=String(e&&e.message||''), say={'room closed':'Mott\'s game isn\'t running right now, so chat is closed.','slow down':'Slow down a little, then send again.',
         'too busy':'Chat is very busy. Try again in a moment.','too long':'Keep it under 100 characters.','empty':'Type something first.','bad name':'Your name needs letters or numbers. Leave and pick another.'}[m];
       st.className='st lose'; st.textContent=say||'Couldn\'t send. Check your connection and try again.';
