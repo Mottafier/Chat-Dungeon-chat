@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Chat Dungeon Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: phone first. One column on the dungeon wall: sign and room on top, the draw timer,
+   the feed as a dark stone slab, the composer pinned at the bottom. On a PC the same column sits centred between the torches. */
+:root{
+  color-scheme: dark;
+  --pit:#0b0908;
+  --mortar:#2b241a;
+  --slab:#14100c;         /* feed and plaques */
+  --slab-hi:#211a13;      /* other people's lines, inputs */
+  --parch:#ead9ae;
+  --parch-dim:#b9a67c;
+  --flame:#ffb23a;        /* the accent: torchlight, your own things */
+  --good:#9be28a; --bad:#f2a08c;
+  --display:'Pixelify Sans','Courier New',monospace;
+  --body:Inter,system-ui,sans-serif;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--pit);color:var(--parch);font-family:var(--body);font-size:16px;overflow:hidden}
+.app{position:relative;height:100%;box-sizing:border-box;display:flex;justify-content:center;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px}
+#wall{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
+.col{position:relative;width:100%;max-width:540px;min-height:0;display:flex;flex-direction:column;gap:10px}
+
+.sign{align-self:center;font-family:var(--display);font-weight:700;font-size:26px;line-height:1;letter-spacing:.06em;color:#ffe9a6;background:#1c0f08;
+  padding:10px 16px 8px;border:3px solid #0d0806;text-shadow:0 0 9px rgba(255,180,70,.55);box-shadow:0 3px 0 #000}
+.plaque{font-family:var(--display);font-weight:500;font-size:16px;letter-spacing:.04em;color:var(--parch);background:var(--slab);
+  border:2px solid var(--mortar);border-radius:3px;min-height:44px;padding:0 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.06),inset 0 -3px 0 rgba(0,0,0,.45),0 2px 0 #000;text-decoration:none;box-sizing:border-box}
+.plaque:hover{color:#fff;border-color:#6b5a3c}
+.plaque.go{background:var(--flame);color:#1a1205;border-color:#1a1205;font-weight:700}
+.plaque.go:hover{background:#ffc869;color:#1a1205}
+:focus-visible{outline:2px solid var(--flame);outline-offset:2px}
+input{font-family:var(--body);font-size:16px;color:var(--parch);background:var(--slab-hi);border:2px solid var(--mortar);border-radius:3px;min-height:48px;padding:0 12px;box-sizing:border-box;min-width:0;width:100%}
+input::placeholder{color:#8f7f5e}
+label{font-size:13px;color:var(--parch-dim)}
+
+/* join */
+.join{margin:auto 0;display:flex;flex-direction:column;gap:18px;padding-bottom:6vh}
+.card{background:var(--slab);border:2px solid var(--mortar);border-radius:4px;padding:18px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 4px 0 #000}
+.card .gap{height:6px}
+#code{font-family:var(--display);font-size:30px;letter-spacing:.3em;text-align:center;text-transform:uppercase;min-height:60px}
+.err{margin:0;color:var(--bad);font-size:14px;min-height:1.3em}
+.fine{margin:0;text-align:center;font-size:13px;color:var(--parch);text-shadow:0 1px 0 #000}
+
+/* room */
+.room{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px}
+.head{display:flex;align-items:center;gap:10px;padding:0 50px}
+.head .who{flex:1 1 auto;min-width:0;font-family:var(--display);font-size:16px;line-height:1.25;text-shadow:0 2px 0 #000}
+.head .who b{color:var(--flame);letter-spacing:.14em}
+.head .who span{display:block;font-family:var(--body);font-size:12px;color:var(--parch);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.head .plaque{min-height:40px;padding:0 10px;font-size:14px;flex:0 0 auto}
+.draw{background:var(--slab);border:2px solid var(--mortar);border-radius:3px;padding:8px 12px 10px;display:flex;flex-direction:column;gap:6px}
+.draw .row{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--parch-dim)}
+.draw .row b{font-family:var(--display);font-size:16px;color:var(--parch);font-variant-numeric:tabular-nums}
+.fuse{height:8px;background:#000;border:1px solid var(--mortar)}
+.fuse i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#e2531b,var(--flame));transform-origin:left;transition:transform 1s linear}
+.feed{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;background:rgba(16,12,9,.9);border:2px solid var(--mortar);border-radius:3px;
+  padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.line{font-size:15px;line-height:1.4;overflow-wrap:anywhere}
+.line .n{font-weight:600}
+.line.sys{color:var(--parch-dim);font-size:13px}
+.line.pick{font-family:var(--display);font-size:15px;color:var(--parch);border-left:0;background:#241a0e;padding:6px 8px;border-radius:2px}
+.line.pick b{color:var(--flame)}
+.line.me{background:var(--slab-hi);border:1px solid #6b5a3c;border-radius:3px;padding:8px 10px}
+.line.me .n{color:var(--flame)}
+.line.me .st{display:block;margin-top:4px;font-size:12px;color:var(--parch-dim)}
+.line.me .st.win{color:var(--good)}
+.line.me .st.lose{color:var(--bad)}
+.say{display:flex;gap:8px}
+.say input{flex:1 1 auto}
+.say .plaque{min-height:48px;flex:0 0 auto}
+.host{display:none}
+/* the host's stream: optional, closes to nothing (for people watching on another screen) */
+.head .plaque.tv{padding:0 9px;gap:6px}
+.head .plaque.tv[aria-pressed="true"]{border-color:#6b5a3c;color:var(--flame)}
+.tv svg{width:18px;height:18px;flex:0 0 auto}
+.stream{position:relative;flex:0 0 auto;background:#000;border:2px solid var(--mortar);border-radius:3px;box-shadow:0 3px 0 #000;overflow:hidden}
+.stream .screen{position:relative;width:100%;aspect-ratio:16/9;max-height:38vh;margin:0 auto}
+.stream iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+.stream .off{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:12px;
+  font-family:var(--display);font-size:15px;color:var(--parch);background:repeating-linear-gradient(0deg,#0d0a08 0 3px,#120e0a 3px 6px)}
+.stream .off small{font-family:var(--body);font-size:12px;color:var(--parch-dim)}
+.stream .x{position:absolute;top:6px;right:6px;z-index:2;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  font-size:20px;line-height:1;color:var(--parch);background:rgba(20,16,12,.85);border:2px solid var(--mortar);border-radius:3px}
+.stream .x:hover{color:#fff;border-color:#6b5a3c}
+@media (max-height:560px){ .stream .screen{max-height:30vh} }
+@media (max-width:459px){ .head .plaque.tv{width:44px;padding:0} .tv .lbl{position:absolute;left:-999em} }
+@media (min-width:760px){
+  .app{padding-block:24px}
+  .head{padding:0}
+  .host{display:inline-flex}
+}
+/* PC with the stream showing: like Twitch, the stream big on the left, chat filling a column on the right */
+@media (min-width:1000px){
+  .app.theatre .col{max-width:none}
+  .app.theatre .room{display:grid;grid-template-columns:minmax(0,1fr) clamp(320px,27vw,420px);grid-template-rows:auto auto minmax(0,1fr) auto;column-gap:16px;row-gap:10px}
+  .app.theatre .stream{grid-column:1;grid-row:1/-1;align-self:start;min-height:0}
+  .app.theatre .stream .screen{width:min(100%,calc((100dvh - 52px)*16/9));max-height:none}
+  .app.theatre .head,.app.theatre .draw,.app.theatre .feed,.app.theatre .say{grid-column:2;min-width:0}
+}
+</style>
+
+</head>
+<body>
+<div class="app" id="app">
+  <canvas id="wall" aria-hidden="true"></canvas>
+  <div class="col">
+
+    <section class="join" id="join" aria-labelledby="signj">
+      <div class="sign" id="signj">CHAT DUNGEON</div>
+      <form class="card" id="joinform" novalidate>
+        <label for="code">Room code</label>
+        <input id="code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" value="KQ7F">
+        <div class="gap"></div>
+        <label for="name">Your name</label>
+        <input id="name" maxlength="20" autocomplete="off" placeholder="What Mott will see">
+        <p class="err" id="err" role="alert"></p>
+        <button class="plaque go" type="submit">Join</button>
+      </form>
+      <p class="fine">No account, no app. The code is on the host's screen.</p>
+    </section>
+
+    <section class="room" id="room" hidden aria-label="Chat room">
+      <div class="head">
+        <div class="who">Room <b id="rc">KQ7F</b><span id="me"></span></div>
+        <a class="plaque host" id="hostlink" href="instant.html">Play your own</a>
+        <button class="plaque tv" id="tvbtn" aria-pressed="false" aria-controls="stream" title="Show or hide the stream"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="1"/><path d="M8 21h8M12 17v4"/></svg><span class="lbl">Stream</span></button>
+        <button class="plaque" id="leave">Leave</button>
+      </div>
+      <div class="stream" id="stream" hidden aria-label="The host's stream">
+        <button class="x" id="tvclose" aria-label="Hide the stream" title="Hide the stream">&times;</button>
+        <div class="screen" id="screen"></div>
+      </div>
+      <div class="draw">
+        <div class="row"><span id="drawlabel">The dungeon picks one idea in</span><b id="clock">0:20</b></div>
+        <div class="fuse" aria-hidden="true"><i id="fuse"></i></div>
+      </div>
+      <div class="feed" id="feed" role="log" aria-live="polite"></div>
+      <form class="say" id="say">
+        <label for="text" style="position:absolute;left:-999em">Your idea</label>
+        <input id="text" maxlength="200" autocomplete="off" placeholder="Say something" enterkeyhint="send">
+        <button class="plaque go" type="submit">Send</button>
+      </form>
+    </section>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  /* The published copy (Online/publish_chat.py) fills this in: {url, key, room} of the online database. Empty = the local
+     test page (Tools/web_test.py) or a mockup. */
+  var ON={"url": "https://qxjrcdkiygobzhjvopvl.supabase.co", "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4anJjZGtpeWdvYnpoanZvcHZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxMDY1NDEsImV4cCI6MjExMDY4MjU0MX0.iWPbqh0sdKA3T2KXZHh9aWFy64pHz9Fl4K5EtjzIOBA", "room": "MOTT", "twitch": "mottafierr"};
+  var $=function(id){ return document.getElementById(id); };
+  var app=$('app'), cv=$('wall'), ctx=cv.getContext('2d'), col=document.querySelector('.col');
+  var still=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  /* ---------- the wall (same bricks and torches as the play page) ---------- */
+  var T=4, W=0, H=0, base, f0, f1, img, torch=[{x:0,y:0},{x:0,y:0}];
+  function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; var t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  var STONES=[[156,134,96],[143,122,86],[163,141,102],[134,114,79],[150,128,90],[128,110,80]], MOSS=[112,124,74], MORTAR=[52,43,30];
+  function build(){
+    W=Math.ceil(app.clientWidth/T); H=Math.ceil(app.clientHeight/T); cv.width=W; cv.height=H;
+    base=new Uint8ClampedArray(W*H*3); f0=new Float32Array(W*H); f1=new Float32Array(W*H); img=ctx.createImageData(W,H);
+    var r=rng(11), BW=12, BH=6, x, y, i;
+    for(var row=0; row*BH<H; row++){ var off=(row%2?BW/2:0)+Math.floor(r()*2);
+      for(var c0=-1; c0*BW<W; c0++){ var c=r()<.03?MOSS:STONES[Math.floor(r()*STONES.length)], sh=.9+r()*.2;
+        for(var by=0; by<BH; by++) for(var bx=0; bx<BW; bx++){ x=c0*BW+off+bx; y=row*BH+by; if(x<0||x>=W||y>=H) continue; i=(y*W+x)*3;
+          var m=(bx===0||by===0), k=m?1:sh*(by===1?1.08:by===BH-1?.86:1)*(.95+r()*.1), s=m?MORTAR:c; base[i]=s[0]*k; base[i+1]=s[1]*k; base[i+2]=s[2]*k; } } }
+    var a=app.getBoundingClientRect(), cr=col.getBoundingClientRect(), wide=a.width>=760;
+    if(wide){ torch[0].x=Math.round((cr.left-a.left)/T)-11; torch[1].x=Math.round((cr.right-a.left)/T)+10; torch[0].y=torch[1].y=Math.round(H*.3); }
+    else { torch[0].x=7; torch[1].x=W-8; var hd=document.querySelector('.room:not([hidden]) .head, .join:not([hidden]) .sign').getBoundingClientRect();
+      torch[0].y=torch[1].y=Math.round((hd.top+hd.height/2-a.top)/T)-2; }
+    for(y=0; y<H; y++) for(x=0; x<W; x++){ i=y*W+x; var p=x-torch[0].x, q=y-(torch[0].y-4), u=x-torch[1].x, v=y-(torch[1].y-4);
+      f0[i]=1.3/(1+(p*p+q*q)/900); f1[i]=1.3/(1+(u*u+v*v)/900); }
+  }
+  var fr=rng(99);
+  function px(x,y,c){ if(x<0||y<0||x>=W||y>=H) return; var j=(y*W+x)*4, d=img.data; d[j]=c[0]; d[j+1]=c[1]; d[j+2]=c[2]; }
+  function paint(){
+    var d=img.data, n=W*H, I0=still?1:.86+fr()*.14, I1=still?1:.86+fr()*.14;
+    for(var i=0, j=0, k=0; i<n; i++, j+=4, k+=3){ var warm=Math.round(Math.min(I0*f0[i]+I1*f1[i],1.3)*14)/14;
+      d[j]=base[k]*(.26+warm); d[j+1]=base[k+1]*(.27+warm*.84); d[j+2]=base[k+2]*(.34+warm*.6); d[j+3]=255; }
+    for(var t=0; t<2; t++){ var x=torch[t].x, y=torch[t].y;
+      for(var s=0; s<9; s++){ px(x,y+2+s,[70,46,24]); px(x-1,y+2+s,[46,30,16]); }
+      for(var c=-2; c<=2; c++){ px(x+c,y,[58,54,52]); px(x+c,y+1,[30,28,28]); }
+      px(x-3,y-1,[30,28,28]); px(x+3,y-1,[30,28,28]);
+      var hgt=8+(still?0:Math.floor(fr()*3)), sway=still?0:Math.round((fr()-.5)*1.6);
+      for(var r2=0; r2<hgt; r2++){ var half=Math.max(0,2.6-r2*.36+(still?0:(fr()-.5)*.9)), cx=x+Math.round(sway*r2/hgt);
+        for(var o=-3; o<=3; o++){ var ad=Math.abs(o); if(ad>half) continue;
+          px(cx+o,y-1-r2, ad<half-1.4&&r2<hgt-3?[255,241,168]:ad<half-.6?[255,178,58]:[226,83,27]); } }
+    }
+    ctx.putImageData(img,0,0);
+  }
+  var rz; function layout(){ clearTimeout(rz); rz=setTimeout(function(){ build(); paint(); },60); }
+  build(); paint(); if(!still) setInterval(paint,110);
+  window.addEventListener('resize',layout); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(layout);
+
+  /* ---------- joining ---------- */
+  var me='', code='KQ7F';
+  try{ $('name').value=localStorage.getItem('cdName')||''; }catch(e){}
+  if(ON){ $('code').value=ON.room||''; $('code').hidden=true; document.querySelector('label[for=code]').hidden=true; document.querySelector('.card .gap').hidden=true;
+    document.querySelector('.fine').textContent='No account, no app. Pick a name and chat into the game live on stream.';
+    $('hostlink').hidden=true; $('text').maxLength=100; }
+  try{ var h=(location.hash||'').replace('#','').toUpperCase(); if(/^[A-Z0-9]{4}$/.test(h)) $('code').value=h; }catch(e){}
+  $('joinform').addEventListener('submit',function(e){ e.preventDefault();
+    var c=$('code').value.trim().toUpperCase(), n=$('name').value.trim().replace(/[^A-Za-z0-9_]/g,'').slice(0,25);
+    if(c.length<4){ $('err').textContent='Room codes are 4 letters.'; $('code').focus(); return; }
+    if(!n){ $('err').textContent=ON?'Pick a name (letters, numbers and _).':'Pick a name first.'; $('name').focus(); return; }
+    me=n; code=c; try{ localStorage.setItem('cdName',n); }catch(e2){}
+    $('err').textContent=''; $('rc').textContent=c; $('me').textContent='You are '+n+(ON?'':' · 5 in the room');
+    $('join').hidden=true; $('room').hidden=false; showStream(wantStream()); layout(); start(); $('text').focus();
+  });
+  $('leave').addEventListener('click',function(){ stop(); showStream(false,true); $('room').hidden=true; $('join').hidden=false; $('feed').textContent=''; layout(); });
+
+  /* ---------- the host's stream ----------
+     Twitch's player, embedded under the room header. On by default (handy on a phone), one tap hides it and the choice is
+     remembered, for people who have chat on the phone and the stream on a PC. Hidden = the player is removed, so it stops
+     using data. The channel comes from the room (the server will know the host's Twitch); for now ?channel=name sets it. */
+  var channel='';
+  try{ channel=(new URLSearchParams(location.search).get('channel')||'').replace(/[^A-Za-z0-9_]/g,'').slice(0,25); }catch(e){}
+  if(ON&&ON.twitch&&!channel) channel=ON.twitch;
+  function wantStream(){ try{ return localStorage.getItem('cdStream')!=='off'; }catch(e){ return true; } }
+  function showStream(on,keepChoice){
+    var box=$('stream'), scr=$('screen');
+    box.hidden=!on; $('tvbtn').setAttribute('aria-pressed',on?'true':'false');
+    app.classList.toggle('theatre',on&&!$('room').hidden);
+    if(!keepChoice){ try{ localStorage.setItem('cdStream',on?'on':'off'); }catch(e){} }
+    scr.textContent='';
+    if(!on) return;
+    if(!channel){ scr.innerHTML='<div class="off">The host\'s stream shows here<small>when they\'re live on Twitch</small></div>'; return; }
+    var f=document.createElement('iframe');
+    f.src='https://player.twitch.tv/?channel='+encodeURIComponent(channel)+'&parent='+encodeURIComponent(location.hostname||'localhost')+'&autoplay=true&muted=false';
+    f.title=channel+' on Twitch'; f.allow='autoplay; fullscreen; picture-in-picture'; f.allowFullscreen=true;
+    scr.appendChild(f);
+  }
+  $('tvbtn').addEventListener('click',function(){ showStream($('stream').hidden); layout(); });
+  $('tvclose').addEventListener('click',function(){ showStream(false); layout(); $('tvbtn').focus(); });
+  $('hostlink').addEventListener('click',function(e){ if(this.getAttribute('href')==='#'){ e.preventDefault(); sys('On the real site this opens the play page.'); } });
+
+  /* ---------- the room (simulated: four friends, a draw every 20 seconds) ---------- */
+  var feed=$('feed'), ROUND=20, left=ROUND, timers=[], pool=[], mine=null;
+  var BOTS=[['sam','#7dd3fc'],['priya','#f0abfc'],['jonno','#86efac'],['megthemod','#fca5a5']];
+  var IDEAS=['a goblin that sells you bad advice','make it rain angry ducks','a skeleton DJ that drops beats on him','spawn 5 angry clowns','give mott a banana launcher',
+             'a knight made of spoons','goo him','a mimic that looks like the exit door','heal him, he looks rough','a very polite dragon'];
+  function add(cls,html){ var near=feed.scrollHeight-feed.scrollTop-feed.clientHeight<60, d=document.createElement('div'); d.className='line '+cls; d.innerHTML=html;
+    feed.appendChild(d); while(feed.children.length>60) feed.removeChild(feed.firstChild); if(near) feed.scrollTop=feed.scrollHeight; return d; }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function sys(t){ add('sys',esc(t)); }
+  function botSay(){ var b=BOTS[Math.floor(Math.random()*BOTS.length)], t=IDEAS[Math.floor(Math.random()*IDEAS.length)];
+    add('','<span class="n" style="color:'+b[1]+'">'+b[0]+'</span> '+esc(t)); pool=pool.filter(function(p){ return p.who!==b[0]; }); pool.push({who:b[0],text:t});
+    timers.push(setTimeout(botSay,4000+Math.random()*6000)); }
+  function tickClock(){ $('clock').textContent='0:'+(left<10?'0':'')+left; $('fuse').style.transform='scaleX('+(left/ROUND)+')'; }
+  function tick(){ left--; if(left<=0){ draw(); left=ROUND; } tickClock(); }
+  function draw(){
+    if(!pool.length){ sys('No ideas this round.'); return; }
+    var win=(mine&&Math.random()<.6)?mine:pool[Math.floor(Math.random()*pool.length)];
+    add('pick','The dungeon picked <b>'+esc(win.who)+'</b>: '+esc(win.text));
+    if(mine){ var st=mine.st;
+      if(win===mine){ st.className='st win'; st.textContent='Picked. The dungeon is building it';
+        timers.push(setTimeout(function(){ st.textContent='It is in the room with Mott. Watch the screen'; },4000)); }
+      else { st.className='st lose'; st.textContent='Not picked this round. Send another'; } }
+    pool=[]; mine=null;
+  }
+  function start(){ if(ON) return onlineStart(); if(live) return liveStart(); left=ROUND; pool=[]; mine=null; tickClock();
+    sys('Type anything: an enemy, a weapon, a wish, a curse. Every 20 seconds the dungeon picks one idea and builds it in front of Mott.');
+    add('','<span class="n" style="color:#7dd3fc">sam</span> a goblin that sells you bad advice'); pool.push({who:'sam',text:'a goblin that sells you bad advice'});
+    add('','<span class="n" style="color:#f0abfc">priya</span> give mott a banana launcher'); pool.push({who:'priya',text:'give mott a banana launcher'});
+    timers.push(setInterval(tick,1000)); timers.push(setTimeout(botSay,3000)); }
+  function stop(){ timers.forEach(function(t){ clearTimeout(t); clearInterval(t); }); timers=[]; }
+  $('say').addEventListener('submit',function(e){ e.preventDefault(); var box=$('text'), t=box.value.trim(); if(!t) return;
+    if(ON) return onlineSend(box,t);
+    if(live) return liveSend(box,t);
+    if(mine){ mine.st.className='st'; mine.st.textContent='Replaced by your newer idea'; pool=pool.filter(function(p){ return p!==mine; }); }
+    var d=add('me','<span class="n">'+esc(me)+'</span> '+esc(t)+'<span class="st">In the draw. One idea each per round</span>');
+    mine={who:me,text:t,st:d.querySelector('.st')}; pool.push(mine); box.value=''; feed.scrollTop=feed.scrollHeight; });
+
+  /* ---------- live mode: served by Tools/web_test.py (Test Websites.cmd), ideas go to the real game ----------
+     /api/status answers only there; the hosted mockup keeps its pretend room. Ideas go to chat.py like any chat line
+     (/api/send -> its phone chat port), so they're read, picked and built exactly as Twitch chat is. */
+  var live=false, liveTimer=null, liveShown=null;
+  if(!ON) try{ fetch('/api/status',{cache:'no-store'}).then(function(r){ return r.ok?r.json():null; }).then(function(j){ if(j&&typeof j.game==='boolean') live=true; }).catch(function(){}); }catch(e){}
+  function nameColor(n){ var C=['#ff6b6b','#5ad1ff','#7ee081','#ffb84d','#c792ff','#ff8ad8','#64e3c8','#ffd84d']; var h=0; for(var i=0;i<n.length;i++) h=(h*31+n.charCodeAt(i))>>>0; return C[h%C.length]; }
+  function liveStatus(){
+    fetch('/api/status',{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+      var txt=j.game?'connected':(j.chat?'waiting for the game page':'chat tool starting');
+      $('clock').textContent=j.game?'Live':'Offline'; $('fuse').style.transform='scaleX('+(j.game?1:0)+')';
+      if(txt!==liveShown){ liveShown=txt; sys(j.game?'The game is connected. Your ideas go straight to it.':(j.chat?'Waiting for the game. Open the game page and click to play.':'The chat tool is starting...')); }
+    }).catch(function(){ $('clock').textContent='Offline'; });
+  }
+  function liveStart(){ pool=[]; mine=null; liveShown=null;
+    $('drawlabel').textContent='Local game';
+    sys('Test mode on this PC: what you type goes to the game running in the other tab, the same way Twitch chat does.');
+    liveStatus(); liveTimer=setInterval(liveStatus,2000); timers.push(liveTimer); }
+  function liveSend(box,t){
+    var d=add('me','<span class="n">'+esc(me)+'</span> '+esc(t)+'<span class="st">Sending...</span>'), st=d.querySelector('.st');
+    box.value=''; feed.scrollTop=feed.scrollHeight;
+    fetch('/api/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:me,text:t,color:nameColor(me)})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){ if(j.ok){ st.className='st win'; st.textContent='Sent to the dungeon. Watch the game tab'; } else { st.className='st lose'; st.textContent=j.message||'Not sent'; } })
+      .catch(function(){ st.className='st lose'; st.textContent='Could not reach the test server. Is Test Websites.cmd still open?'; });
+  }
+
+  /* ---------- online mode: the published page. Chat goes through the online database (send_chat), never to Mott's PC
+     directly: chat.py on the PC takes it from there (Tools/chat.py online_requests) and says what became of each line.
+     The room is open only while Mott's game runs. ---------- */
+  var seen={}, minePending={}, lastId=0, roomOpen=null;
+  function rpc(name,args){
+    var h={'Content-Type':'application/json','apikey':ON.key}; if(ON.key.indexOf('eyJ')===0) h.Authorization='Bearer '+ON.key;
+    return fetch(ON.url+'/rest/v1/rpc/'+name,{method:'POST',headers:h,body:JSON.stringify(args)}).then(function(r){
+      return r.text().then(function(t){ var j=null; try{ j=t?JSON.parse(t):null; }catch(e){}
+        if(!r.ok) throw new Error((j&&j.message)||('error '+r.status)); return j; }); });
+  }
+  function onlineRoom(){
+    if(document.hidden) return;
+    rpc('room_info',{q_code:code}).then(function(rows){
+      var r=rows&&rows[0], open=!!(r&&r.open);
+      if(r&&r.twitch&&!channel){ channel=r.twitch; if(!$('stream').hidden) showStream(true,true); }
+      $('clock').textContent=open?'Live':'Offline'; $('fuse').style.transform='scaleX('+(open?1:0)+')';
+      if(open!==roomOpen){ roomOpen=open;
+        sys(!r?'There is no room with that code.':open?'Mott\'s game is live. What you send goes straight into it.':'Mott\'s game isn\'t running right now. Chat opens when it is.'); }
+    }).catch(function(){ $('clock').textContent='Offline'; });
+  }
+  function onlineStatus(st,row){
+    if(row.answered_ok===true){ st.className='st win'; st.textContent='In the dungeon. Watch the stream'; return true; }
+    if(row.answered_ok===false){ st.className='st lose'; st.textContent=row.answer||'The game didn\'t take that'; return true; }
+    st.className='st'; st.textContent=row.taken?'The dungeon is reading it':'Waiting for the dungeon'; return false;
+  }
+  function onlineFeed(){
+    if(document.hidden) return;
+    var after=lastId; for(var k in minePending){ after=Math.min(after,(+k)-1); }
+    rpc('room_chats',{q_code:code,after_id:after}).then(function(rows){
+      (rows||[]).forEach(function(r){
+        if(minePending[r.id]){ if(onlineStatus(minePending[r.id].st,r)) delete minePending[r.id]; }
+        else if(!seen[r.id]){ seen[r.id]=1; add('','<span class="n" style="color:'+nameColor(r.chatter)+'">'+esc(r.chatter)+'</span> '+esc(r.text)); }
+        if(r.id>lastId) lastId=r.id;
+      });
+      var now=Date.now(); for(var k in minePending){ if(now-minePending[k].at>120000){ var st=minePending[k].st; st.className='st lose'; st.textContent='The game never picked it up. Send it again?'; delete minePending[k]; } }
+    }).catch(function(){});
+  }
+  function onlineStart(){ seen={}; minePending={}; lastId=0; roomOpen=null;
+    $('drawlabel').textContent='Mott\'s dungeon'; $('clock').textContent='...'; $('fuse').style.transform='scaleX(0)';
+    sys('Type anything: an enemy, a weapon, a wish, a curse. It goes into Mott\'s game and the dungeon builds it on stream.');
+    onlineRoom(); onlineFeed(); timers.push(setInterval(onlineRoom,10000)); timers.push(setInterval(onlineFeed,2500)); }
+  function onlineSend(box,t){
+    var d=add('me','<span class="n">'+esc(me)+'</span> '+esc(t)+'<span class="st">Sending...</span>'), st=d.querySelector('.st');
+    box.value=''; feed.scrollTop=feed.scrollHeight;
+    rpc('send_chat',{q_code:code,q_name:me,q_text:t}).then(function(id){
+      seen[id]=1; minePending[id]={st:st,at:Date.now()}; st.textContent='Waiting for the dungeon';
+    }).catch(function(e){
+      var m=String(e&&e.message||''), say={'room closed':'Mott\'s game isn\'t running right now, so chat is closed.','slow down':'Slow down a little, then send again.',
+        'too busy':'Chat is very busy. Try again in a moment.','too long':'Keep it under 100 characters.','empty':'Type something first.','bad name':'Your name needs letters or numbers. Leave and pick another.'}[m];
+      st.className='st lose'; st.textContent=say||'Couldn\'t send. Check your connection and try again.';
+      if(m==='slow down'||m==='too busy'||m==='room closed'){ if(!box.value) box.value=t; }
+    });
+  }
+})();
+</script>
+</body>
+</html>
