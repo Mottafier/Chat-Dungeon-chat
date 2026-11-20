@@ -137,6 +137,76 @@ label{font-size:13px;color:var(--parch-dim)}
   font-size:20px;line-height:1;color:var(--parch);background:rgba(20,16,12,.85);border:2px solid var(--mortar);border-radius:3px}
 .stream .x:hover{color:#fff;border-color:#6b5a3c}
 @media (max-height:560px){ .stream .screen{max-height:30vh} }
+/* ---- energy pips and pledges (online page): viewers spend pips on enemy ideas; 3 (a boss 5) brings one to life ---- */
+.room.online .draw{display:none}
+.head .who i.live{display:none;font-style:normal;margin-left:8px;font-size:12px;letter-spacing:.12em;color:#ff7a6e;vertical-align:1px}
+.head .who i.live::before{content:"";display:inline-block;width:7px;height:7px;margin-right:5px;border-radius:50%;background:#ff4b3e;box-shadow:0 0 6px #ff4b3e;vertical-align:1px}
+.head .who i.live.on{display:inline}
+.energy{display:flex;align-items:center;gap:10px;background:var(--slab);border:2px solid var(--mortar);border-radius:3px;padding:6px 10px}
+.pips{display:flex;gap:5px;flex:0 0 auto}
+.pip{position:relative;width:20px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:3px;
+  background:#1d1b19;border:2px solid #34302b;transition:background .3s,border-color .3s,box-shadow .3s}
+.pip svg{width:12px;height:19px;fill:#47423b;display:block}
+.pip .fill{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;clip-path:inset(var(--cut,100%) 0 0 0)}
+.pip .fill svg{fill:#9a6fd6}
+.pip.full{background:#2a1a44;border-color:#8456d0;box-shadow:0 0 8px rgba(160,92,255,.35)}
+.pip.full svg{fill:#d3a6ff;filter:drop-shadow(0 0 3px #a05cff)}
+.pip.part{border-color:#4a3d5e}
+.pip.part .fill{animation:charge 1.6s ease-in-out infinite}
+@keyframes charge{50%{opacity:.6}}
+.pip.gone{animation:pipgone .5s ease-out}
+@keyframes pipgone{0%{transform:scale(1.25);box-shadow:0 0 16px #c78bff}100%{transform:scale(1)}}
+.pips.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+.ehint{flex:1 1 auto;min-width:0;font-size:12px;line-height:1.3;color:var(--parch-dim)}
+.ehint b{color:#c99bff;font-weight:600;font-variant-numeric:tabular-nums}
+.adbtn{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;min-height:34px;padding:0 10px;border-radius:3px;text-decoration:none;
+  font-family:var(--display);font-size:14px;color:#f3e6ff;background:linear-gradient(#6b35b8,#4a2386);border:2px solid #a77ae8;box-shadow:0 2px 0 #1a0c2e}
+.adbtn:hover{background:linear-gradient(#7a42c9,#552a98)}
+.adbtn svg{width:8px;height:13px;fill:currentColor}
+.adbtn small{font-family:var(--body);font-size:11px;opacity:.85}
+@media (max-width:459px){ .adbtn small{display:none} .ehint .long{display:none} .head .who i.live{font-size:0;margin-left:6px} .head .who i.live::before{margin-right:0} }
+/* the pledge button on an enemy idea: its progress in small bars, tap to put one of your pips in */
+.pl{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;height:26px;margin:-2px 0;padding:0 7px;border-radius:3px;cursor:pointer;
+  font-family:var(--display);font-size:13px;color:#e3cbff;background:rgba(120,70,200,.18);border:1px solid #7a4cc4;font-variant-numeric:tabular-nums}
+.pl:hover{background:rgba(140,85,230,.32);color:#fff}
+.pl svg{width:8px;height:13px;fill:#c99bff}
+.pl .bars{display:flex;gap:2px}
+.pl .bars i{width:4px;height:10px;background:#3a3430;border-radius:1px}
+.pl .bars i.on{background:#c99bff;box-shadow:0 0 4px #a05cff}
+.pl.mine{border-color:#c99bff}
+.pl.done{cursor:default;color:#fff;background:linear-gradient(#7a42c9,#4a2386);border-color:#c99bff;box-shadow:0 0 10px rgba(160,92,255,.55)}
+.pl.done .bars i{background:#f0dcff}
+.pl.shut{cursor:default;opacity:.45;background:transparent;border-color:#4a4038;color:var(--parch-dim)}
+.pl.hit{animation:plhit .45s cubic-bezier(.3,1.7,.6,1)}
+@keyframes plhit{0%{transform:scale(1.3);box-shadow:0 0 18px #c78bff}100%{transform:scale(1)}}
+.chip.s-funded{color:#f0dcff;background:rgba(160,92,255,.28);animation:pop .35s cubic-bezier(.3,1.6,.6,1)}
+.line.bump{animation:bump 1.4s ease-out}
+@keyframes bump{0%{background:rgba(160,92,255,.35);box-shadow:inset 3px 0 0 #c99bff}100%{background:transparent;box-shadow:inset 3px 0 0 transparent}}
+.line.ch.funded{box-shadow:inset 3px 0 0 #a77ae8;background:linear-gradient(90deg,rgba(160,92,255,.14),rgba(160,92,255,0) 70%);border-radius:3px}
+.line.ch.funded:not(.me){padding:4px 6px;margin:0 -6px}
+.zap{position:fixed;z-index:50;width:12px;height:19px;pointer-events:none;transition:transform .5s cubic-bezier(.4,0,.6,1),opacity .5s}
+.zap svg{width:100%;height:100%;fill:#e6c6ff;filter:drop-shadow(0 0 5px #a05cff)}
+.newpill{position:sticky;bottom:0;align-self:center;flex:0 0 auto;z-index:3;margin-top:-4px;padding:5px 12px;border-radius:14px;cursor:pointer;
+  font-family:var(--display);font-size:13px;color:#1a1205;background:var(--flame);border:2px solid #1a1205;box-shadow:0 2px 6px rgba(0,0,0,.6)}
+/* a banner ad under the stream (PC layout only; an empty placeholder until an ad network is chosen) */
+.adslot{display:none}
+@media (min-width:1000px){
+  .app.theatre .room.online{grid-template-rows:auto minmax(0,1fr) auto auto}
+  .app.theatre .room.online .head{grid-row:1} .app.theatre .room.online .feed{grid-row:2}
+  .app.theatre .room.online .energy{grid-row:3;grid-column:2;min-width:0} .app.theatre .room.online .say{grid-row:4}
+  .app.theatre .room.online .stream{width:min(100%,calc((100dvh - 52px - 104px)*16/9))}
+  .app.theatre .room.online .adslot{display:flex;align-items:center;justify-content:center;height:90px;margin-top:2px;border-top:2px solid var(--mortar);
+    background:repeating-linear-gradient(45deg,#14100c 0 10px,#17120d 10px 20px);color:#6f6250;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+}
+@media (prefers-reduced-motion:reduce){.pip .fill,.pl,.line.bump,.pips.shake{animation:none!important}.zap{display:none}}
+/* the recharge page (?recharge): a stand-in for a rewarded ad, away from the stream */
+.recharge{margin:auto 0;display:flex;flex-direction:column;gap:18px;padding-bottom:6vh}
+.recharge .adbox{height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:2px dashed #4a3d5e;border-radius:3px;
+  background:#120e16;color:#8f7fa8;font-size:13px;text-align:center;padding:10px}
+.recharge .adbox b{font-family:var(--display);font-size:34px;color:#d3a6ff}
+.recharge p{margin:0;font-size:14px;line-height:1.45;color:var(--parch)}
+
 @media (max-width:459px){ .head .plaque.tv{width:44px;padding:0} .tv .lbl{position:absolute;left:-999em} }
 @media (min-width:760px){
   .app{padding-block:24px}
@@ -174,9 +244,19 @@ label{font-size:13px;color:var(--parch-dim)}
       <p class="fine">No account, no app. The code is on the host's screen.</p>
     </section>
 
+    <section class="recharge" id="recharge" hidden aria-labelledby="signr">
+      <h1 class="sign" id="signr">Recharge</h1>
+      <div class="card">
+        <div class="adbox" id="adbox"><b id="adcount">15</b><span>Ad space: no ad network yet, so this only stands in for one.</span></div>
+        <p id="admsg">Watch a short ad and get 2 energy pips. Up to 3 times an hour.</p>
+        <button class="plaque go" id="adclaim" disabled>Wait for it…</button>
+        <a class="plaque" href="./">Back to chat</a>
+      </div>
+    </section>
+
     <section class="room" id="room" hidden aria-label="Chat room">
       <div class="head">
-        <div class="who">Room <b id="rc">KQ7F</b><span id="me"></span></div>
+        <div class="who">Room <b id="rc">KQ7F</b><i class="live" id="livetag">LIVE</i><span id="me"></span></div>
         <a class="plaque host" id="hostlink" href="instant.html">Play your own</a>
         <button class="plaque tv" id="tvbtn" aria-pressed="false" aria-controls="stream" title="Show or hide the stream"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="1"/><path d="M8 21h8M12 17v4"/></svg><span class="lbl">Stream</span></button>
         <button class="plaque" id="leave">Leave</button>
@@ -184,12 +264,18 @@ label{font-size:13px;color:var(--parch-dim)}
       <div class="stream" id="stream" hidden aria-label="The host's stream">
         <button class="x" id="tvclose" aria-label="Hide the stream" title="Hide the stream">&times;</button>
         <div class="screen" id="screen"></div>
+        <div class="adslot" id="adslot" aria-label="Advertisement">Ad space</div>
       </div>
       <div class="draw">
         <div class="row"><span id="drawlabel">The dungeon picks one idea in</span><b id="clock">0:20</b></div>
         <div class="fuse" aria-hidden="true"><i id="fuse"></i></div>
       </div>
       <div class="feed" id="feed" role="log" aria-live="polite"></div>
+      <div class="energy" id="energy" hidden>
+        <div class="pips" id="pips" role="img" aria-label="Energy"></div>
+        <div class="ehint" id="ehint"></div>
+        <a class="adbtn" id="adbtn" href="?recharge" target="_blank" rel="noopener" hidden title="Watch a short ad for 2 more pips"></a>
+      </div>
       <form class="say" id="say">
         <label for="text" style="position:absolute;left:-999em">Your idea</label>
         <input id="text" maxlength="200" autocomplete="off" placeholder="Say something" enterkeyhint="send">
@@ -232,7 +318,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       torch[1].x=R>=44?Math.round((sr.right-a.left)/T)+5:Math.round((sr.right-a.left+R/2)/T);
       torch[0].y=torch[1].y=Math.round((sr.top-a.top+Math.min(sr.height*.3,220))/T); }
     else if(wide){ torch[0].x=Math.round((cr.left-a.left)/T)-11; torch[1].x=Math.round((cr.right-a.left)/T)+10; torch[0].y=torch[1].y=Math.round(H*.3); }
-    else { torch[0].x=7; torch[1].x=W-8; var hd=document.querySelector('.room:not([hidden]) .head, .join:not([hidden]) .sign').getBoundingClientRect();
+    else { torch[0].x=7; torch[1].x=W-8; var hd=document.querySelector('.room:not([hidden]) .head, .join:not([hidden]) .sign, .recharge:not([hidden]) .sign').getBoundingClientRect();
       torch[0].y=torch[1].y=Math.round((hd.top+hd.height/2-a.top)/T)-2; }
     for(y=0; y<H; y++) for(x=0; x<W; x++){ i=y*W+x; var p=x-torch[0].x, q=y-(torch[0].y-4), u=x-torch[1].x, v=y-(torch[1].y-4);
       f0[i]=1.3/(1+(p*p+q*q)/900); f1[i]=1.3/(1+(u*u+v*v)/900); }
@@ -273,7 +359,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     $('err').textContent=''; $('rc').textContent=c; $('me').textContent='You are '+n+(ON?'':' · 5 in the room');
     $('join').hidden=true; $('room').hidden=false; showStream(wantStream()); layout(); start(); $('text').focus();
   });
-  $('leave').addEventListener('click',function(){ stop(); showStream(false,true); $('room').hidden=true; $('join').hidden=false; $('feed').textContent=''; layout(); });
+  $('leave').addEventListener('click',function(){ stop(); showStream(false,true); $('room').hidden=true; $('join').hidden=false; $('feed').textContent=''; pill.hidden=true; layout(); });
 
   /* ---------- the host's stream ----------
      Twitch's player, embedded under the room header. On by default (handy on a phone), one tap hides it and the choice is
@@ -308,8 +394,14 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   var BOTS=[['sam','#7dd3fc'],['priya','#f0abfc'],['jonno','#86efac'],['megthemod','#fca5a5']];
   var IDEAS=['a goblin that sells you bad advice','make it rain angry ducks','a skeleton DJ that drops beats on him','spawn 5 angry clowns','give mott a banana launcher',
              'a knight made of spoons','goo him','a mimic that looks like the exit door','heal him, he looks rough','a very polite dragon'];
-  function add(cls,html){ var near=feed.scrollHeight-feed.scrollTop-feed.clientHeight<60, d=document.createElement('div'); d.className='line '+cls; d.innerHTML=html;
-    feed.appendChild(d); while(feed.children.length>60) feed.removeChild(feed.firstChild); if(near) feed.scrollTop=feed.scrollHeight; return d; }
+  /* The feed keeps the last 200 lines. Scrolled up to read back, it stays put and a "new messages" pill says there's more. */
+  var pill=document.createElement('button'); pill.type='button'; pill.className='newpill'; pill.hidden=true; pill.textContent='\u2193 New messages';
+  pill.addEventListener('click',function(){ feed.scrollTop=feed.scrollHeight; pill.hidden=true; });
+  function nearEnd(){ return feed.scrollHeight-feed.scrollTop-feed.clientHeight<60; }
+  function place(d,near){ if(pill.parentNode!==feed) feed.appendChild(pill); feed.insertBefore(d,pill);
+    while(feed.children.length>201){ var f=feed.firstChild; if(f===pill) break; feed.removeChild(f); }
+    if(near) feed.scrollTop=feed.scrollHeight; else if(d.className.indexOf(' me')<0) pill.hidden=false; }
+  function add(cls,html){ var near=nearEnd(), d=document.createElement('div'); d.className='line '+cls; d.innerHTML=html; place(d,near); return d; }
   function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function sys(t){ add('sys',esc(t)); }
   function botSay(){ var b=BOTS[Math.floor(Math.random()*BOTS.length)], t=IDEAS[Math.floor(Math.random()*IDEAS.length)];
@@ -333,12 +425,13 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     add('','<span class="n" style="color:#f0abfc">priya</span> give mott a banana launcher'); pool.push({who:'priya',text:'give mott a banana launcher'});
     timers.push(setInterval(tick,1000)); timers.push(setTimeout(botSay,3000)); }
   function stop(){ timers.forEach(function(t){ clearTimeout(t); clearInterval(t); }); timers=[]; }
+  feed.addEventListener('scroll',function(){ if(nearEnd()) pill.hidden=true; },{passive:true});
   $('say').addEventListener('submit',function(e){ e.preventDefault(); var box=$('text'), t=box.value.trim(); if(!t) return;
     if(ON) return onlineSend(box,t);
     if(live) return liveSend(box,t);
     if(mine){ mine.st.className='st'; mine.st.textContent='Replaced by your newer idea'; pool=pool.filter(function(p){ return p!==mine; }); }
     var d=add('me','<span class="n">'+esc(me)+'</span> '+esc(t)+'<span class="st">In the draw. One idea each per round</span>');
-    mine={who:me,text:t,st:d.querySelector('.st')}; pool.push(mine); box.value=''; feed.scrollTop=feed.scrollHeight; });
+    mine={who:me,text:t,st:d.querySelector('.st')}; pool.push(mine); box.value=''; feed.scrollTop=feed.scrollHeight; pill.hidden=true; });
 
   /* ---------- live mode: served by Tools/web_test.py (Test Websites.cmd), ideas go to the real game ----------
      /api/status answers only there; the hosted mockup keeps its pretend room. Ideas go to chat.py like any chat line
@@ -381,7 +474,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     rpc('room_info',{q_code:code}).then(function(rows){
       var r=rows&&rows[0], open=!!(r&&r.open);
       if(r&&r.twitch&&!channel){ channel=r.twitch; if(!$('stream').hidden) showStream(true,true); }
-      $('clock').textContent=open?'Live':'Offline'; $('fuse').style.transform='scaleX('+(open?1:0)+')';
+      $('clock').textContent=open?'Live':'Offline'; $('fuse').style.transform='scaleX('+(open?1:0)+')'; $('livetag').classList.toggle('on',open);
       if(open!==roomOpen){ roomOpen=open;
         if(!r) sys('There is no room with that code.'); else if(open) sys('Mott\'s game is live. What you send goes straight into it.'); }
     }).catch(function(){ $('clock').textContent='Offline'; });
@@ -406,6 +499,8 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   function chipState(r){
     var st=r.status||'', k=KIND[r.kind]||'';
     if(!st&&r.answered_ok===false) st='failed';
+    if(st==='pledge') return r.pledge_open?{s:'queued',i:'enemy',t:'An enemy idea: power it with your energy'}:{s:'passed',i:'enemy',t:'Time ran out before it was powered'};
+    if(st==='funded') return {s:'funded',i:'enemy',t:'Powered! It\'s up next'};
     if(st==='spawned'||st==='chosen'||st==='building'||st==='queued') return {s:st,i:k||'curse',t:
       st==='spawned'?'In the game'+(r.thing?': '+r.thing:'')+'!':st==='building'?'The dungeon is building it':st==='chosen'?'Picked! The dungeon is about to build it':'Read as '+(NAMES[k]||'a request')};
     if(st==='passed') return {s:'passed',i:'talk',t:r.answer&&r.answer!=='sent'?r.answer:'Just chat, or not picked this time'};
@@ -418,33 +513,119 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     var chip=line.chip; chip.className='chip s-'+c.s; chip.title=c.t; chip.setAttribute('aria-label',c.t);
     chip.innerHTML=c.s==='wait'?'<span class="dots"><i></i><i></i><i></i></span>':icon(c.i);
     line.el.classList.toggle('won',c.s==='spawned');
+    line.el.classList.toggle('funded',c.s==='funded'||((c.s==='chosen'||c.s==='building')&&r.goal>0));
   }
   function chatLine(cls,who,color,text){
     var d=add('ch '+cls,'<span class="tx"><span class="n"'+(color?' style="color:'+color+'"':'')+'>'+esc(who)+'</span> '+esc(text)+'<span class="st" hidden></span></span><span class="chip s-wait"><span class="dots"><i></i><i></i><i></i></span></span>');
     return {el:d,chip:d.querySelector('.chip'),st:d.querySelector('.st'),key:''};
   }
+  /* ---- energy pips and pledges ----
+     Each viewer has up to 5 pips (the database keeps them, by IP address) that refill one every 90 seconds. An enemy idea
+     gets a pledge button: one tap puts one of your pips in; at 3 (a boss 5) it's powered and the game builds it next.
+     No refunds. Every pledge moves the idea to the bottom of chat, for everyone. "+2 watch ad" opens ?recharge in a tab. */
+  var BOLT='<svg viewBox="0 0 7 11" shape-rendering="crispEdges" aria-hidden="true"><path d="M3 0h4v1H6v1H5v1H4v1h3v1H6v1H5v1H4v1H3v1H2v1H1v1H0V9h1V8h1V7h1V6H1V5h1V4h1V3h1V2H3z"/></svg>';
+  var oldDb=false, en={e:5,max:5,refill:90,ads:3,at:Date.now(),known:false};
+  function energyNow(){ return Math.min(en.max,en.e+(Date.now()-en.at)/1000/en.refill); }
+  function myEnergy(){ if(document.hidden) return; rpc('my_energy',{}).then(function(rows){ var r=rows&&rows[0]; if(!r) return;
+      en={e:+r.energy,max:r.most|0||5,refill:r.refill_seconds|0||90,ads:r.ads_left|0,at:Date.now(),known:true}; $('energy').hidden=false; drawEnergy(); }).catch(function(){}); }
+  var pipsBuilt=0;
+  function drawEnergy(){
+    var box=$('pips'), now=energyNow(), full=Math.floor(now+1e-6), frac=now-full, i;
+    if(pipsBuilt!==en.max){ box.innerHTML=''; for(i=0;i<en.max;i++){ var p=document.createElement('div'); p.className='pip'; p.innerHTML=BOLT+'<div class="fill">'+BOLT+'</div>'; box.appendChild(p); } pipsBuilt=en.max; }
+    for(i=0;i<en.max;i++){ var pp=box.children[i]; pp.classList.toggle('full',i<full); pp.classList.toggle('part',i===full&&frac>0.001);
+      pp.querySelector('.fill').style.setProperty('--cut',(i<full?0:i===full?Math.round((1-frac)*100):100)+'%'); }
+    box.setAttribute('aria-label','Energy: '+full+' of '+en.max);
+    var wait=full<en.max?Math.ceil((1-frac)*en.refill):0, mm=Math.floor(wait/60), ss=wait%60, t=mm+':'+(ss<10?'0':'')+ss;
+    var bolt=BOLT.replace('<svg','<svg style="width:7px;height:11px;fill:#c99bff;vertical-align:-1px"');
+    $('ehint').innerHTML=full<1?'Out of energy.<br>Next '+bolt+' in <b>'+t+'</b>':'Tap '+bolt+' on an enemy idea. <b>3</b> brings it to life<span class="long"> (boss <b>5</b>)</span>.'+(full<en.max?'<br>Next '+bolt+' in <b>'+t+'</b>':'');
+    var ad=$('adbtn'); ad.hidden=!(en.known&&full<en.max&&en.ads>0); ad.innerHTML=BOLT+'+2 <small>watch ad</small>';
+  }
+  function plState(line,r){
+    if(!(r.goal>0)){ if(line.pl){ line.pl.remove(); line.pl=null; } return; }
+    var b=line.pl;
+    if(!b){ b=line.pl=document.createElement('button'); b.type='button'; b.className='pl'; line.el.insertBefore(b,line.chip);
+      b.addEventListener('click',function(){ pledgeOn(line); }); }
+    var bars=''; for(var i=0;i<r.goal;i++) bars+='<i'+(i<r.pledged?' class="on"':'')+'></i>';
+    var funded=r.status!=='pledge'&&r.pledged>=r.goal, open=!!r.pledge_open;
+    b.className='pl'+(funded?' done':!open?' shut':'')+(r.mine>0?' mine':'');
+    b.disabled=!open; b.innerHTML=BOLT+'<span class="bars">'+bars+'</span>'+(funded?(r.backers>1?r.backers+' backers':'Powered'):r.pledged+'/'+r.goal);
+    b.title=funded?'Powered by '+r.backers+(r.backers===1?' viewer':' viewers'):open?'Put one of your energy pips in ('+r.pledged+' of '+r.goal+(r.mine?', '+r.mine+' yours':'')+')':'Time ran out ('+r.pledged+' of '+r.goal+')';
+    b.setAttribute('aria-label',b.title);
+  }
+  function zap(from,to){ if(still||!from||!to) return; var a=from.getBoundingClientRect(), c=to.getBoundingClientRect(), z=document.createElement('div');
+    z.className='zap'; z.innerHTML=BOLT; z.style.left=(a.left+a.width/2-6)+'px'; z.style.top=(a.top+a.height/2-9)+'px'; document.body.appendChild(z);
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ z.style.transform='translate('+(c.left+c.width/2-a.left-a.width/2)+'px,'+(c.top+c.height/2-a.top-a.height/2)+'px) scale(.8)'; z.style.opacity='.2'; }); });
+    setTimeout(function(){ z.remove(); },560); }
+  function pledgeOn(line){
+    if(!line.row||!line.row.pledge_open||line.busy) return;
+    var now=energyNow(), pips=$('pips');
+    if(now<1){ pips.classList.remove('shake'); void pips.offsetWidth; pips.classList.add('shake'); return; }
+    var from=pips.children[Math.max(0,Math.floor(now)-1)]; line.busy=true;
+    rpc('pledge',{q_code:code,q_name:me,q_id:line.id}).then(function(rows){ var r=rows&&rows[0]; line.busy=false; if(!r) return;
+      zap(from,line.pl); if(from){ from.classList.remove('gone'); void from.offsetWidth; from.classList.add('gone'); }
+      en.e=+r.energy; en.at=Date.now(); drawEnergy();
+      var row=line.row; row.pledged=r.pledged; row.goal=r.goal; row.mine=(row.mine|0)+1; if(r.funded){ row.status='funded'; row.pledge_open=false; }
+      row.sort_at=Date.now()/1000; setTimeout(function(){ line.pl&&line.pl.classList.add('hit'); setTimeout(function(){ line.pl&&line.pl.classList.remove('hit'); },500); },420);
+      plState(line,row); setChip(line,row); bump(line,true);
+    }).catch(function(e){ line.busy=false; var m=String(e&&e.message||'');
+      if(m==='no energy'){ en.e=0; en.at=Date.now(); drawEnergy(); pips.classList.remove('shake'); void pips.offsetWidth; pips.classList.add('shake'); }
+      else if(m==='not open'){ line.row.pledge_open=false; plState(line,line.row); }
+      else if(m==='room closed'){ sys('Mott\'s game isn\'t running right now.'); } });
+  }
+  /* A pledge moves its idea to the bottom of chat for everyone, with a slide and a glow */
+  function bump(line,mine){
+    var el=line.el; if(!el||!el.parentNode) return;
+    var last=pill.previousElementSibling; if(last===el){ el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); return; }
+    var near=nearEnd()||mine, top=el.getBoundingClientRect().top;
+    place(el,near);
+    if(!still){ var dy=top-el.getBoundingClientRect().top; el.style.transition='none'; el.style.transform='translateY('+dy+'px)';
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.style.transition='transform .45s cubic-bezier(.3,1.2,.5,1)'; el.style.transform=''; }); }); }
+    el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  }
   function onlineFeed(){
     if(document.hidden) return;
-    rpc('room_chats',{q_code:code,after_id:0}).then(function(rows){
-      (rows||[]).forEach(function(r){
-        var line=seen[r.id];
+    var first=!lastId;
+    rpc('room_chats',{q_code:code,after_id:oldDb?0:lastId}).then(function(rows){
+      rows=rows||[]; if(rows.length&&!('sort_at' in rows[0])) oldDb=true;  /* (a database without pledges: every line, every time) */ if(first) rows.sort(function(a,b){ return (a.sort_at||0)-(b.sort_at||0)||a.id-b.id; });
+      rows.forEach(function(r){
+        var line=seen[r.id], moved=false;
         if(!line){ line=seen[r.id]=chatLine('',r.chatter,nameColor(r.chatter),r.text); }
-        if(line.el) setChip(line,r);
+        else if(line.row&&r.sort_at>(line.row.sort_at||0)+0.5) moved=true;
+        line.id=r.id; line.row=r;
+        if(line.el){ setChip(line,r); plState(line,r); if(moved) bump(line,false); }
         if(r.id>lastId) lastId=r.id;
       });
       var now=Date.now(); for(var k in seen){ var l=seen[k]; if(l.at&&now-l.at>120000&&l.key.indexOf('wait')===0){ l.st.hidden=false; l.st.className='st lose'; l.st.textContent='The game never picked it up. Send it again?'; l.at=0; } }
     }).catch(function(){});
   }
   function onlineStart(){ seen={}; lastId=0; roomOpen=null;
+    $('room').classList.add('online'); oldDb=false; drawEnergy(); myEnergy();  /* (the pips show once the database answers) */
+    timers.push(setInterval(myEnergy,20000)); timers.push(setInterval(drawEnergy,1000));
     $('drawlabel').textContent='Mott\'s dungeon'; $('clock').textContent='...'; $('fuse').style.transform='scaleX(0)';
     sys('Everything you type will come to life and attack the player!');
     onlineRoom(); onlineFeed(); timers.push(setInterval(onlineRoom,10000)); timers.push(setInterval(onlineFeed,2500)); }
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden&&ON&&!$('room').hidden) myEnergy(); });
+  /* ---- the recharge page (?recharge): opened in its own tab, never over the stream ---- */
+  var wantRecharge=false; try{ wantRecharge=ON&&new URLSearchParams(location.search).has('recharge'); }catch(e){}
+  if(wantRecharge){
+    $('join').hidden=true; $('room').hidden=true; $('recharge').hidden=false; layout();
+    var n=15, cl=$('adclaim'), cnt=$('adcount');
+    var iv=setInterval(function(){ n--; cnt.textContent=Math.max(n,0); if(n<=0){ clearInterval(iv); cl.disabled=false; cl.textContent='Claim +2 energy'; } },1000);
+    cl.addEventListener('click',function(){ cl.disabled=true;
+      rpc('ad_reward',{}).then(function(rows){ var r=rows&&rows[0]||{};
+        $('admsg').textContent='Done: you have '+Math.floor(+r.energy||0)+' energy now'+(r.ads_left>0?' ('+r.ads_left+' more recharge'+(r.ads_left===1?'':'s')+' this hour)':'')+'. Close this tab to get back to chat.';
+        cl.textContent='Claimed'; })
+      .catch(function(e){ var m=String(e&&e.message||'');
+        $('admsg').textContent=m==='ad limit'?'That\'s all 3 recharges for this hour. Your pips still refill on their own.':'Couldn\'t reach the server. Try again in a moment.';
+        if(m!=='ad limit') cl.disabled=false; });
+    });
+  }
   function onlineSend(box,t){
     var line=chatLine('me',me,'',t), st=line.st; line.at=Date.now();
-    box.value=''; feed.scrollTop=feed.scrollHeight;
+    box.value=''; feed.scrollTop=feed.scrollHeight; pill.hidden=true;
     rpc('send_chat',{q_code:code,q_name:me,q_text:t}).then(function(id){
       if(seen[id]&&seen[id].el&&seen[id]!==line){ seen[id].el.remove(); }  /* (the feed got to it first) */
-      seen[id]=line;
+      seen[id]=line; line.id=id;
     }).catch(function(e){
       line.chip.remove(); st.hidden=false; line.at=0;
       var m=String(e&&e.message||''), say={'room closed':'Mott\'s game isn\'t running right now, so chat is closed.','slow down':'Slow down a little, then send again.',
