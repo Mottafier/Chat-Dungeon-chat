@@ -194,12 +194,15 @@ label{font-size:13px;color:var(--parch-dim)}
   font-family:var(--display);font-size:13px;color:#1a1205;background:var(--flame);border:2px solid #1a1205;box-shadow:0 2px 6px rgba(0,0,0,.6)}
 /* a banner ad under the stream (PC layout only; an empty placeholder until an ad network is chosen) */
 .adslot{display:none}
+.foot{display:flex;justify-content:center;gap:18px;font-size:13px}
+.foot a{color:var(--parch);text-decoration:none;text-shadow:0 1px 0 #000;padding:6px 2px}
+.foot a:hover{color:var(--flame);text-decoration:underline}
 @media (min-width:1000px){
   .app.theatre .room.online{grid-template-rows:auto minmax(0,1fr) auto auto}
   .app.theatre .room.online .head{grid-row:1} .app.theatre .room.online .feed{grid-row:2}
   .app.theatre .room.online .energy{grid-row:3;grid-column:2;min-width:0} .app.theatre .room.online .say{grid-row:4}
-  .app.theatre .room.online .stream{width:min(100%,calc((100dvh - 52px - 104px)*16/9))}
-  .app.theatre .room.online .adslot{display:flex;align-items:center;justify-content:center;height:90px;margin-top:2px;border-top:2px solid var(--mortar);
+  .app.theatre .room.online.withad .stream{width:min(100%,calc((100dvh - 52px - 104px)*16/9))}
+  .app.theatre .room.online.withad .adslot{display:flex;align-items:center;justify-content:center;height:90px;margin-top:2px;border-top:2px solid var(--mortar);
     background:repeating-linear-gradient(45deg,#14100c 0 10px,#17120d 10px 20px);color:#6f6250;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
 }
 @media (prefers-reduced-motion:reduce){.pip .fill,.pl,.line.bump,.pips.shake{animation:none!important}.zap{display:none}}
@@ -247,6 +250,7 @@ label{font-size:13px;color:var(--parch-dim)}
         <button class="plaque go" type="submit">Join</button>
       </form>
       <p class="fine">No account, no app. The code is on the host's screen.</p>
+      <nav class="foot" aria-label="About this site"><a href="about.html">About</a><a href="privacy.html">Privacy</a><a href="mailto:mottafier@gmail.com">Contact</a></nav>
     </section>
 
     <section class="recharge" id="recharge" hidden aria-labelledby="signr">
@@ -257,6 +261,7 @@ label{font-size:13px;color:var(--parch-dim)}
         <button class="plaque go" id="adclaim" disabled>Wait for it…</button>
         <a class="plaque" href="./">Back to chat</a>
       </div>
+      <nav class="foot" aria-label="About this site"><a href="about.html">About</a><a href="privacy.html">Privacy</a><a href="mailto:mottafier@gmail.com">Contact</a></nav>
     </section>
 
     <section class="room" id="room" hidden aria-label="Chat room">
