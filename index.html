@@ -120,8 +120,9 @@ label{font-size:13px;color:var(--parch-dim)}
 @media (min-width:1000px){
   .app.theatre .col{max-width:none}
   .app.theatre .room{display:grid;grid-template-columns:minmax(0,1fr) clamp(320px,27vw,420px);grid-template-rows:auto auto minmax(0,1fr) auto;column-gap:16px;row-gap:10px}
-  .app.theatre .stream{grid-column:1;grid-row:1/-1;align-self:start;min-height:0}
-  .app.theatre .stream .screen{width:min(100%,calc((100dvh - 52px)*16/9));max-height:none}
+  /* the box hugs the 16:9 player (no black bars on very wide windows); the brick wall and torches fill the rest */
+  .app.theatre .stream{grid-column:1;grid-row:1/-1;align-self:start;justify-self:center;min-height:0;width:min(100%,calc((100dvh - 52px)*16/9))}
+  .app.theatre .stream .screen{width:100%;max-height:none}
   .app.theatre .head,.app.theatre .draw,.app.theatre .feed,.app.theatre .say{grid-column:2;min-width:0}
 }
 </style>
@@ -196,7 +197,11 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
         for(var by=0; by<BH; by++) for(var bx=0; bx<BW; bx++){ x=c0*BW+off+bx; y=row*BH+by; if(x<0||x>=W||y>=H) continue; i=(y*W+x)*3;
           var m=(bx===0||by===0), k=m?1:sh*(by===1?1.08:by===BH-1?.86:1)*(.95+r()*.1), s=m?MORTAR:c; base[i]=s[0]*k; base[i+1]=s[1]*k; base[i+2]=s[2]*k; } } }
     var a=app.getBoundingClientRect(), cr=col.getBoundingClientRect(), wide=a.width>=760;
-    if(wide){ torch[0].x=Math.round((cr.left-a.left)/T)-11; torch[1].x=Math.round((cr.right-a.left)/T)+10; torch[0].y=torch[1].y=Math.round(H*.3); }
+    var st=wide&&app.classList.contains('theatre')?document.getElementById('stream'):null;
+    if(st&&!st.hidden){ var sr=st.getBoundingClientRect();  /* torches right beside the stream, where there's wall to hang them on */
+      if(sr.left-a.left>=44){ torch[0].x=Math.round((sr.left-a.left)/T)-6; torch[1].x=Math.round((sr.right-a.left)/T)+5; } else { torch[0].x=torch[1].x=-99; }
+      torch[0].y=torch[1].y=Math.round((sr.top-a.top+Math.min(sr.height*.3,220))/T); }
+    else if(wide){ torch[0].x=Math.round((cr.left-a.left)/T)-11; torch[1].x=Math.round((cr.right-a.left)/T)+10; torch[0].y=torch[1].y=Math.round(H*.3); }
     else { torch[0].x=7; torch[1].x=W-8; var hd=document.querySelector('.room:not([hidden]) .head, .join:not([hidden]) .sign').getBoundingClientRect();
       torch[0].y=torch[1].y=Math.round((hd.top+hd.height/2-a.top)/T)-2; }
     for(y=0; y<H; y++) for(x=0; x<W; x++){ i=y*W+x; var p=x-torch[0].x, q=y-(torch[0].y-4), u=x-torch[1].x, v=y-(torch[1].y-4);
