@@ -156,6 +156,8 @@ label{font-size:13px;color:var(--parch-dim)}
 </div>
 
 <script>
+/* The stream player refuses plain http pages: always use https on the real site */
+if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.hostname)) location.replace('https://'+location.host+location.pathname+location.search+location.hash);
 (function(){
   /* The published copy (Online/publish_chat.py) fills this in: {url, key, room} of the online database. Empty = the local
      test page (Tools/web_test.py) or a mockup. */
@@ -238,7 +240,10 @@ label{font-size:13px;color:var(--parch-dim)}
     if(!on) return;
     if(!channel){ scr.innerHTML='<div class="off">The host\'s stream shows here<small>when they\'re live on Twitch</small></div>'; return; }
     var f=document.createElement('iframe');
-    f.src='https://player.twitch.tv/?channel='+encodeURIComponent(channel)+'&parent='+encodeURIComponent(location.hostname||'localhost')+'&autoplay=true&muted=false';
+    /* Twitch only plays inside pages on https (localhost aside) whose address is listed as a parent */
+    var host=location.hostname||'localhost', parents=[host], bare=host.replace(/^www\./,'');
+    if(bare!==host) parents.push(bare); else if(host.indexOf('.')>0&&!/^[\d.]+$/.test(host)) parents.push('www.'+host);
+    f.src='https://player.twitch.tv/?channel='+encodeURIComponent(channel)+parents.map(function(h){ return '&parent='+encodeURIComponent(h); }).join('')+'&autoplay=true&muted=false';
     f.title=channel+' on Twitch'; f.allow='autoplay; fullscreen; picture-in-picture'; f.allowFullscreen=true;
     scr.appendChild(f);
   }
