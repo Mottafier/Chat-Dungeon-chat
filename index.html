@@ -199,7 +199,10 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     var a=app.getBoundingClientRect(), cr=col.getBoundingClientRect(), wide=a.width>=760;
     var st=wide&&app.classList.contains('theatre')?document.getElementById('stream'):null;
     if(st&&!st.hidden){ var sr=st.getBoundingClientRect();  /* torches right beside the stream, where there's wall to hang them on */
-      if(sr.left-a.left>=44){ torch[0].x=Math.round((sr.left-a.left)/T)-6; torch[1].x=Math.round((sr.right-a.left)/T)+5; } else { torch[0].x=torch[1].x=-99; }
+      /* with no wall to spare they sit in the gutters at the stream's edges (partly behind it), so the light still spills round it */
+      var L=sr.left-a.left, R=document.getElementById('feed').getBoundingClientRect().left-sr.right;
+      torch[0].x=L>=44?Math.round(L/T)-6:Math.round(L/2/T);
+      torch[1].x=R>=44?Math.round((sr.right-a.left)/T)+5:Math.round((sr.right-a.left+R/2)/T);
       torch[0].y=torch[1].y=Math.round((sr.top-a.top+Math.min(sr.height*.3,220))/T); }
     else if(wide){ torch[0].x=Math.round((cr.left-a.left)/T)-11; torch[1].x=Math.round((cr.right-a.left)/T)+10; torch[0].y=torch[1].y=Math.round(H*.3); }
     else { torch[0].x=7; torch[1].x=W-8; var hd=document.querySelector('.room:not([hidden]) .head, .join:not([hidden]) .sign').getBoundingClientRect();
