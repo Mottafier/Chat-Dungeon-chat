@@ -383,7 +383,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       if(r&&r.twitch&&!channel){ channel=r.twitch; if(!$('stream').hidden) showStream(true,true); }
       $('clock').textContent=open?'Live':'Offline'; $('fuse').style.transform='scaleX('+(open?1:0)+')';
       if(open!==roomOpen){ roomOpen=open;
-        sys(!r?'There is no room with that code.':open?'Mott\'s game is live. What you send goes straight into it.':'Mott\'s game isn\'t running right now. Chat opens when it is.'); }
+        if(!r) sys('There is no room with that code.'); else if(open) sys('Mott\'s game is live. What you send goes straight into it.'); }
     }).catch(function(){ $('clock').textContent='Offline'; });
   }
   /* ---- status chips: the little icon right of each line ---- */
@@ -437,7 +437,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   }
   function onlineStart(){ seen={}; lastId=0; roomOpen=null;
     $('drawlabel').textContent='Mott\'s dungeon'; $('clock').textContent='...'; $('fuse').style.transform='scaleX(0)';
-    sys('Type anything: an enemy, a weapon, armor, an ally, a bomb. It goes into Mott\'s game and gets built live on stream.');
+    sys('Everything you type will come to life and attack the player!');
     onlineRoom(); onlineFeed(); timers.push(setInterval(onlineRoom,10000)); timers.push(setInterval(onlineFeed,2500)); }
   function onlineSend(box,t){
     var line=chatLine('me',me,'',t), st=line.st; line.at=Date.now();
