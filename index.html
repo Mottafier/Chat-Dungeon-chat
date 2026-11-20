@@ -328,7 +328,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     pool=[]; mine=null;
   }
   function start(){ if(ON) return onlineStart(); if(live) return liveStart(); left=ROUND; pool=[]; mine=null; tickClock();
-    sys('Type anything: an enemy, a weapon, a wish, a curse. Every 20 seconds the dungeon picks one idea and builds it in front of Mott.');
+    sys('Type anything: an enemy, a weapon, armor, an ally, a bomb. Every 20 seconds the dungeon picks one idea and builds it in front of Mott.');
     add('','<span class="n" style="color:#7dd3fc">sam</span> a goblin that sells you bad advice'); pool.push({who:'sam',text:'a goblin that sells you bad advice'});
     add('','<span class="n" style="color:#f0abfc">priya</span> give mott a banana launcher'); pool.push({who:'priya',text:'give mott a banana launcher'});
     timers.push(setInterval(tick,1000)); timers.push(setTimeout(botSay,3000)); }
@@ -400,7 +400,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     x:['##....##','###..###','.######.','..####..','..####..','.######.','###..###','##....##']};
   var KIND={enemy:'enemy',thing:'enemy',spawn:'enemy',ritual:'enemy',boss_add:'enemy',rescue:'enemy',boss:'enemy',weapon:'weapon',armor:'armor',gear:'armor',
     powerup:'powerup',ammo:'powerup',throwable:'throwable',grenade:'throwable',bomb:'throwable',nuke:'throwable',ally:'ally',curse:'curse',wish:'curse',happening:'curse',event:'curse'};
-  var NAMES={enemy:'an enemy',weapon:'a weapon',armor:'armor',powerup:'a powerup',throwable:'something to throw',ally:'an ally',curse:'a curse or wish'};
+  var NAMES={enemy:'an enemy',weapon:'a weapon',armor:'armor',powerup:'a powerup',throwable:'something to throw',ally:'an ally',curse:'an event'};
   function icon(k){ var g=ICONS[k]||ICONS.curse, r=''; for(var y=0;y<8;y++) for(var x=0;x<8;x++) if(g[y][x]==='#') r+='<rect x="'+x+'" y="'+y+'" width="1" height="1"/>';
     return '<svg viewBox="0 0 8 8" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true">'+r+'</svg>'; }
   function chipState(r){
@@ -437,7 +437,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   }
   function onlineStart(){ seen={}; lastId=0; roomOpen=null;
     $('drawlabel').textContent='Mott\'s dungeon'; $('clock').textContent='...'; $('fuse').style.transform='scaleX(0)';
-    sys('Type anything: an enemy, a weapon, a wish, a curse. It goes into Mott\'s game and the dungeon builds it on stream.');
+    sys('Type anything: an enemy, a weapon, armor, an ally, a bomb. It goes into Mott\'s game and gets built live on stream.');
     onlineRoom(); onlineFeed(); timers.push(setInterval(onlineRoom,10000)); timers.push(setInterval(onlineFeed,2500)); }
   function onlineSend(box,t){
     var line=chatLine('me',me,'',t), st=line.st; line.at=Date.now();
