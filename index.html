@@ -165,6 +165,9 @@ label{font-size:13px;color:var(--parch-dim)}
 .adbtn:hover{background:linear-gradient(#7a42c9,#552a98)}
 .adbtn svg{width:8px;height:13px;fill:currentColor}
 .adbtn small{font-family:var(--body);font-size:11px;opacity:.85}
+.adbtn .chg{display:block;width:26px;height:6px;background:#2a1a44;border:1px solid #c99bff;border-radius:2px;overflow:hidden}
+.adbtn .chg i{display:block;height:100%;background:#e6c6ff;box-shadow:0 0 6px #c78bff;animation:chg .7s linear forwards}
+@keyframes chg{from{width:0}to{width:100%}}
 @media (max-width:459px){ .adbtn small{display:none} .ehint .long{display:none} .head .who i.live{font-size:0;margin-left:6px} .head .who i.live::before{margin-right:0} }
 /* the pledge button on an enemy idea: its progress in small bars, tap to put one of your pips in */
 .pl{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;height:26px;margin:-2px 0;padding:0 7px;border-radius:3px;cursor:pointer;
@@ -248,7 +251,7 @@ label{font-size:13px;color:var(--parch-dim)}
       <h1 class="sign" id="signr">Recharge</h1>
       <div class="card">
         <div class="adbox" id="adbox"><b id="adcount">15</b><span>Ad space: no ad network yet, so this only stands in for one.</span></div>
-        <p id="admsg">Watch a short ad and get 2 energy pips. Up to 3 times an hour.</p>
+        <p id="admsg">Watch a short ad and get 2 energy pips.</p>
         <button class="plaque go" id="adclaim" disabled>Wait for it…</button>
         <a class="plaque" href="./">Back to chat</a>
       </div>
@@ -524,6 +527,9 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
      gets a pledge button: one tap puts one of your pips in; at 3 (a boss 5) it's powered and the game builds it next.
      No refunds. Every pledge moves the idea to the bottom of chat, for everyone. "+2 watch ad" opens ?recharge in a tab. */
   var BOLT='<svg viewBox="0 0 7 11" shape-rendering="crispEdges" aria-hidden="true"><path d="M3 0h4v1H6v1H5v1H4v1h3v1H6v1H5v1H4v1H3v1H2v1H1v1H0V9h1V8h1V7h1V6H1V5h1V4h1V3h1V2H3z"/></svg>';
+  /* ONE SETTING: false = the energy button tops you up at once (no ads yet, Mott 2026-11-20); true = it opens the recharge
+     page (?recharge) with a rewarded ad, once an ad network is set up. The database caps it either way (ad_reward). */
+  var REWARDED_ADS=false;
   var oldDb=false, en={e:5,max:5,refill:90,ads:3,at:Date.now(),known:false};
   function energyNow(){ return Math.min(en.max,en.e+(Date.now()-en.at)/1000/en.refill); }
   function myEnergy(){ if(document.hidden) return; rpc('my_energy',{}).then(function(rows){ var r=rows&&rows[0]; if(!r) return;
@@ -538,7 +544,9 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     var wait=full<en.max?Math.ceil((1-frac)*en.refill):0, mm=Math.floor(wait/60), ss=wait%60, t=mm+':'+(ss<10?'0':'')+ss;
     var bolt=BOLT.replace('<svg','<svg style="width:7px;height:11px;fill:#c99bff;vertical-align:-1px"');
     $('ehint').innerHTML=full<1?'Out of energy.<br>Next '+bolt+' in <b>'+t+'</b>':'Tap '+bolt+' on an enemy idea. <b>3</b> brings it to life<span class="long"> (boss <b>5</b>)</span>.'+(full<en.max?'<br>Next '+bolt+' in <b>'+t+'</b>':'');
-    var ad=$('adbtn'); ad.hidden=!(en.known&&full<en.max&&en.ads>0); ad.innerHTML=BOLT+'+2 <small>watch ad</small>';
+    var ad=$('adbtn'); ad.hidden=!(en.known&&full<en.max&&en.ads>0);
+    if(!ad.classList.contains('charging')) ad.innerHTML=BOLT+'+2'+(REWARDED_ADS?' <small>watch ad</small>':'');
+    ad.title=REWARDED_ADS?'Watch a short ad for 2 more pips':'Get 2 more pips ('+en.ads+' left this hour)';
   }
   function plState(line,r){
     if(!(r.goal>0)){ if(line.pl){ line.pl.remove(); line.pl=null; } return; }
@@ -604,6 +612,18 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     $('drawlabel').textContent='Mott\'s dungeon'; $('clock').textContent='...'; $('fuse').style.transform='scaleX(0)';
     sys('Everything you type will come to life and attack the player!');
     onlineRoom(); onlineFeed(); timers.push(setInterval(onlineRoom,10000)); timers.push(setInterval(onlineFeed,2500)); }
+  /* the energy button: straight top-up (REWARDED_ADS false), or the recharge page in a new tab */
+  $('adbtn').addEventListener('click',function(e){
+    if(REWARDED_ADS) return;
+    e.preventDefault(); var b=this; if(b.classList.contains('charging')) return;
+    b.classList.add('charging'); b.innerHTML=BOLT+'<span class="chg"><i></i></span>';
+    var t0=Date.now();
+    rpc('ad_reward',{}).then(function(rows){ var r=rows&&rows[0]||{};
+      setTimeout(function(){ b.classList.remove('charging'); en.e=+r.energy; en.at=Date.now(); en.ads=r.ads_left|0; drawEnergy();
+        var pips=$('pips'); [].forEach.call(pips.children,function(p){ if(p.classList.contains('full')){ p.classList.remove('gone'); void p.offsetWidth; p.classList.add('gone'); } }); },
+        Math.max(0,700-(Date.now()-t0)));
+    }).catch(function(err){ b.classList.remove('charging'); if(String(err&&err.message)==='ad limit') en.ads=0; drawEnergy(); });
+  });
   document.addEventListener('visibilitychange',function(){ if(!document.hidden&&ON&&!$('room').hidden) myEnergy(); });
   /* ---- the recharge page (?recharge): opened in its own tab, never over the stream ---- */
   var wantRecharge=false; try{ wantRecharge=ON&&new URLSearchParams(location.search).has('recharge'); }catch(e){}
@@ -616,7 +636,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
         $('admsg').textContent='Done: you have '+Math.floor(+r.energy||0)+' energy now'+(r.ads_left>0?' ('+r.ads_left+' more recharge'+(r.ads_left===1?'':'s')+' this hour)':'')+'. Close this tab to get back to chat.';
         cl.textContent='Claimed'; })
       .catch(function(e){ var m=String(e&&e.message||'');
-        $('admsg').textContent=m==='ad limit'?'That\'s all 3 recharges for this hour. Your pips still refill on their own.':'Couldn\'t reach the server. Try again in a moment.';
+        $('admsg').textContent=m==='ad limit'?'That\'s all the recharges for this hour. Your pips still refill on their own.':'Couldn\'t reach the server. Try again in a moment.';
         if(m!=='ad limit') cl.disabled=false; });
     });
   }
