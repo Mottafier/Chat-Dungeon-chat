@@ -403,6 +403,8 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   function load(k){ try{ return localStorage.getItem(k)||''; }catch(e){ return ''; } }
   function tokenFor(n){ return load('cdTokName').toLowerCase()===String(n||'').toLowerCase()?load('cdTok'):''; }
   /* the token is only sent when there is one, so chat keeps working against a database from before names */
+  /* a failed fetch is a connection problem; anything else is the server's own message, shown so it can be reported */
+  function srvErr(e){ var m=String(e&&e.message||''); return (!m||e instanceof TypeError)?'Couldn\'t reach the server. Try again.':'Server said: '+m.slice(0,120); }
   function withTok(a){ var t=tokenFor(me); if(t) a.q_token=t; return a; }
   var locked=false, joining=false;
   function enter(c,n){
@@ -424,7 +426,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       rpc('login_name',{q_name:n,q_password:pw}).then(function(rows){ go(); var r=rows&&rows[0];
         if(!r||!r.token){ $('err').textContent='Wrong password for '+n+'.'; $('pass').select(); return; }
         store('cdTok',r.token); store('cdTokName',r.name); locked=true; enter(c,r.name);
-      }).catch(function(e){ go(); $('err').textContent=String(e&&e.message)==='slow down'?'Too many tries. Wait a few minutes and try again.':'Couldn\'t reach the server. Try again.'; });
+      }).catch(function(e){ go(); $('err').textContent=String(e&&e.message)==='slow down'?'Too many tries. Wait a few minutes and try again.':srvErr(e); });
       return;
     }
     rpc('name_status',{q_name:n,q_token:tokenFor(n)}).then(function(rows){ go(); var r=rows&&rows[0]||{};
@@ -445,7 +447,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     rpc('register_name',{q_name:me,q_password:a}).then(function(tok){ store('cdTok',tok); store('cdTokName',me); locked=true; drawLock(); $('lockwrap').hidden=true;
       sys('Your name '+me+' is locked. On another device, log in with your password.'); })
     .catch(function(e2){ var m=String(e2&&e2.message||'');
-      er.textContent={'taken':'Someone already locked this name. Leave and pick another.','reserved':'That name belongs to a streamer.','slow down':'Too many new names from here. Try again later.','short password':'Use 6 to 72 characters.','bad name':'This name can\'t be locked.'}[m]||'Couldn\'t reach the server. Try again.'; });
+      er.textContent={'taken':'Someone already locked this name. Leave and pick another.','reserved':'That name belongs to a streamer.','slow down':'Too many new names from here. Try again later.','short password':'Use 6 to 72 characters.','bad name':'This name can\'t be locked.'}[m]||srvErr(e2); });
   });
   $('leave').addEventListener('click',function(){ stop(); showStream(false,true); $('room').hidden=true; $('join').hidden=false; $('feed').textContent=''; pill.hidden=true; layout(); });
 
