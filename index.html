@@ -402,6 +402,8 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   function store(k,v){ try{ if(v==null) localStorage.removeItem(k); else localStorage.setItem(k,v); }catch(e){} }
   function load(k){ try{ return localStorage.getItem(k)||''; }catch(e){ return ''; } }
   function tokenFor(n){ return load('cdTokName').toLowerCase()===String(n||'').toLowerCase()?load('cdTok'):''; }
+  /* the token is only sent when there is one, so chat keeps working against a database from before names */
+  function withTok(a){ var t=tokenFor(me); if(t) a.q_token=t; return a; }
   var locked=false, joining=false;
   function enter(c,n){
     me=n; code=c; store('cdName',n);
@@ -652,7 +654,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     var now=energyNow(), pips=$('pips');
     if(now<1){ pips.classList.remove('shake'); void pips.offsetWidth; pips.classList.add('shake'); return; }
     var from=pips.children[Math.max(0,Math.floor(now)-1)]; line.busy=true;
-    rpc('pledge',{q_code:code,q_name:me,q_id:line.id,q_token:tokenFor(me)}).then(function(rows){ var r=rows&&rows[0]; line.busy=false; if(!r) return;
+    rpc('pledge',withTok({q_code:code,q_name:me,q_id:line.id})).then(function(rows){ var r=rows&&rows[0]; line.busy=false; if(!r) return;
       zap(from,line.pl); if(from){ from.classList.remove('gone'); void from.offsetWidth; from.classList.add('gone'); }
       en.e=+r.energy; en.at=Date.now(); drawEnergy();
       var row=line.row; row.pledged=r.pledged; row.goal=r.goal; row.mine=(row.mine|0)+1; if(r.funded){ row.status='funded'; row.pledge_open=false; }
@@ -727,7 +729,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   function onlineSend(box,t){
     var line=chatLine('me',me,'',t), st=line.st; line.at=Date.now();
     box.value=''; feed.scrollTop=feed.scrollHeight; pill.hidden=true;
-    rpc('send_chat',{q_code:code,q_name:me,q_text:t,q_token:tokenFor(me)}).then(function(id){
+    rpc('send_chat',withTok({q_code:code,q_name:me,q_text:t})).then(function(id){
       if(seen[id]&&seen[id].el&&seen[id]!==line){ seen[id].el.remove(); }  /* (the feed got to it first) */
       seen[id]=line; line.id=id;
     }).catch(function(e){
