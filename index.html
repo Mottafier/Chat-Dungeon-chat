@@ -245,6 +245,7 @@ label{font-size:13px;color:var(--parch-dim)}
   .app.theatre .stream .screen{width:100%;max-height:none}
   .app.theatre .head,.app.theatre .draw,.app.theatre .feed,.app.theatre .say{grid-column:2;min-width:0}
 }
+  .vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);border:0;opacity:0}
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
@@ -262,10 +263,10 @@ label{font-size:13px;color:var(--parch-dim)}
         <input id="code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" value="KQ7F">
         <div class="gap"></div>
         <label for="name">Your name</label>
-        <input id="name" maxlength="20" autocomplete="username" placeholder="What Mott will see">
+        <input id="name" name="username" maxlength="20" autocomplete="username" placeholder="What Mott will see">
         <div id="passrow" class="passrow" hidden>
           <label for="pass">Password</label>
-          <input id="pass" type="password" maxlength="72" autocomplete="current-password" placeholder="This name is registered">
+          <input id="pass" name="password" type="password" maxlength="72" autocomplete="current-password" placeholder="This name is registered">
         </div>
         <p class="err" id="err" role="alert"></p>
         <button class="plaque go" type="submit">Join</button>
@@ -279,7 +280,8 @@ label{font-size:13px;color:var(--parch-dim)}
         <h2 id="locktitle">Lock your name</h2>
         <p class="lockinfo">Set a password so nobody else can chat as <b id="lockname"></b>. You'll stay logged in on this device.</p>
         <label for="newpass">Password</label>
-        <input id="newpass" type="password" maxlength="72" autocomplete="new-password" placeholder="At least 6 characters">
+        <input id="lockuser" type="text" name="username" autocomplete="username" readonly tabindex="-1" aria-hidden="true" class="vh">
+        <input id="newpass" name="password" type="password" maxlength="72" autocomplete="new-password" placeholder="At least 6 characters">
         <label for="newpass2">Password again</label>
         <input id="newpass2" type="password" maxlength="72" autocomplete="new-password">
         <p class="err" id="lockerr" role="alert"></p>
@@ -438,7 +440,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   $('joinform').addEventListener('submit',function(e){ e.preventDefault(); tryJoin(false); });
   $('name').addEventListener('input',function(){ if(!$('passrow').hidden){ $('passrow').hidden=true; $('pass').value=''; $('err').textContent=''; } });
   /* lock (register) the name you're using */
-  $('lockbtn').addEventListener('click',function(){ if(locked) return; $('lockname').textContent=me; $('lockerr').textContent=''; $('newpass').value=''; $('newpass2').value='';
+  $('lockbtn').addEventListener('click',function(){ if(locked) return; $('lockname').textContent=me; $('lockuser').value=me; $('lockerr').textContent=''; $('newpass').value=''; $('newpass2').value='';
     $('lockwrap').hidden=false; $('newpass').focus(); });
   $('lockcancel').addEventListener('click',function(){ $('lockwrap').hidden=true; });
   $('lockwrap').addEventListener('click',function(e){ if(e.target===this) this.hidden=true; });
