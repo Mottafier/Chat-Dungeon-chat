@@ -200,6 +200,17 @@ label{font-size:13px;color:var(--parch-dim)}
 .head .who .mewrap .legal[hidden]{display:none}
 .head .who .legal,.head .who .legal a{color:var(--parch-dim);text-decoration:none}
 .head .who .legal a:hover{color:var(--flame);text-decoration:underline}
+.passrow{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.lockbtn{display:inline-flex;align-items:center;gap:3px;margin-left:5px;padding:0 3px;height:16px;border:0;background:none;cursor:pointer;
+  font:12px var(--body);color:var(--parch-dim);vertical-align:-2px;flex:0 0 auto}
+.lockbtn svg{width:9px;height:11px;fill:currentColor}
+.lockbtn:hover{color:var(--flame)}
+.lockbtn.on{color:var(--flame);cursor:default}
+.lockwrap{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.6)}
+.lockcard{width:100%;max-width:380px;box-sizing:border-box}
+.lockcard h2{margin:0;font-family:var(--display);font-size:20px;color:var(--flame)}
+.lockinfo{margin:0 0 6px;font-size:14px;line-height:1.45;color:var(--parch)}
+.lockbtns{display:flex;gap:8px;justify-content:flex-end}
 .foot{display:flex;justify-content:center;gap:18px;font-size:13px}
 .foot a{color:var(--parch);text-decoration:none;text-shadow:0 1px 0 #000;padding:6px 2px}
 .foot a:hover{color:var(--flame);text-decoration:underline}
@@ -251,13 +262,30 @@ label{font-size:13px;color:var(--parch-dim)}
         <input id="code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" value="KQ7F">
         <div class="gap"></div>
         <label for="name">Your name</label>
-        <input id="name" maxlength="20" autocomplete="off" placeholder="What Mott will see">
+        <input id="name" maxlength="20" autocomplete="username" placeholder="What Mott will see">
+        <div id="passrow" class="passrow" hidden>
+          <label for="pass">Password</label>
+          <input id="pass" type="password" maxlength="72" autocomplete="current-password" placeholder="This name is registered">
+        </div>
         <p class="err" id="err" role="alert"></p>
         <button class="plaque go" type="submit">Join</button>
       </form>
       <p class="fine">No account, no app. The code is on the host's screen.</p>
       <nav class="foot" aria-label="About this site"><a href="about.html">About</a><a href="privacy.html">Privacy</a><a href="mailto:mottafier@gmail.com">Contact</a></nav>
     </section>
+
+    <div class="lockwrap" id="lockwrap" hidden>
+      <form class="card lockcard" id="lockform" novalidate aria-labelledby="locktitle">
+        <h2 id="locktitle">Lock your name</h2>
+        <p class="lockinfo">Set a password so nobody else can chat as <b id="lockname"></b>. You'll stay logged in on this device.</p>
+        <label for="newpass">Password</label>
+        <input id="newpass" type="password" maxlength="72" autocomplete="new-password" placeholder="At least 6 characters">
+        <label for="newpass2">Password again</label>
+        <input id="newpass2" type="password" maxlength="72" autocomplete="new-password">
+        <p class="err" id="lockerr" role="alert"></p>
+        <div class="lockbtns"><button class="plaque" type="button" id="lockcancel">Cancel</button><button class="plaque go" type="submit">Lock name</button></div>
+      </form>
+    </div>
 
     <section class="recharge" id="recharge" hidden aria-labelledby="signr">
       <h1 class="sign" id="signr">Recharge</h1>
@@ -272,7 +300,7 @@ label{font-size:13px;color:var(--parch-dim)}
 
     <section class="room" id="room" hidden aria-label="Chat room">
       <div class="head">
-        <div class="who">Room <b id="rc">KQ7F</b><i class="live" id="livetag">LIVE</i><span class="mewrap"><span id="me"></span><span class="legal" hidden>· <a href="about.html" target="_blank" rel="noopener">About</a> · <a href="privacy.html" target="_blank" rel="noopener">Privacy</a></span></span></div>
+        <div class="who">Room <b id="rc">KQ7F</b><i class="live" id="livetag">LIVE</i><span class="mewrap"><span id="me"></span><button type="button" class="lockbtn" id="lockbtn" hidden></button><span class="legal" hidden>· <a href="about.html" target="_blank" rel="noopener">About</a> · <a href="privacy.html" target="_blank" rel="noopener">Privacy</a></span></span></div>
         <a class="plaque host" id="hostlink" href="instant.html">Play your own</a>
         <button class="plaque tv" id="tvbtn" aria-pressed="false" aria-controls="stream" title="Show or hide the stream"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="1"/><path d="M8 21h8M12 17v4"/></svg><span class="lbl">Stream</span></button>
         <button class="plaque" id="leave">Leave</button>
@@ -367,13 +395,55 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     document.querySelector('.fine').textContent='Pick a name to join the host\'s chat with. You can change it later.';
     $('hostlink').hidden=true; $('text').maxLength=100; }
   try{ var h=(location.hash||'').replace('#','').toUpperCase(); if(/^[A-Z0-9]{4}$/.test(h)) $('code').value=h; }catch(e){}
-  $('joinform').addEventListener('submit',function(e){ e.preventDefault();
-    var c=$('code').value.trim().toUpperCase(), n=$('name').value.trim().replace(/[^A-Za-z0-9_]/g,'').slice(0,25);
+  var autoJoin=!!(ON&&$('name').value);  /* (the online page: a remembered name goes straight in, see tryJoin) */
+  /* ---------- names: remembered on this device; a registered (locked) name needs its password once per device ----------
+     Like Pokemon Showdown: any free name can be used; "Lock name" sets a password so only you can chat as it. The login
+     token from the database is kept in localStorage (cdTok, for the name in cdTokName). */
+  function store(k,v){ try{ if(v==null) localStorage.removeItem(k); else localStorage.setItem(k,v); }catch(e){} }
+  function load(k){ try{ return localStorage.getItem(k)||''; }catch(e){ return ''; } }
+  function tokenFor(n){ return load('cdTokName').toLowerCase()===String(n||'').toLowerCase()?load('cdTok'):''; }
+  var locked=false, joining=false;
+  function enter(c,n){
+    me=n; code=c; store('cdName',n);
+    $('err').textContent=''; $('pass').value=''; $('passrow').hidden=true; $('rc').textContent=c; $('me').textContent='You are '+n+(ON?'':' · 5 in the room');
+    drawLock(); $('join').hidden=true; $('room').hidden=false; showStream(wantStream()); layout(); start(); $('text').focus();
+  }
+  function drawLock(){ var b=$('lockbtn'); if(!ON){ b.hidden=true; return; } b.hidden=false; b.classList.toggle('on',locked);
+    b.innerHTML='<svg viewBox="0 0 9 11" aria-hidden="true"><path d="'+(locked?'M2 4V3a2.5 2.5 0 0 1 5 0v1h1v7H1V4zm1 0h3V3a1.5 1.5 0 0 0-3 0z':'M2 4V3a2.5 2.5 0 0 1 5 0h-1a1.5 1.5 0 0 0-3 0v1h5v7H1V4z')+'"/></svg>'+(locked?'':'Lock name');
+    b.title=locked?'Your name is locked with a password':'Set a password so nobody else can use your name'; b.setAttribute('aria-label',b.title); }
+  function tryJoin(auto){
+    if(joining) return; var c=$('code').value.trim().toUpperCase(), n=$('name').value.trim().replace(/[^A-Za-z0-9_]/g,'').slice(0,25), pw=$('pass').value;
     if(c.length<4){ $('err').textContent='Room codes are 4 letters.'; $('code').focus(); return; }
     if(!n){ $('err').textContent=ON?'Pick a name (letters, numbers and _).':'Pick a name first.'; $('name').focus(); return; }
-    me=n; code=c; try{ localStorage.setItem('cdName',n); }catch(e2){}
-    $('err').textContent=''; $('rc').textContent=c; $('me').textContent='You are '+n+(ON?'':' · 5 in the room');
-    $('join').hidden=true; $('room').hidden=false; showStream(wantStream()); layout(); start(); $('text').focus();
+    if(!ON){ locked=false; return enter(c,n); }
+    joining=true;
+    var go=function(){ joining=false; };
+    if(!$('passrow').hidden&&pw){
+      rpc('login_name',{q_name:n,q_password:pw}).then(function(rows){ go(); var r=rows&&rows[0];
+        if(!r||!r.token){ $('err').textContent='Wrong password for '+n+'.'; $('pass').select(); return; }
+        store('cdTok',r.token); store('cdTokName',r.name); locked=true; enter(c,r.name);
+      }).catch(function(e){ go(); $('err').textContent=String(e&&e.message)==='slow down'?'Too many tries. Wait a few minutes and try again.':'Couldn\'t reach the server. Try again.'; });
+      return;
+    }
+    rpc('name_status',{q_name:n,q_token:tokenFor(n)}).then(function(rows){ go(); var r=rows&&rows[0]||{};
+      if(r.reserved){ $('err').textContent='That name belongs to a streamer. Pick another.'; if(!auto) $('name').focus(); return; }
+      if(r.registered&&!r.mine){ $('passrow').hidden=false; $('err').textContent=n+' is locked with a password. Enter it, or pick another name.'; $('pass').focus(); return; }
+      locked=!!r.registered; enter(c,r.name||n);
+    }).catch(function(){ go(); locked=false; enter(c,n); });  /* (a database without names yet: join as before) */
+  }
+  $('joinform').addEventListener('submit',function(e){ e.preventDefault(); tryJoin(false); });
+  $('name').addEventListener('input',function(){ if(!$('passrow').hidden){ $('passrow').hidden=true; $('pass').value=''; $('err').textContent=''; } });
+  /* lock (register) the name you're using */
+  $('lockbtn').addEventListener('click',function(){ if(locked) return; $('lockname').textContent=me; $('lockerr').textContent=''; $('newpass').value=''; $('newpass2').value='';
+    $('lockwrap').hidden=false; $('newpass').focus(); });
+  $('lockcancel').addEventListener('click',function(){ $('lockwrap').hidden=true; });
+  $('lockwrap').addEventListener('click',function(e){ if(e.target===this) this.hidden=true; });
+  $('lockform').addEventListener('submit',function(e){ e.preventDefault(); var a=$('newpass').value, b=$('newpass2').value, er=$('lockerr');
+    if(a.length<6){ er.textContent='Use at least 6 characters.'; return; } if(a!==b){ er.textContent='The two passwords don\'t match.'; return; }
+    rpc('register_name',{q_name:me,q_password:a}).then(function(tok){ store('cdTok',tok); store('cdTokName',me); locked=true; drawLock(); $('lockwrap').hidden=true;
+      sys('Your name '+me+' is locked. On another device, log in with your password.'); })
+    .catch(function(e2){ var m=String(e2&&e2.message||'');
+      er.textContent={'taken':'Someone already locked this name. Leave and pick another.','reserved':'That name belongs to a streamer.','slow down':'Too many new names from here. Try again later.','short password':'Use 6 to 72 characters.','bad name':'This name can\'t be locked.'}[m]||'Couldn\'t reach the server. Try again.'; });
   });
   $('leave').addEventListener('click',function(){ stop(); showStream(false,true); $('room').hidden=true; $('join').hidden=false; $('feed').textContent=''; pill.hidden=true; layout(); });
 
@@ -582,7 +652,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     var now=energyNow(), pips=$('pips');
     if(now<1){ pips.classList.remove('shake'); void pips.offsetWidth; pips.classList.add('shake'); return; }
     var from=pips.children[Math.max(0,Math.floor(now)-1)]; line.busy=true;
-    rpc('pledge',{q_code:code,q_name:me,q_id:line.id}).then(function(rows){ var r=rows&&rows[0]; line.busy=false; if(!r) return;
+    rpc('pledge',{q_code:code,q_name:me,q_id:line.id,q_token:tokenFor(me)}).then(function(rows){ var r=rows&&rows[0]; line.busy=false; if(!r) return;
       zap(from,line.pl); if(from){ from.classList.remove('gone'); void from.offsetWidth; from.classList.add('gone'); }
       en.e=+r.energy; en.at=Date.now(); drawEnergy();
       var row=line.row; row.pledged=r.pledged; row.goal=r.goal; row.mine=(row.mine|0)+1; if(r.funded){ row.status='funded'; row.pledge_open=false; }
@@ -591,7 +661,8 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     }).catch(function(e){ line.busy=false; var m=String(e&&e.message||'');
       if(m==='no energy'){ en.e=0; en.at=Date.now(); drawEnergy(); pips.classList.remove('shake'); void pips.offsetWidth; pips.classList.add('shake'); }
       else if(m==='not open'){ line.row.pledge_open=false; plState(line,line.row); }
-      else if(m==='room closed'){ sys('Mott\'s game isn\'t running right now.'); } });
+      else if(m==='room closed'){ sys('Mott\'s game isn\'t running right now.'); }
+      else if(m==='name taken'){ sys('Someone locked this name with a password. Leave and log in, or pick another name.'); } });
   }
   /* A pledge moves its idea to the bottom of chat for everyone, with a slide and a glow */
   function bump(line,mine){
@@ -656,17 +727,19 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   function onlineSend(box,t){
     var line=chatLine('me',me,'',t), st=line.st; line.at=Date.now();
     box.value=''; feed.scrollTop=feed.scrollHeight; pill.hidden=true;
-    rpc('send_chat',{q_code:code,q_name:me,q_text:t}).then(function(id){
+    rpc('send_chat',{q_code:code,q_name:me,q_text:t,q_token:tokenFor(me)}).then(function(id){
       if(seen[id]&&seen[id].el&&seen[id]!==line){ seen[id].el.remove(); }  /* (the feed got to it first) */
       seen[id]=line; line.id=id;
     }).catch(function(e){
       line.chip.remove(); st.hidden=false; line.at=0;
       var m=String(e&&e.message||''), say={'room closed':'Mott\'s game isn\'t running right now, so chat is closed.','slow down':'Slow down a little, then send again.',
-        'too busy':'Chat is very busy. Try again in a moment.','too long':'Keep it under 100 characters.','empty':'Type something first.','bad name':'Your name needs letters or numbers. Leave and pick another.'}[m];
+        'too busy':'Chat is very busy. Try again in a moment.','too long':'Keep it under 100 characters.','empty':'Type something first.','bad name':'Your name needs letters or numbers. Leave and pick another.',
+        'name taken':'Someone locked this name with a password. Leave and log in, or pick another name.'}[m];
       st.className='st lose'; st.textContent=say||'Couldn\'t send. Check your connection and try again.';
       if(m==='slow down'||m==='too busy'||m==='room closed'){ if(!box.value) box.value=t; }
     });
   }
+  if(autoJoin&&!wantRecharge) tryJoin(true);  /* (a remembered name rejoins after a reload or in a new tab) */
 })();
 </script>
 </body>
