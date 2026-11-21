@@ -447,7 +447,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     rpc('register_name',{q_name:me,q_password:a}).then(function(tok){ store('cdTok',tok); store('cdTokName',me); locked=true; drawLock(); $('lockwrap').hidden=true;
       sys('Your name '+me+' is locked. On another device, log in with your password.'); })
     .catch(function(e2){ var m=String(e2&&e2.message||'');
-      er.textContent={'taken':'Someone already locked this name. Leave and pick another.','reserved':'That name belongs to a streamer.','slow down':'Too many new names from here. Try again later.','short password':'Use 6 to 72 characters.','bad name':'This name can\'t be locked.'}[m]||srvErr(e2); });
+      er.textContent={'taken':'Someone already locked this name. Leave and pick another.','reserved':'That name belongs to a streamer.','slow down':'You can lock one name a day. Try again tomorrow.','short password':'Use 6 to 72 characters.','bad name':'This name can\'t be locked.'}[m]||srvErr(e2); });
   });
   $('leave').addEventListener('click',function(){ stop(); showStream(false,true); $('room').hidden=true; $('join').hidden=false; $('feed').textContent=''; pill.hidden=true; layout(); });
 
@@ -738,7 +738,8 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       line.chip.remove(); st.hidden=false; line.at=0;
       var m=String(e&&e.message||''), say={'room closed':'Mott\'s game isn\'t running right now, so chat is closed.','slow down':'Slow down a little, then send again.',
         'too busy':'Chat is very busy. Try again in a moment.','too long':'Keep it under 100 characters.','empty':'Type something first.','bad name':'Your name needs letters or numbers. Leave and pick another.',
-        'name taken':'Someone locked this name with a password. Leave and log in, or pick another name.'}[m];
+        'name taken':'Someone locked this name with a password. Leave and log in, or pick another name.',
+        'too many names':'You\'ve chatted under too many names this hour. Leave and use a name you already used.'}[m];
       st.className='st lose'; st.textContent=say||'Couldn\'t send. Check your connection and try again.';
       if(m==='slow down'||m==='too busy'||m==='room closed'){ if(!box.value) box.value=t; }
     });
