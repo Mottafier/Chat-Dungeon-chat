@@ -245,6 +245,48 @@ label{font-size:13px;color:var(--parch-dim)}
   .app.theatre .stream .screen{width:100%;max-height:none}
   .app.theatre .head,.app.theatre .draw,.app.theatre .feed,.app.theatre .say{grid-column:2;min-width:0}
 }
+/* ---- Dungeon Points (2026-11-22): the online page shows the stream, the stream's real Twitch chat, and buttons under
+   the stream that spend points. The site's own chat, energy pips and pledges are gone from the page. ---- */
+.points,.tchat,.popchat{display:none}
+.room.online .draw,.room.online .feed,.room.online .say,.room.online .energy{display:none!important}
+.room.online .points{display:flex;flex-direction:column;gap:8px;background:var(--slab);border:2px solid var(--mortar);border-radius:3px;padding:8px 10px;box-shadow:0 3px 0 #000}
+.room.online .points[hidden]{display:none}
+.ptop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bal{display:flex;align-items:center;gap:6px;font-family:var(--display);font-size:20px;color:#e9d2ff}
+.bal svg{width:20px;height:20px;flex:0 0 auto;filter:drop-shadow(0 0 4px #a05cff)}
+.bal small{font-family:var(--body);font-size:12px;color:var(--parch-dim)}
+.pinfo{flex:1 1 160px;min-width:0;font-size:13px;line-height:1.35;color:var(--parch)}
+.pbtn{min-height:36px;padding:0 12px;font-size:14px;white-space:nowrap}
+.pacts{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:6px}
+.act{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-height:52px;padding:6px 44px 6px 9px;text-align:left;cursor:pointer;
+  background:#1c1524;border:2px solid #3d2f52;border-radius:3px;color:var(--parch);font:inherit}
+.act b{font-size:14px;color:#f1e4ff}
+.act small{font-size:11.5px;line-height:1.25;color:var(--parch-dim)}
+.act i{position:absolute;top:50%;right:7px;transform:translateY(-50%);font-style:normal;font-family:var(--display);font-size:15px;color:#d3a6ff}
+.act:hover:not(:disabled){border-color:#8456d0;background:#241a30}
+.act.on{border-color:#a970ff;box-shadow:0 0 0 2px rgba(169,112,255,.35)}
+.act.soon{opacity:.45;cursor:default}
+.act.soon i{font-family:var(--body);font-size:11px}
+.pask{display:flex;gap:6px}
+.pask[hidden]{display:none}
+.pask input{flex:1 1 auto;min-width:0}
+.pask .plaque{min-height:44px;flex:0 0 auto}
+.pmsg{font-size:13px;line-height:1.35;color:var(--parch);min-height:0}
+.pmsg:empty{display:none}
+.pmsg .ok{color:#b7f5a2}.pmsg .bad{color:var(--bad)}
+.room.online .tchat{display:block;position:relative;flex:1 1 auto;min-height:420px;height:62vh;background:#18181b;border:2px solid var(--mortar);border-radius:3px;overflow:hidden}
+.tchat iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+.tchat .off{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;color:var(--parch-dim);font-size:14px}
+.room.online .popchat{display:block;font-size:12px;text-align:right;color:var(--parch-dim)}
+.popchat a{color:var(--parch-dim)} .popchat a:hover{color:var(--flame)}
+@media (min-width:1000px){
+  .app.theatre .room.online{grid-template-rows:auto auto minmax(0,1fr) auto}
+  .app.theatre .room.online .stream{grid-column:1;grid-row:1/3;width:min(100%,calc((100dvh - 52px - 200px)*16/9))}
+  .app.theatre .room.online .points{grid-column:1;grid-row:3/5;align-self:start;justify-self:center;box-sizing:border-box;width:min(100%,calc((100dvh - 52px - 200px)*16/9))}
+  .app.theatre .room.online .head{grid-column:2;grid-row:1}
+  .app.theatre .room.online .tchat{grid-column:2;grid-row:2/4;height:auto;min-height:0}
+  .app.theatre .room.online .popchat{grid-column:2;grid-row:4}
+}
   .vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);border:0;opacity:0}
 </style>
 
@@ -277,15 +319,15 @@ label{font-size:13px;color:var(--parch-dim)}
 
     <div class="lockwrap" id="lockwrap" hidden>
       <form class="card lockcard" id="lockform" novalidate aria-labelledby="locktitle">
-        <h2 id="locktitle">Lock your name</h2>
-        <p class="lockinfo">Set a password so nobody else can chat as <b id="lockname"></b>. You'll stay logged in on this device.</p>
+        <h2 id="locktitle">Make an account</h2>
+        <p class="lockinfo">Set a password for <b id="lockname"></b>. Nobody else can use the name, you get <b>100 free Dungeon Points every day</b>, and you stay logged in on this device.</p>
         <label for="newpass">Password</label>
         <input id="lockuser" type="text" name="username" autocomplete="username" readonly tabindex="-1" aria-hidden="true" class="vh">
         <input id="newpass" name="password" type="password" maxlength="72" autocomplete="new-password" placeholder="At least 6 characters">
         <label for="newpass2">Password again</label>
         <input id="newpass2" type="password" maxlength="72" autocomplete="new-password">
         <p class="err" id="lockerr" role="alert"></p>
-        <div class="lockbtns"><button class="plaque" type="button" id="lockcancel">Cancel</button><button class="plaque go" type="submit">Lock name</button></div>
+        <div class="lockbtns"><button class="plaque" type="button" id="lockcancel">Cancel</button><button class="plaque go" type="submit">Make account</button></div>
       </form>
     </div>
 
@@ -293,9 +335,9 @@ label{font-size:13px;color:var(--parch-dim)}
       <h1 class="sign" id="signr">Recharge</h1>
       <div class="card">
         <div class="adbox" id="adbox"><b id="adcount">15</b><span>Ad space: no ad network yet, so this only stands in for one.</span></div>
-        <p id="admsg">Watch a short ad and get 2 energy pips.</p>
+        <p id="admsg">Watch a short ad and get 20 Dungeon Points.</p>
         <button class="plaque go" id="adclaim" disabled>Wait for it…</button>
-        <a class="plaque" href="./">Back to chat</a>
+        <a class="plaque" href="./">Back to the stream</a>
       </div>
       <nav class="foot" aria-label="About this site"><a href="about.html">About</a><a href="privacy.html">Privacy</a><a href="mailto:mottafier@gmail.com">Contact</a></nav>
     </section>
@@ -322,6 +364,32 @@ label{font-size:13px;color:var(--parch-dim)}
         <div class="ehint" id="ehint"></div>
         <a class="adbtn" id="adbtn" href="?recharge" target="_blank" rel="noopener" hidden title="Watch a short ad for 2 more pips"></a>
       </div>
+      <div class="points" id="points" hidden aria-label="Dungeon Points">
+        <div class="ptop">
+          <span class="bal" title="Your Dungeon Points"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1l8 6-8 12L2 7z" fill="#a970ff"/><path d="M10 1l8 6h-16z" fill="#d3a6ff"/><path d="M6 7l4 12 4-12z" fill="#8a4fe0"/></svg><b id="pnum">0</b><small>points</small></span>
+          <span class="pinfo" id="pinfo">Type in Twitch chat and it comes to life. Points make it happen right now.</span>
+          <button class="plaque go pbtn" id="pacct" type="button" hidden>Make an account</button>
+          <a class="plaque pbtn" id="pad" href="?recharge" target="_blank" rel="noopener" hidden>Watch an ad</a>
+          <button class="plaque pbtn" id="pbuy" type="button" hidden>Get more</button>
+        </div>
+        <div class="pacts" id="pacts">
+          <button type="button" class="act" data-act="spawn"><b>Spawn now</b><small>your monster, no waiting</small><i data-price="spawn">40</i></button>
+          <button type="button" class="act" data-act="boss"><b>Boss</b><small>your monster as a boss</small><i data-price="boss">100</i></button>
+          <button type="button" class="act" data-act="wish"><b>Wish</b><small>make something happen</small><i data-price="wish">25</i></button>
+          <button type="button" class="act" data-act="random"><b>Surprise</b><small>a monster chat made before</small><i data-price="random">20</i></button>
+          <button type="button" class="act soon" disabled><b>Send a gun</b><small>a gift for the streamer</small><i>soon</i></button>
+          <button type="button" class="act soon" disabled><b>Be the genie</b><small>grant 3 wishes</small><i>soon</i></button>
+        </div>
+        <form class="pask" id="pask" hidden>
+          <label for="ptext" class="vh">What to make</label>
+          <input id="ptext" maxlength="100" autocomplete="off" enterkeyhint="send">
+          <button class="plaque go" type="submit" id="pgo">Go</button>
+          <button class="plaque" type="button" id="pcancel">Cancel</button>
+        </form>
+        <div class="pmsg" id="pmsg" role="status" aria-live="polite"></div>
+      </div>
+      <div class="tchat" id="tchat" aria-label="Stream chat"></div>
+      <div class="popchat" id="popchat"><a id="poplink" href="#" target="_blank" rel="noopener">Can't log in to chat? Open it in its own window</a></div>
       <form class="say" id="say">
         <label for="text" style="position:absolute;left:-999em">Your idea</label>
         <input id="text" maxlength="200" autocomplete="off" placeholder="Say something" enterkeyhint="send">
@@ -394,7 +462,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   var me='', code='KQ7F';
   try{ $('name').value=localStorage.getItem('cdName')||''; }catch(e){}
   if(ON){ $('code').value=ON.room||''; $('code').hidden=true; document.querySelector('label[for=code]').hidden=true; document.querySelector('.card .gap').hidden=true;
-    document.querySelector('.fine').textContent='Pick a name to join the host\'s chat with. You can change it later.';
+    document.querySelector('.fine').textContent='Pick a name. Make it an account to get free Dungeon Points and mess with the stream.';
     $('hostlink').hidden=true; $('text').maxLength=100; }
   try{ var h=(location.hash||'').replace('#','').toUpperCase(); if(/^[A-Z0-9]{4}$/.test(h)) $('code').value=h; }catch(e){}
   var autoJoin=!!(ON&&$('name').value);  /* (the online page: a remembered name goes straight in, see tryJoin) */
@@ -415,8 +483,8 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     drawLock(); $('join').hidden=true; $('room').hidden=false; showStream(wantStream()); layout(); start(); $('text').focus();
   }
   function drawLock(){ var b=$('lockbtn'); if(!ON){ b.hidden=true; return; } b.hidden=false; b.classList.toggle('on',locked);
-    b.innerHTML='<svg viewBox="0 0 9 11" aria-hidden="true"><path d="'+(locked?'M2 4V3a2.5 2.5 0 0 1 5 0v1h1v7H1V4zm1 0h3V3a1.5 1.5 0 0 0-3 0z':'M2 4V3a2.5 2.5 0 0 1 5 0h-1a1.5 1.5 0 0 0-3 0v1h5v7H1V4z')+'"/></svg>'+(locked?'':'Lock name');
-    b.title=locked?'Your name is locked with a password':'Set a password so nobody else can use your name'; b.setAttribute('aria-label',b.title); }
+    b.innerHTML='<svg viewBox="0 0 9 11" aria-hidden="true"><path d="'+(locked?'M2 4V3a2.5 2.5 0 0 1 5 0v1h1v7H1V4zm1 0h3V3a1.5 1.5 0 0 0-3 0z':'M2 4V3a2.5 2.5 0 0 1 5 0h-1a1.5 1.5 0 0 0-3 0v1h5v7H1V4z')+'"/></svg>'+(locked?'':'Make account');
+    b.title=locked?'Your account (your name is locked with a password)':'Make an account: lock your name and get free Dungeon Points'; b.setAttribute('aria-label',b.title); }
   function tryJoin(auto){
     if(joining) return; var c=$('code').value.trim().toUpperCase(), n=$('name').value.trim().replace(/[^A-Za-z0-9_]/g,'').slice(0,25), pw=$('pass').value;
     if(c.length<4){ $('err').textContent='Room codes are 4 letters.'; $('code').focus(); return; }
@@ -440,14 +508,15 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   $('joinform').addEventListener('submit',function(e){ e.preventDefault(); tryJoin(false); });
   $('name').addEventListener('input',function(){ if(!$('passrow').hidden){ $('passrow').hidden=true; $('pass').value=''; $('err').textContent=''; } });
   /* lock (register) the name you're using */
-  $('lockbtn').addEventListener('click',function(){ if(locked) return; $('lockname').textContent=me; $('lockuser').value=me; $('lockerr').textContent=''; $('newpass').value=''; $('newpass2').value='';
-    $('lockwrap').hidden=false; $('newpass').focus(); });
+  function openAccount(){ if(locked) return; $('lockname').textContent=me; $('lockuser').value=me; $('lockerr').textContent=''; $('newpass').value=''; $('newpass2').value='';
+    $('lockwrap').hidden=false; $('newpass').focus(); }
+  $('lockbtn').addEventListener('click',openAccount);
   $('lockcancel').addEventListener('click',function(){ $('lockwrap').hidden=true; });
   $('lockwrap').addEventListener('click',function(e){ if(e.target===this) this.hidden=true; });
   $('lockform').addEventListener('submit',function(e){ e.preventDefault(); var a=$('newpass').value, b=$('newpass2').value, er=$('lockerr');
     if(a.length<6){ er.textContent='Use at least 6 characters.'; return; } if(a!==b){ er.textContent='The two passwords don\'t match.'; return; }
     rpc('register_name',{q_name:me,q_password:a}).then(function(tok){ store('cdTok',tok); store('cdTokName',me); locked=true; drawLock(); $('lockwrap').hidden=true;
-      sys('Your name '+me+' is locked. On another device, log in with your password.'); })
+      pmsg('Account made. Here are your first 100 points! On another device, join as '+me+' with your password.','ok'); myPoints(); })
     .catch(function(e2){ var m=String(e2&&e2.message||'');
       er.textContent={'taken':'Someone already locked this name. Leave and pick another.','reserved':'That name belongs to a streamer.','slow down':'You can lock one name a day. Try again tomorrow.','short password':'Use 6 to 72 characters.','bad name':'This name can\'t be locked.'}[m]||srvErr(e2); });
   });
@@ -565,7 +634,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     if(document.hidden) return;
     rpc('room_info',{q_code:code}).then(function(rows){
       var r=rows&&rows[0], open=!!(r&&r.open);
-      if(r&&r.twitch&&!channel){ channel=r.twitch; if(!$('stream').hidden) showStream(true,true); }
+      if(r&&r.twitch&&!channel){ channel=r.twitch; if(!$('stream').hidden) showStream(true,true); showChat(); }
       $('clock').textContent=open?'Live':'Offline'; $('fuse').style.transform='scaleX('+(open?1:0)+')'; $('livetag').classList.toggle('on',open);
       if(open!==roomOpen){ roomOpen=open;
         if(!r) sys('There is no room with that code.'); else if(open) sys('Mott\'s game is live. What you send goes straight into it.'); }
@@ -697,11 +766,81 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     }).catch(function(){});
   }
   function onlineStart(){ seen={}; lastId=0; roomOpen=null;
-    $('room').classList.add('online'); document.querySelector('.head .legal').hidden=false; oldDb=false; drawEnergy(); myEnergy();  /* (the pips show once the database answers) */
-    timers.push(setInterval(myEnergy,20000)); timers.push(setInterval(drawEnergy,1000));
-    $('drawlabel').textContent='Mott\'s dungeon'; $('clock').textContent='...'; $('fuse').style.transform='scaleX(0)';
-    sys('Everything you type will come to life and attack the player!');
-    onlineRoom(); onlineFeed(); timers.push(setInterval(onlineRoom,10000)); timers.push(setInterval(onlineFeed,2500)); }
+    $('room').classList.add('online'); document.querySelector('.head .legal').hidden=false; oldDb=false;
+    $('points').hidden=false; spends=[]; showChat(); drawPoints(); myPoints();
+    timers.push(setInterval(myPoints,30000)); timers.push(setInterval(followSpends,2500));
+    onlineRoom(); timers.push(setInterval(onlineRoom,10000)); }
+
+  /* ---------- the stream's real Twitch chat (Twitch's own chat embed: logged in to Twitch, you chat as yourself) ---------- */
+  function parentsQ(){ var host=location.hostname||'localhost', parents=[host], bare=host.replace(/^www\./,'');
+    if(bare!==host) parents.push(bare); else if(host.indexOf('.')>0&&!/^[\d.]+$/.test(host)) parents.push('www.'+host);
+    return parents.map(function(h){ return '&parent='+encodeURIComponent(h); }).join(''); }
+  var chatFor='';
+  function showChat(){
+    var box=$('tchat'); if(chatFor===channel&&box.firstChild) return; chatFor=channel; box.textContent='';
+    if(!channel){ box.innerHTML='<div class="off">The stream\'s Twitch chat shows here once the host is set up.</div>'; $('popchat').hidden=true; return; }
+    var f=document.createElement('iframe');
+    f.src='https://www.twitch.tv/embed/'+encodeURIComponent(channel)+'/chat?darkpopout'+parentsQ();
+    f.title=channel+'\'s Twitch chat'; box.appendChild(f);
+    $('poplink').href='https://www.twitch.tv/popout/'+encodeURIComponent(channel)+'/chat?popout='; $('popchat').hidden=false;
+  }
+
+  /* ---------- Dungeon Points: buttons under the stream that make something happen right away ----------
+     An account (a locked name) gets daily free points (the database: my_points, spend_points, points_ad_reward). A paid
+     request is built before any free chat idea; if nothing comes of it, the points come back. */
+  var pts={n:0,account:false,prices:{},ads:0,ad:20,known:false}, asking=null, spends=[];
+  var ASK={spawn:['Type a monster, e.g. a goose with a gun','Spawn'],boss:['Type a boss, e.g. the king of all rats','Spawn boss'],wish:['Type a wish, e.g. acid rain for 10 seconds','Wish']};
+  function pmsg(t,cls){ var m=$('pmsg'); m.innerHTML=t?'<span class="'+(cls||'')+'">'+esc(t)+'</span>':''; }
+  function myPoints(){ if(document.hidden||!ON) return; rpc('my_points',withTok({q_name:me})).then(function(rows){ var r=rows&&rows[0]; if(!r) return;
+      pts={n:r.points|0,account:!!r.account,prices:r.prices||{},ads:r.ads_left|0,ad:r.ad_points|0||20,daily:r.daily|0||100,known:true}; drawPoints(); }).catch(function(){}); }
+  function drawPoints(){
+    $('pnum').textContent=pts.n;
+    [].forEach.call(document.querySelectorAll('[data-price]'),function(i){ var p=pts.prices[i.getAttribute('data-price')]; if(p!=null) i.textContent=p; });
+    $('pacct').hidden=!pts.known||pts.account; $('pbuy').hidden=!pts.account; $('pad').hidden=!pts.account||pts.ads<=0;
+    $('pad').textContent='Watch an ad +'+pts.ad;
+    $('pinfo').textContent=!pts.known?'Type in Twitch chat and it comes to life. Points make it happen right now.':
+      pts.account?'Type in Twitch chat and it comes to life. Spend points to make it happen right now. '+(pts.daily||100)+' free every day.':
+      'Type in Twitch chat and it comes to life. Make an account to get '+(pts.daily||100)+' free points a day and skip the line.';
+  }
+  function price(a){ var p=pts.prices[a]; return p==null?0:p|0; }
+  function closeAsk(){ asking=null; $('pask').hidden=true; [].forEach.call(document.querySelectorAll('.act.on'),function(b){ b.classList.remove('on'); }); }
+  [].forEach.call(document.querySelectorAll('.act[data-act]'),function(b){ b.addEventListener('click',function(){
+    var a=b.getAttribute('data-act');
+    if(!pts.account){ pmsg('Points need an account. Make one and you get '+(pts.daily||100)+' free points every day.'); openAccount(); return; }
+    if(pts.n<price(a)){ pmsg('Not enough points for that. '+(pts.ads>0?'Watch an ad for '+pts.ad+' more, or come back tomorrow for free ones.':'More free points tomorrow.'),'bad'); return; }
+    if(a==='random'){ closeAsk(); spend(a,''); return; }
+    closeAsk(); asking=a; b.classList.add('on'); $('pask').hidden=false; $('ptext').value=''; $('ptext').placeholder=ASK[a][0];
+    $('pgo').textContent=ASK[a][1]+' \u00b7 '+price(a); $('ptext').focus(); pmsg('');
+  }); });
+  $('pcancel').addEventListener('click',closeAsk);
+  $('pask').addEventListener('submit',function(e){ e.preventDefault(); var t=$('ptext').value.trim(); if(!t){ $('ptext').focus(); return; } spend(asking,t); });
+  $('pacct').addEventListener('click',openAccount);
+  $('pbuy').addEventListener('click',function(){ pmsg('Point packs are coming soon. For now: free points every day, and ads.'); });
+  var SPEND_ERR={'not enough points':'Not enough points for that.','room closed':'The streamer\'s game isn\'t running right now. Try again when it\'s live.',
+    'slow down':'One at a time: wait a few seconds.','too busy':'Lots of people are spending points. Try again in a moment.','too long':'Keep it under 100 characters.',
+    'empty':'Type something first.','no account':'Points need an account. Make one first.','name taken':'This name is locked. Leave and log in with its password.',
+    'bad name':'Your name needs letters or numbers. Leave and pick another.'};
+  function spend(a,t){
+    if(!a) return; var busy=$('pgo'); busy.disabled=true;
+    rpc('spend_points',withTok({q_code:code,q_name:me,q_action:a,q_text:t})).then(function(rows){ busy.disabled=false; var r=rows&&rows[0]; if(!r) return;
+      pts.n=r.points|0; drawPoints(); closeAsk();
+      spends.push({id:r.id,text:r.text,act:a,last:''}); spends=spends.slice(-5);
+      pmsg((a==='random'?'Surprise! "'+r.text+'"':'"'+r.text+'"')+' is on its way. Watch the stream!','ok');
+    }).catch(function(e){ busy.disabled=false; var m=String(e&&e.message||'');
+      pmsg(SPEND_ERR[m]||srvErr(e),'bad'); if(m==='no account') openAccount(); if(m==='not enough points') myPoints(); });
+  }
+  var SPEND_SAY={'':'is on its way to the game',heard:'reached the game',queued:'is up next',chosen:'is up next',building:'is being built',
+    spawned:'is in the dungeon!',passed:'couldn\'t be made, so your points are back',failed:'couldn\'t be made, so your points are back'};
+  function followSpends(){
+    var open=spends.filter(function(s){ return !s.done; }); if(!open.length||document.hidden) return;
+    rpc('my_spends',{q_ids:open.map(function(s){ return s.id; })}).then(function(rows){ (rows||[]).forEach(function(r){
+      var s=open.filter(function(x){ return x.id===r.id; })[0]; if(!s) return;
+      var st=r.refunded||r.answered_ok===false?'failed':(r.status||'');
+      if(st===s.last) return; s.last=st; if(st==='spawned'||st==='failed'||st==='passed') s.done=true;
+      pmsg('"'+(r.thing||s.text)+'" '+(SPEND_SAY[st]||SPEND_SAY['']),st==='failed'||st==='passed'?'bad':'ok');
+      if(s.done&&st!=='spawned') myPoints();
+    }); }).catch(function(){});
+  }
   /* the energy button: straight top-up (REWARDED_ADS false), or the recharge page in a new tab */
   $('adbtn').addEventListener('click',function(e){
     if(REWARDED_ADS) return;
@@ -714,20 +853,22 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
         Math.max(0,700-(Date.now()-t0)));
     }).catch(function(err){ b.classList.remove('charging'); if(String(err&&err.message)==='ad limit') en.ads=0; drawEnergy(); });
   });
-  document.addEventListener('visibilitychange',function(){ if(!document.hidden&&ON&&!$('room').hidden) myEnergy(); });
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden&&ON&&!$('room').hidden) myPoints(); });
   /* ---- the recharge page (?recharge): opened in its own tab, never over the stream ---- */
   var wantRecharge=false; try{ wantRecharge=ON&&new URLSearchParams(location.search).has('recharge'); }catch(e){}
   if(wantRecharge){
     $('join').hidden=true; $('room').hidden=true; $('recharge').hidden=false; layout();
     var n=15, cl=$('adclaim'), cnt=$('adcount');
-    var iv=setInterval(function(){ n--; cnt.textContent=Math.max(n,0); if(n<=0){ clearInterval(iv); cl.disabled=false; cl.textContent='Claim +2 energy'; } },1000);
+    var adName=load('cdName'), adTok=tokenFor(adName);
+    if(!adTok){ $('admsg').textContent='Ads earn points for accounts. Go back, make an account, then come here again.'; cl.hidden=true; clearInterval(0); }
+    var iv=setInterval(function(){ n--; cnt.textContent=Math.max(n,0); if(n<=0){ clearInterval(iv); cl.disabled=!adTok; cl.textContent='Claim your points'; } },1000);
     cl.addEventListener('click',function(){ cl.disabled=true;
-      rpc('ad_reward',{}).then(function(rows){ var r=rows&&rows[0]||{};
-        $('admsg').textContent='Done: you have '+Math.floor(+r.energy||0)+' energy now'+(r.ads_left>0?' ('+r.ads_left+' more recharge'+(r.ads_left===1?'':'s')+' this hour)':'')+'. Close this tab to get back to chat.';
+      rpc('points_ad_reward',{q_name:adName,q_token:adTok}).then(function(rows){ var r=rows&&rows[0]||{};
+        $('admsg').textContent='Done: you have '+(r.points|0)+' points now'+(r.ads_left>0?' ('+r.ads_left+' more ad'+(r.ads_left===1?'':'s')+' today)':'')+'. Close this tab to get back to the stream.';
         cl.textContent='Claimed'; })
       .catch(function(e){ var m=String(e&&e.message||'');
-        $('admsg').textContent=m==='ad limit'?'That\'s all the recharges for this hour. Your pips still refill on their own.':'Couldn\'t reach the server. Try again in a moment.';
-        if(m!=='ad limit') cl.disabled=false; });
+        $('admsg').textContent=m==='ad limit'?'That\'s all the ads for today. Free points come back tomorrow.':m==='no account'?'Ads earn points for accounts. Make one first.':'Couldn\'t reach the server. Try again in a moment.';
+        if(m!=='ad limit'&&m!=='no account') cl.disabled=false; });
     });
   }
   function onlineSend(box,t){
