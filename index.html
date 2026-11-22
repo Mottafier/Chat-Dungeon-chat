@@ -287,6 +287,109 @@ label{font-size:13px;color:var(--parch-dim)}
   .app.theatre .room.online .tchat{grid-column:2;grid-row:2/4;height:auto;min-height:0}
   .app.theatre .room.online .popchat{grid-column:2;grid-row:4}
 }
+/* ---- Rubies and the new buttons (2026-11-22 evening): a top bar with the account, rubies and the shop; Dungeon Points
+   (the sun) are spent on the buttons under the stream. ---- */
+.topbar,.chatfoot,.rfind,.gbox{display:none}
+.room.online .head{display:none!important}
+.room.online .topbar{display:flex;align-items:center;gap:8px;background:var(--slab);border:2px solid var(--mortar);border-radius:3px;padding:5px 8px;box-shadow:0 3px 0 #000;position:relative;z-index:20}
+.tb-logo{display:flex;align-items:center;gap:7px;font-family:var(--display);font-size:17px;color:var(--flame);text-decoration:none;white-space:nowrap}
+.tb-logo svg{width:22px;height:22px}
+.tb-room{font-size:13px;color:var(--parch-dim);white-space:nowrap;display:flex;align-items:center;gap:6px}
+.tb-room b{font-family:var(--display);color:var(--parch);font-weight:500}
+.tb-room i{display:none;font-style:normal;font-size:11px;letter-spacing:.12em;color:#ff7a6e}
+.tb-room i.on{display:inline}
+.tb-sp{flex:1 1 auto}
+.tb-btn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 10px;font-size:14px;flex:0 0 auto;position:relative}
+.tb-btn[hidden]{display:none}
+.tb-btn svg{width:18px;height:18px;flex:0 0 auto}
+.rubyc b{font-family:var(--display);font-size:17px;color:#ffd3da;font-weight:500}
+.acct .nm{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--body);font-size:14px;letter-spacing:0}
+.acct .caret{width:9px;height:9px}
+.plus{position:absolute;left:50%;top:-4px;transform:translateX(-50%);font-family:var(--display);font-size:16px;color:#ff8da0;pointer-events:none;
+  text-shadow:0 2px 0 #000;animation:plusup 1.6s ease-out forwards;white-space:nowrap}
+@keyframes plusup{0%{opacity:0;transform:translate(-50%,6px)}15%{opacity:1}100%{opacity:0;transform:translate(-50%,-26px)}}
+.menu{position:absolute;right:6px;top:calc(100% + 4px);min-width:210px;background:var(--slab);border:2px solid var(--mortar);border-radius:3px;box-shadow:0 6px 0 #000;
+  display:flex;flex-direction:column;padding:4px;z-index:30}
+.menu[hidden]{display:none}
+.menu button{text-align:left;background:none;border:0;color:var(--parch);font:inherit;font-size:14px;padding:10px;cursor:pointer;border-radius:2px}
+.menu button:hover,.menu button:focus-visible{background:var(--slab-hi);color:var(--flame)}
+/* Dungeon Points: the sun */
+.room.online .bal{color:#ffd77a}
+.bal svg.sun{width:26px;height:26px;filter:drop-shadow(0 0 5px rgba(255,170,30,.55))}
+.ptop{min-height:36px}
+.act{background:#1f170c;border-color:#4a3618}
+.act b{color:#ffe7b5}
+.act i{color:#ffc14a}
+.act:hover:not(:disabled){border-color:#c48a2a;background:#2a1f10}
+.act.on{border-color:#ffb21f;box-shadow:0 0 0 2px rgba(255,178,31,.35)}
+.act.busy{opacity:.5;cursor:default}
+.phint{font-size:13px;color:var(--parch-dim);flex:1 1 160px}
+/* your genie: the wishes box */
+.room.online .gbox{display:flex;flex-direction:column;gap:6px;padding:8px;border:2px solid #7a52c7;border-radius:3px;background:#1a1426}
+.room.online .gbox[hidden]{display:none}
+.gbox p{margin:0;font-size:13.5px;color:#e6d7ff}
+.gbox form{display:flex;gap:6px}
+.gbox input{flex:1 1 auto;min-width:0}
+.gbox .plaque{min-height:44px}
+/* under the Twitch chat */
+.room.online .chatfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.chatcap{font-family:var(--display);font-size:15px;color:var(--flame)}
+.room.online .popchat{text-align:right}
+/* a dungeon find: the banner over the stream */
+.stream{position:relative}
+.room.online .rfind{display:flex;flex-direction:column;align-items:center;gap:2px;position:absolute;left:50%;top:14%;transform:translateX(-50%);z-index:5;
+  padding:10px 18px;background:rgba(20,6,10,.88);border:2px solid #d81a3a;border-radius:4px;box-shadow:0 4px 0 #000,0 0 24px rgba(216,26,58,.5);
+  text-align:center;pointer-events:none;animation:rfind 6s ease forwards;max-width:90%}
+.room.online .rfind[hidden]{display:none}
+.rfind b{font-family:var(--display);font-size:22px;color:#fff;display:flex;align-items:center;gap:6px;font-weight:500}
+.rfind b svg{width:22px;height:22px}
+.rfind small{font-size:13px;color:#ffc2cc}
+@keyframes rfind{0%{opacity:0;transform:translate(-50%,-10px) scale(.9)}8%{opacity:1;transform:translate(-50%,0) scale(1)}85%{opacity:1}100%{opacity:0}}
+/* the shop, and the account's pages: a panel over the page */
+.shopwrap{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.66);display:flex;align-items:center;justify-content:center;padding:16px}
+.shopwrap[hidden]{display:none}
+.shop{width:min(560px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:var(--slab);border:2px solid var(--mortar);border-radius:4px;box-shadow:0 6px 0 #000;padding:12px}
+.shophead{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.shophead h2{margin:0;font-family:var(--display);font-weight:500;font-size:22px;color:var(--flame);flex:1 1 auto}
+.shophead .plaque{min-height:36px;padding:0 10px;font-size:14px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.tabs button{flex:1 1 auto;min-height:36px;padding:0 10px;background:#1b150f;border:2px solid var(--mortar);border-radius:3px;color:var(--parch-dim);font:inherit;font-size:13.5px;cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--flame);border-color:var(--flame)}
+.tabp{display:flex;flex-direction:column;gap:8px}
+.tabp[hidden]{display:none}
+.tabp p{margin:0;font-size:13.5px;color:var(--parch-dim);line-height:1.4}
+.packs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.pack{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:#1f170c;border:2px solid #4a3618;border-radius:3px;color:var(--parch);font:inherit;cursor:pointer}
+.pack:hover:not(:disabled){border-color:#c48a2a}
+.pack:disabled{opacity:.5;cursor:default}
+.pack .big{display:flex;align-items:center;gap:6px;font-family:var(--display);font-size:20px;color:#ffe7b5}
+.pack .big svg{width:24px;height:24px}
+.pack .cost{display:flex;align-items:center;gap:4px;font-size:14px;color:#ffd3da}
+.pack .cost svg{width:15px;height:15px}
+.pack.ruby{background:#21090e;border-color:#5a1a26}
+.pack.ruby .big{color:#ffd3da}
+.soonbox{display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 10px;text-align:center}
+.soonbox svg{width:72px;height:72px}
+.soonbox b{font-family:var(--display);font-weight:500;font-size:20px;color:var(--parch)}
+.shopmsg{font-size:13.5px;min-height:0}
+.shopmsg:empty{display:none}
+.shopmsg .ok{color:#b7f5a2}.shopmsg .bad{color:var(--bad)}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--mortar);font-size:14px}
+@media (max-width:640px){
+  .tb-room,.acct .nm,.shop-lbl{display:none}
+  .tb-logo span{display:none}
+}
+@media (min-width:1000px){
+  .app.theatre .room.online{grid-template-rows:auto auto auto minmax(0,1fr) auto}
+  .app.theatre .room.online .topbar{grid-column:1/-1;grid-row:1}
+  .app.theatre .room.online .stream{grid-column:1;grid-row:2/4;width:min(100%,calc((100dvh - 52px - 260px)*16/9))}
+  .app.theatre .room.online .points{grid-column:1;grid-row:4/6;width:min(100%,calc((100dvh - 52px - 260px)*16/9))}
+  .app.theatre .room.online .tchat{grid-column:2;grid-row:2/5}
+  .app.theatre .room.online .chatfoot{grid-column:2;grid-row:5}
+  .app.theatre .room.online .popchat{grid-row:auto}
+  .app.theatre .room.online .pacts{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .app.theatre .room.online.genie .stream,.app.theatre .room.online.genie .points{width:min(100%,calc((100dvh - 52px - 350px)*16/9))}
+}
   .vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);border:0;opacity:0}
 </style>
 
@@ -320,7 +423,7 @@ label{font-size:13px;color:var(--parch-dim)}
     <div class="lockwrap" id="lockwrap" hidden>
       <form class="card lockcard" id="lockform" novalidate aria-labelledby="locktitle">
         <h2 id="locktitle">Make an account</h2>
-        <p class="lockinfo">Set a password for <b id="lockname"></b>. Nobody else can use the name, you get <b>100 free Dungeon Points every day</b>, and you stay logged in on this device.</p>
+        <p class="lockinfo">Set a password for <b id="lockname"></b>. Nobody else can use the name, you earn <b>rubies</b> and get <b>free Dungeon Points every day</b>, and you stay logged in on this device.</p>
         <label for="newpass">Password</label>
         <input id="lockuser" type="text" name="username" autocomplete="username" readonly tabindex="-1" aria-hidden="true" class="vh">
         <input id="newpass" name="password" type="password" maxlength="72" autocomplete="new-password" placeholder="At least 6 characters">
@@ -331,11 +434,52 @@ label{font-size:13px;color:var(--parch-dim)}
       </form>
     </div>
 
+    <div class="shopwrap" id="shopwrap" hidden>
+      <div class="shop" role="dialog" aria-modal="true" aria-labelledby="shoptitle">
+        <div class="shophead"><h2 id="shoptitle">Shop</h2><span class="plaque tb-btn rubyc" aria-label="Your rubies"><svg class="ruby" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2h10l4 5-9 11L1 7z" fill="#d81a3a"/><path d="M5 2h10l4 5H1z" fill="#ff5d76"/><path d="M6 7l4 11 4-11z" fill="#a8102a"/><path d="M6 3.2h3l-2 2.6z" fill="#ffd0d8"/></svg><b id="rnum2">0</b></span><button type="button" class="plaque" id="shopclose">Close</button></div>
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" data-tab="dp" aria-selected="true">Dungeon Points</button>
+          <button type="button" role="tab" data-tab="chests" aria-selected="false">Genie chests</button>
+          <button type="button" role="tab" data-tab="closet" aria-selected="false">Genie closet</button>
+          <button type="button" role="tab" data-tab="rubies" aria-selected="false">Rubies</button>
+        </div>
+        <div class="tabp" data-panel="dp">
+          <p>Trade rubies for Dungeon Points, then spend them on the buttons under the stream.</p>
+          <div class="packs" id="dppacks"></div>
+        </div>
+        <div class="tabp" data-panel="chests" hidden><div class="soonbox"><svg viewBox="0 0 24 24" aria-hidden="true" shape-rendering="crispEdges"><rect x="3" y="9" width="18" height="11" fill="#6b4220"/><rect x="3" y="5" width="18" height="5" fill="#8a5a2b"/><rect x="3" y="9" width="18" height="2" fill="#c9962e"/><rect x="11" y="9" width="2" height="5" fill="#ffd34a"/><rect x="10" y="12" width="4" height="3" fill="#ffd34a"/></svg><b>Genie chests</b><p>Coming soon.</p></div></div>
+        <div class="tabp" data-panel="closet" hidden><div class="soonbox"><svg viewBox="0 0 24 24" aria-hidden="true" shape-rendering="crispEdges"><rect x="8" y="2" width="8" height="8" fill="#f1c27d"/><rect x="8" y="2" width="8" height="3" fill="#5c3a1c"/><rect x="10" y="6" width="1" height="2" fill="#111"/><rect x="13" y="6" width="1" height="2" fill="#111"/><rect x="7" y="10" width="10" height="7" fill="#1849a0"/><rect x="5" y="11" width="2" height="5" fill="#1849a0"/><rect x="17" y="11" width="2" height="5" fill="#1849a0"/><rect x="9" y="17" width="6" height="3" fill="#8f6bd8"/><rect x="11" y="20" width="2" height="2" fill="#b79bf0"/></svg><b>Genie closet</b><p>Coming soon.</p></div></div>
+        <div class="tabp" data-panel="rubies" hidden>
+          <p>Earn rubies every day you visit, while you watch, and whenever the streamer finds rubies in the dungeon.</p>
+          <div class="packs" id="rubypacks">
+            <button type="button" class="pack ruby" data-usd="1.99"><span class="big"><svg class="ruby" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2h10l4 5-9 11L1 7z" fill="#d81a3a"/><path d="M5 2h10l4 5H1z" fill="#ff5d76"/><path d="M6 7l4 11 4-11z" fill="#a8102a"/><path d="M6 3.2h3l-2 2.6z" fill="#ffd0d8"/></svg>200</span><span class="cost">$1.99</span></button>
+            <button type="button" class="pack ruby" data-usd="4.99"><span class="big"><svg class="ruby" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2h10l4 5-9 11L1 7z" fill="#d81a3a"/><path d="M5 2h10l4 5H1z" fill="#ff5d76"/><path d="M6 7l4 11 4-11z" fill="#a8102a"/><path d="M6 3.2h3l-2 2.6z" fill="#ffd0d8"/></svg>550</span><span class="cost">$4.99</span></button>
+            <button type="button" class="pack ruby" data-usd="9.99"><span class="big"><svg class="ruby" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2h10l4 5-9 11L1 7z" fill="#d81a3a"/><path d="M5 2h10l4 5H1z" fill="#ff5d76"/><path d="M6 7l4 11 4-11z" fill="#a8102a"/><path d="M6 3.2h3l-2 2.6z" fill="#ffd0d8"/></svg>1,200</span><span class="cost">$9.99</span></button>
+            <button type="button" class="pack ruby" data-usd="19.99"><span class="big"><svg class="ruby" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2h10l4 5-9 11L1 7z" fill="#d81a3a"/><path d="M5 2h10l4 5H1z" fill="#ff5d76"/><path d="M6 7l4 11 4-11z" fill="#a8102a"/><path d="M6 3.2h3l-2 2.6z" fill="#ffd0d8"/></svg>2,600</span><span class="cost">$19.99</span></button>
+          </div>
+          <a class="plaque" id="shopad" href="?recharge" target="_blank" rel="noopener">Watch an ad +15 rubies</a>
+        </div>
+        <div class="shopmsg" id="shopmsg" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+    <div class="shopwrap" id="custwrap" hidden>
+      <div class="shop" role="dialog" aria-modal="true" aria-labelledby="custtitle">
+        <div class="shophead"><h2 id="custtitle">Customize</h2><button type="button" class="plaque" id="custclose">Close</button></div>
+        <div class="soonbox"><svg viewBox="0 0 24 24" aria-hidden="true" shape-rendering="crispEdges"><rect x="8" y="2" width="8" height="8" fill="#f1c27d"/><rect x="8" y="2" width="8" height="3" fill="#5c3a1c"/><rect x="10" y="6" width="1" height="2" fill="#111"/><rect x="13" y="6" width="1" height="2" fill="#111"/><rect x="7" y="10" width="10" height="7" fill="#1849a0"/><rect x="5" y="11" width="2" height="5" fill="#1849a0"/><rect x="17" y="11" width="2" height="5" fill="#1849a0"/><rect x="9" y="17" width="6" height="3" fill="#8f6bd8"/><rect x="11" y="20" width="2" height="2" fill="#b79bf0"/></svg><b>Your genie</b><p>This is how your genie looks in the game. More looks coming soon.</p></div>
+      </div>
+    </div>
+    <div class="shopwrap" id="setwrap" hidden>
+      <div class="shop" role="dialog" aria-modal="true" aria-labelledby="settitle">
+        <div class="shophead"><h2 id="settitle">Settings</h2><button type="button" class="plaque" id="setclose">Close</button></div>
+        <label class="setrow" for="setstream"><span>Show the stream</span><input type="checkbox" id="setstream"></label>
+        <p class="setrow" style="margin:0"><span>Account</span><span id="setacct"></span></p>
+      </div>
+    </div>
     <section class="recharge" id="recharge" hidden aria-labelledby="signr">
       <h1 class="sign" id="signr">Recharge</h1>
       <div class="card">
         <div class="adbox" id="adbox"><b id="adcount">15</b><span>Ad space: no ad network yet, so this only stands in for one.</span></div>
-        <p id="admsg">Watch a short ad and get 20 Dungeon Points.</p>
+        <p id="admsg">Watch a short ad and get 15 rubies.</p>
         <button class="plaque go" id="adclaim" disabled>Wait for it…</button>
         <a class="plaque" href="./">Back to the stream</a>
       </div>
@@ -343,6 +487,21 @@ label{font-size:13px;color:var(--parch-dim)}
     </section>
 
     <section class="room" id="room" hidden aria-label="Chat room">
+      <div class="topbar" id="topbar">
+        <a class="tb-logo" href="./" title="Chat Dungeon"><svg viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><rect x="1" y="2" width="14" height="12" fill="#2b241a"/><rect x="2" y="3" width="12" height="10" fill="#14100c"/><rect x="4" y="6" width="2" height="2" fill="#ffb23a"/><rect x="10" y="6" width="2" height="2" fill="#ffb23a"/><rect x="5" y="10" width="6" height="1" fill="#ffb23a"/></svg><span>Chat Dungeon</span></a>
+        <span class="tb-room">Room <b id="tbroom">MOTT</b><i id="tblive">&#9679; LIVE</i></span>
+        <span class="tb-sp"></span>
+        <button type="button" class="plaque tb-btn" id="tblogin" hidden>Log in</button>
+        <button type="button" class="plaque go tb-btn" id="tbmake" hidden>Make account</button>
+        <button type="button" class="plaque tb-btn rubyc" id="rbtn" hidden title="Your rubies"><svg class="ruby" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2h10l4 5-9 11L1 7z" fill="#d81a3a"/><path d="M5 2h10l4 5H1z" fill="#ff5d76"/><path d="M6 7l4 11 4-11z" fill="#a8102a"/><path d="M6 3.2h3l-2 2.6z" fill="#ffd0d8"/></svg><b id="rnum">0</b></button>
+        <button type="button" class="plaque tb-btn" id="shopbtn" title="Shop"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 7h12l-1 11H5z" fill="currentColor"/><path d="M7 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span class="shop-lbl">Shop</span></button>
+        <button type="button" class="plaque tb-btn acct" id="acctbtn" aria-haspopup="true" aria-expanded="false" aria-controls="acctmenu"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="10" cy="8" r="3.2" fill="currentColor"/><path d="M4.4 16.2c1.2-2.6 3.3-3.8 5.6-3.8s4.4 1.2 5.6 3.8" fill="currentColor"/></svg><span class="nm" id="acctname"></span><svg class="caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 3h8L5 8z" fill="currentColor"/></svg></button>
+        <div class="menu" id="acctmenu" hidden role="menu">
+          <button type="button" role="menuitem" id="mcustom">Customize</button>
+          <button type="button" role="menuitem" id="msettings">Settings</button>
+          <button type="button" role="menuitem" id="mleave">Change name / Log out</button>
+        </div>
+      </div>
       <div class="head">
         <div class="who">Room <b id="rc">KQ7F</b><i class="live" id="livetag">LIVE</i><span class="mewrap"><span id="me"></span><button type="button" class="lockbtn" id="lockbtn" hidden></button><span class="legal" hidden>· <a href="about.html" target="_blank" rel="noopener">About</a> · <a href="privacy.html" target="_blank" rel="noopener">Privacy</a></span></span></div>
         <a class="plaque host" id="hostlink" href="instant.html">Play your own</a>
@@ -353,6 +512,7 @@ label{font-size:13px;color:var(--parch-dim)}
         <button class="x" id="tvclose" aria-label="Hide the stream" title="Hide the stream">&times;</button>
         <div class="screen" id="screen"></div>
         <div class="adslot" id="adslot" aria-label="Advertisement">Ad space</div>
+        <div class="rfind" id="rfind" hidden role="status"><b id="rfindt"></b><small id="rfinds"></small></div>
       </div>
       <div class="draw">
         <div class="row"><span id="drawlabel">The dungeon picks one idea in</span><b id="clock">0:20</b></div>
@@ -366,19 +526,17 @@ label{font-size:13px;color:var(--parch-dim)}
       </div>
       <div class="points" id="points" hidden aria-label="Dungeon Points">
         <div class="ptop">
-          <span class="bal" title="Your Dungeon Points"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1l8 6-8 12L2 7z" fill="#a970ff"/><path d="M10 1l8 6h-16z" fill="#d3a6ff"/><path d="M6 7l4 12 4-12z" fill="#8a4fe0"/></svg><b id="pnum">0</b><small>points</small></span>
-          <span class="pinfo" id="pinfo">Type in Twitch chat and it comes to life. Points make it happen right now.</span>
-          <button class="plaque go pbtn" id="pacct" type="button" hidden>Make an account</button>
-          <a class="plaque pbtn" id="pad" href="?recharge" target="_blank" rel="noopener" hidden>Watch an ad</a>
-          <button class="plaque pbtn" id="pbuy" type="button" hidden>Get more</button>
+          <span class="bal" title="Your Dungeon Points"><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><g fill="#ffb21f"><rect x="11" y="0" width="2" height="4"/><rect x="11" y="20" width="2" height="4"/><rect x="0" y="11" width="4" height="2"/><rect x="20" y="11" width="4" height="2"/><rect x="3.5" y="3.5" width="2.5" height="2.5"/><rect x="18" y="3.5" width="2.5" height="2.5"/><rect x="3.5" y="18" width="2.5" height="2.5"/><rect x="18" y="18" width="2.5" height="2.5"/></g><circle cx="12" cy="12" r="7.2" fill="#ffc93a" stroke="#f08a12" stroke-width="1.4"/><text x="12" y="14.6" text-anchor="middle" font-family="Pixelify Sans,Courier New,monospace" font-size="7.2" font-weight="700" fill="#5a2e08">DP</text></svg><b id="pnum">0</b><small>DP</small></span>
+          <span class="phint" id="phint"></span>
+          <button class="plaque pbtn" id="pbuy" type="button">Get DP</button>
         </div>
         <div class="pacts" id="pacts">
-          <button type="button" class="act" data-act="spawn"><b>Spawn now</b><small>your monster, no waiting</small><i data-price="spawn">40</i></button>
-          <button type="button" class="act" data-act="boss"><b>Boss</b><small>your monster as a boss</small><i data-price="boss">100</i></button>
-          <button type="button" class="act" data-act="wish"><b>Wish</b><small>make something happen</small><i data-price="wish">25</i></button>
-          <button type="button" class="act" data-act="random"><b>Surprise</b><small>a monster chat made before</small><i data-price="random">20</i></button>
-          <button type="button" class="act soon" disabled><b>Send a gun</b><small>a gift for the streamer</small><i>soon</i></button>
-          <button type="button" class="act soon" disabled><b>Be the genie</b><small>grant 3 wishes</small><i>soon</i></button>
+          <button type="button" class="act" data-act="random_enemy"><b>Random Enemy</b><small>Spawn a random enemy instantly</small><i data-price="random_enemy">20</i></button>
+          <button type="button" class="act" data-act="random_item"><b>Random Item</b><small>Spawn a random item for the player instantly</small><i data-price="random_item">20</i></button>
+          <button type="button" class="act" data-act="random_gun"><b>Random Gun</b><small>Spawn a random gun for the player instantly</small><i data-price="random_gun">40</i></button>
+          <button type="button" class="act" data-act="custom_enemy"><b>Custom Enemy</b><small>Create a custom enemy that will appear in game instantly</small><i data-price="custom_enemy">60</i></button>
+          <button type="button" class="act" data-act="random_event"><b>Random Event</b><small>Anything you say will happen</small><i data-price="random_event">100</i></button>
+          <button type="button" class="act" data-act="genie" id="geniebtn"><b>Become a Genie</b><small id="geniesub">Spawn into the game as a genie and grant 3 wishes instantly</small><i data-price="genie">200</i></button>
         </div>
         <form class="pask" id="pask" hidden>
           <label for="ptext" class="vh">What to make</label>
@@ -386,10 +544,14 @@ label{font-size:13px;color:var(--parch-dim)}
           <button class="plaque go" type="submit" id="pgo">Go</button>
           <button class="plaque" type="button" id="pcancel">Cancel</button>
         </form>
+        <div class="gbox" id="gbox" hidden>
+          <p id="gtext">You're Mott's genie! Type a wish and it comes true.</p>
+          <form id="gform"><label for="gwish" class="vh">Your wish</label><input id="gwish" maxlength="100" autocomplete="off" enterkeyhint="send" placeholder="e.g. a golden rocket launcher"><button class="plaque go" type="submit" id="ggo">Wish</button></form>
+        </div>
         <div class="pmsg" id="pmsg" role="status" aria-live="polite"></div>
       </div>
       <div class="tchat" id="tchat" aria-label="Stream chat"></div>
-      <div class="popchat" id="popchat"><a id="poplink" href="#" target="_blank" rel="noopener">Can't log in to chat? Open it in its own window</a></div>
+      <div class="chatfoot" id="chatfoot"><span class="chatcap">Your chats come to life</span><div class="popchat" id="popchat"><a id="poplink" href="#" target="_blank" rel="noopener">Can't log in to chat? Open it in its own window</a></div></div>
       <form class="say" id="say">
         <label for="text" style="position:absolute;left:-999em">Your idea</label>
         <input id="text" maxlength="200" autocomplete="off" placeholder="Say something" enterkeyhint="send">
@@ -462,7 +624,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   var me='', code='KQ7F';
   try{ $('name').value=localStorage.getItem('cdName')||''; }catch(e){}
   if(ON){ $('code').value=ON.room||''; $('code').hidden=true; document.querySelector('label[for=code]').hidden=true; document.querySelector('.card .gap').hidden=true;
-    document.querySelector('.fine').textContent='Pick a name. Make it an account to get free Dungeon Points and mess with the stream.';
+    document.querySelector('.fine').textContent='Pick a name. Make it an account to earn rubies and mess with the stream.';
     $('hostlink').hidden=true; $('text').maxLength=100; }
   try{ var h=(location.hash||'').replace('#','').toUpperCase(); if(/^[A-Z0-9]{4}$/.test(h)) $('code').value=h; }catch(e){}
   var autoJoin=!!(ON&&$('name').value);  /* (the online page: a remembered name goes straight in, see tryJoin) */
@@ -482,7 +644,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     $('err').textContent=''; $('pass').value=''; $('passrow').hidden=true; $('rc').textContent=c; $('me').textContent='You are '+n+(ON?'':' · 5 in the room');
     drawLock(); $('join').hidden=true; $('room').hidden=false; showStream(wantStream()); layout(); start(); $('text').focus();
   }
-  function drawLock(){ var b=$('lockbtn'); if(!ON){ b.hidden=true; return; } b.hidden=false; b.classList.toggle('on',locked);
+  function drawLock(){ var b=$('lockbtn'); if(!ON){ b.hidden=true; return; } if(typeof drawTop==='function') drawTop(); b.hidden=false; b.classList.toggle('on',locked);
     b.innerHTML='<svg viewBox="0 0 9 11" aria-hidden="true"><path d="'+(locked?'M2 4V3a2.5 2.5 0 0 1 5 0v1h1v7H1V4zm1 0h3V3a1.5 1.5 0 0 0-3 0z':'M2 4V3a2.5 2.5 0 0 1 5 0h-1a1.5 1.5 0 0 0-3 0v1h5v7H1V4z')+'"/></svg>'+(locked?'':'Make account');
     b.title=locked?'Your account (your name is locked with a password)':'Make an account: lock your name and get free Dungeon Points'; b.setAttribute('aria-label',b.title); }
   function tryJoin(auto){
@@ -516,7 +678,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   $('lockform').addEventListener('submit',function(e){ e.preventDefault(); var a=$('newpass').value, b=$('newpass2').value, er=$('lockerr');
     if(a.length<6){ er.textContent='Use at least 6 characters.'; return; } if(a!==b){ er.textContent='The two passwords don\'t match.'; return; }
     rpc('register_name',{q_name:me,q_password:a}).then(function(tok){ store('cdTok',tok); store('cdTokName',me); locked=true; drawLock(); $('lockwrap').hidden=true;
-      pmsg('Account made. Here are your first 100 points! On another device, join as '+me+' with your password.','ok'); myPoints(); })
+      pmsg('Account made! You get free Dungeon Points every day, and rubies for visiting and watching. On another device, join as '+me+' with your password.','ok'); rubyDaily(); myPoints(); })
     .catch(function(e2){ var m=String(e2&&e2.message||'');
       er.textContent={'taken':'Someone already locked this name. Leave and pick another.','reserved':'That name belongs to a streamer.','slow down':'You can lock one name a day. Try again tomorrow.','short password':'Use 6 to 72 characters.','bad name':'This name can\'t be locked.'}[m]||srvErr(e2); });
   });
@@ -635,7 +797,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     rpc('room_info',{q_code:code}).then(function(rows){
       var r=rows&&rows[0], open=!!(r&&r.open);
       if(r&&r.twitch&&!channel){ channel=r.twitch; if(!$('stream').hidden) showStream(true,true); showChat(); }
-      $('clock').textContent=open?'Live':'Offline'; $('fuse').style.transform='scaleX('+(open?1:0)+')'; $('livetag').classList.toggle('on',open);
+      $('clock').textContent=open?'Live':'Offline'; $('fuse').style.transform='scaleX('+(open?1:0)+')'; $('livetag').classList.toggle('on',open); $('tblive').classList.toggle('on',open);
       if(open!==roomOpen){ roomOpen=open;
         if(!r) sys('There is no room with that code.'); else if(open) sys('Mott\'s game is live. What you send goes straight into it.'); }
     }).catch(function(){ $('clock').textContent='Offline'; });
@@ -767,8 +929,9 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   }
   function onlineStart(){ seen={}; lastId=0; roomOpen=null;
     $('room').classList.add('online'); document.querySelector('.head .legal').hidden=false; oldDb=false;
-    $('points').hidden=false; spends=[]; showChat(); drawPoints(); myPoints();
-    timers.push(setInterval(myPoints,30000)); timers.push(setInterval(followSpends,2500));
+    $('points').hidden=false; spends=[]; showChat(); drawPoints(); myPoints(); rubyDaily();
+    if($('stream').hidden){ showStream(true,true); layout(); }
+    timers.push(setInterval(myPoints,15000)); timers.push(setInterval(followSpends,2500)); timers.push(setInterval(rubyWatch,60000));
     onlineRoom(); timers.push(setInterval(onlineRoom,10000)); }
 
   /* ---------- the stream's real Twitch chat (Twitch's own chat embed: logged in to Twitch, you chat as yourself) ---------- */
@@ -788,59 +951,125 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   /* ---------- Dungeon Points: buttons under the stream that make something happen right away ----------
      An account (a locked name) gets daily free points (the database: my_points, spend_points, points_ad_reward). A paid
      request is built before any free chat idea; if nothing comes of it, the points come back. */
-  var pts={n:0,account:false,prices:{},ads:0,ad:20,known:false}, asking=null, spends=[];
-  var ASK={spawn:['Type a monster, e.g. a goose with a gun','Spawn'],boss:['Type a boss, e.g. the king of all rats','Spawn boss'],wish:['Type a wish, e.g. acid rain for 10 seconds','Wish']};
+  var pts={n:0,account:false,prices:{},packs:{},rubies:0,ads:0,known:false,genie:'',genieMine:false,wishes:0}, asking=null, spends=[];
+  var ASK={custom_enemy:['Type your enemy, e.g. a goose with a gun','Create']};
+  var RUBY_SVG=document.querySelector('#rbtn svg').outerHTML, SUN_SVG=document.querySelector('.bal svg').outerHTML;
+  var NAMES={random_enemy:'Random Enemy',random_item:'Random Item',random_gun:'Random Gun',custom_enemy:'Custom Enemy',random_event:'Random Event',genie:'Become a Genie'};
   function pmsg(t,cls){ var m=$('pmsg'); m.innerHTML=t?'<span class="'+(cls||'')+'">'+esc(t)+'</span>':''; }
-  function myPoints(){ if(document.hidden||!ON) return; rpc('my_points',withTok({q_name:me})).then(function(rows){ var r=rows&&rows[0]; if(!r) return;
-      pts={n:r.points|0,account:!!r.account,prices:r.prices||{},ads:r.ads_left|0,ad:r.ad_points|0||20,daily:r.daily|0||100,known:true}; drawPoints(); }).catch(function(){}); }
+  function smsg(t,cls){ var m=$('shopmsg'); m.innerHTML=t?'<span class="'+(cls||'')+'">'+esc(t)+'</span>':''; }
+  var lastFind=0; try{ lastFind=+(localStorage.getItem('cdFind')||0); }catch(e){}
+  function myPoints(){ if(document.hidden||!ON) return; rpc('my_points',withTok({q_name:me,q_code:code})).then(function(rows){ var r=rows&&rows[0]; if(!r) return;
+      var was=pts.rubies;
+      pts={n:r.points|0,account:!!r.account,prices:r.prices||{},packs:r.packs||{},rubies:r.rubies|0,ads:r.ads_left|0,daily:r.daily|0,known:true,
+           genie:r.genie||'',genieMine:!!r.genie_mine,wishes:r.wishes_left|0};
+      if(r.find_id&&r.find_id>lastFind&&(r.find_age|0)<90){ lastFind=r.find_id; try{ localStorage.setItem('cdFind',String(lastFind)); }catch(e){} showFind(r.find_amount|0); }
+      else if(pts.account&&was&&pts.rubies>was) plus(pts.rubies-was);
+      drawPoints(); }).catch(function(){}); }
   function drawPoints(){
     $('pnum').textContent=pts.n;
     [].forEach.call(document.querySelectorAll('[data-price]'),function(i){ var p=pts.prices[i.getAttribute('data-price')]; if(p!=null) i.textContent=p; });
-    $('pacct').hidden=!pts.known||pts.account; $('pbuy').hidden=!pts.account; $('pad').hidden=!pts.account||pts.ads<=0;
-    $('pad').textContent='Watch an ad +'+pts.ad;
-    $('pinfo').textContent=!pts.known?'Type in Twitch chat and it comes to life. Points make it happen right now.':
-      pts.account?'Type in Twitch chat and it comes to life. Spend points to make it happen right now. '+(pts.daily||100)+' free every day.':
-      'Type in Twitch chat and it comes to life. Make an account to get '+(pts.daily||100)+' free points a day and skip the line.';
+    $('phint').textContent=!pts.known?'':pts.account?(pts.daily?pts.daily+' free DP every day':''):'Make an account to get rubies and Dungeon Points.';
+    $('pbuy').textContent=pts.account?'Get DP':'Make account';
+    var g=$('geniebtn'), busyGenie=pts.genie&&!pts.genieMine;
+    g.classList.toggle('busy',!!busyGenie); $('geniesub').textContent=busyGenie?pts.genie+' is the genie right now':pts.genieMine?'You\'re the genie!':'Spawn into the game as a genie and grant 3 wishes instantly';
+    $('gbox').hidden=!(pts.genieMine&&pts.wishes>0); $('room').classList.toggle('genie',!$('gbox').hidden);
+    $('gtext').textContent='You\'re Mott\'s genie! Type a wish and it comes true. '+pts.wishes+' wish'+(pts.wishes===1?'':'es')+' left.';
+    drawTop();
   }
+  function drawTop(){
+    var acc=pts.account||locked;
+    $('tbroom').textContent=code; $('acctname').textContent=me;
+    $('rbtn').hidden=!acc; $('tbmake').hidden=acc||!pts.known; $('tblogin').hidden=acc||!pts.known;
+    $('rnum').textContent=pts.rubies; $('rnum2').textContent=pts.rubies;
+    $('setacct').textContent=acc?me+' (account)':me+' (no account)';
+    var dp=$('dppacks'); if(!dp.firstChild||dp.getAttribute('data-k')!==JSON.stringify(pts.packs)){ dp.setAttribute('data-k',JSON.stringify(pts.packs)); dp.textContent='';
+      Object.keys(pts.packs).sort(function(a,b){ return a-b; }).forEach(function(k){ var b=document.createElement('button'); b.type='button'; b.className='pack'; b.setAttribute('data-pack',k);
+        b.innerHTML='<span class="big">'+SUN_SVG+esc(k)+' DP</span><span class="cost">'+RUBY_SVG+esc(pts.packs[k])+'</span>'; b.addEventListener('click',function(){ buyPack(+k,b); }); dp.appendChild(b); }); }
+    [].forEach.call(dp.children,function(b){ b.disabled=!acc||pts.rubies<(pts.packs[b.getAttribute('data-pack')]|0); });
+  }
+  function plus(n){ if(!n) return; var b=$('rbtn'), e=document.createElement('span'); e.className='plus'; e.textContent='+'+n; b.appendChild(e); setTimeout(function(){ e.remove(); },1700); }
+  function showFind(n){ var f=$('rfind'); if(!n) return;
+    $('rfindt').innerHTML='Everyone in chat gains +'+n+' '+RUBY_SVG+'!';
+    $('rfinds').textContent=pts.account||locked?'Added to your rubies':'Make an account to collect them';
+    f.hidden=true; void f.offsetWidth; f.hidden=false; clearTimeout(showFind.t); showFind.t=setTimeout(function(){ f.hidden=true; },6200);
+    if(pts.account) setTimeout(function(){ plus(n); },400); }
+  /* rubies: once a day for visiting, and for watching (the page says it's watching every minute while the stream shows) */
+  function rubyDaily(){ if(!ON||!tokenFor(me)) return; rpc('ruby_daily',withTok({q_name:me})).then(function(rows){ var r=rows&&rows[0]; if(!r) return;
+      pts.rubies=r.rubies|0; drawTop(); if(r.gained>0){ plus(r.gained); pmsg('+'+r.gained+' rubies for visiting today'+(r.streak>1?' ('+r.streak+' days in a row)':'')+'!','ok'); } }).catch(function(){}); }
+  function rubyWatch(){ if(document.hidden||!ON||!tokenFor(me)||$('stream').hidden||!roomOpen) return;
+    rpc('ruby_watch',withTok({q_code:code,q_name:me})).then(function(rows){ var r=rows&&rows[0]; if(!r) return; pts.rubies=r.rubies|0; drawTop(); if(r.gained>0) plus(r.gained); }).catch(function(){}); }
   function price(a){ var p=pts.prices[a]; return p==null?0:p|0; }
   function closeAsk(){ asking=null; $('pask').hidden=true; [].forEach.call(document.querySelectorAll('.act.on'),function(b){ b.classList.remove('on'); }); }
   [].forEach.call(document.querySelectorAll('.act[data-act]'),function(b){ b.addEventListener('click',function(){
     var a=b.getAttribute('data-act');
-    if(!pts.account){ pmsg('Points need an account. Make one and you get '+(pts.daily||100)+' free points every day.'); openAccount(); return; }
-    if(pts.n<price(a)){ pmsg('Not enough points for that. '+(pts.ads>0?'Watch an ad for '+pts.ad+' more, or come back tomorrow for free ones.':'More free points tomorrow.'),'bad'); return; }
-    if(a==='random'){ closeAsk(); spend(a,''); return; }
+    if(!pts.account){ pmsg('Dungeon Points need an account. Make one and you get free DP every day.'); openAccount(); return; }
+    if(a==='genie'&&pts.genie){ pmsg(pts.genieMine?'You\'re the genie already: type your wishes below.':pts.genie+' is the genie right now. Try again when they\'re done.',pts.genieMine?'ok':'bad'); return; }
+    if(pts.n<price(a)){ pmsg('Not enough DP for that. Get more in the shop.','bad'); return; }
+    if(!ASK[a]){ closeAsk(); spend(a,''); return; }
     closeAsk(); asking=a; b.classList.add('on'); $('pask').hidden=false; $('ptext').value=''; $('ptext').placeholder=ASK[a][0];
-    $('pgo').textContent=ASK[a][1]+' \u00b7 '+price(a); $('ptext').focus(); pmsg('');
+    $('pgo').textContent=ASK[a][1]+' · '+price(a); $('ptext').focus(); pmsg('');
   }); });
   $('pcancel').addEventListener('click',closeAsk);
   $('pask').addEventListener('submit',function(e){ e.preventDefault(); var t=$('ptext').value.trim(); if(!t){ $('ptext').focus(); return; } spend(asking,t); });
-  $('pacct').addEventListener('click',openAccount);
-  $('pbuy').addEventListener('click',function(){ pmsg('Point packs are coming soon. For now: free points every day, and ads.'); });
-  var SPEND_ERR={'not enough points':'Not enough points for that.','room closed':'The streamer\'s game isn\'t running right now. Try again when it\'s live.',
-    'slow down':'One at a time: wait a few seconds.','too busy':'Lots of people are spending points. Try again in a moment.','too long':'Keep it under 100 characters.',
-    'empty':'Type something first.','no account':'Points need an account. Make one first.','name taken':'This name is locked. Leave and log in with its password.',
-    'bad name':'Your name needs letters or numbers. Leave and pick another.'};
+  $('pbuy').addEventListener('click',function(){ if(!pts.account){ openAccount(); return; } openShop('dp'); });
+  var SPEND_ERR={'not enough points':'Not enough DP for that.','room closed':'The streamer\'s game isn\'t running right now. Try again when it\'s live.',
+    'slow down':'One at a time: wait a few seconds.','too busy':'Lots of people are using the buttons. Try again in a moment.','too long':'Keep it under 100 characters.',
+    'empty':'Type something first.','no account':'Dungeon Points need an account. Make one first.','name taken':'This name is locked. Log in with its password.',
+    'bad name':'Your name needs letters or numbers. Pick another.','genie busy':'Someone else is the genie right now. Try again soon.',
+    'not the genie':'You\'re not the genie any more.','no wishes left':'That was your last wish!','not enough rubies':'Not enough rubies for that.'};
   function spend(a,t){
     if(!a) return; var busy=$('pgo'); busy.disabled=true;
     rpc('spend_points',withTok({q_code:code,q_name:me,q_action:a,q_text:t})).then(function(rows){ busy.disabled=false; var r=rows&&rows[0]; if(!r) return;
       pts.n=r.points|0; drawPoints(); closeAsk();
-      spends.push({id:r.id,text:r.text,act:a,last:''}); spends=spends.slice(-5);
-      pmsg((a==='random'?'Surprise! "'+r.text+'"':'"'+r.text+'"')+' is on its way. Watch the stream!','ok');
+      spends.push({id:r.id,text:a==='custom_enemy'||a==='random_enemy'?r.text:NAMES[a],act:a,last:''}); spends=spends.slice(-5);
+      pmsg(a==='genie'?'Summoning you as the genie...':a==='random_enemy'?'Random Enemy: "'+r.text+'" is on its way. Watch the stream!':'"'+(a==='custom_enemy'?r.text:NAMES[a])+'" is on its way. Watch the stream!','ok');
+      if(a==='genie') myPoints();
     }).catch(function(e){ busy.disabled=false; var m=String(e&&e.message||'');
-      pmsg(SPEND_ERR[m]||srvErr(e),'bad'); if(m==='no account') openAccount(); if(m==='not enough points') myPoints(); });
+      pmsg(SPEND_ERR[m]||srvErr(e),'bad'); if(m==='no account') openAccount(); if(m==='not enough points'||m==='genie busy') myPoints(); });
   }
+  $('gform').addEventListener('submit',function(e){ e.preventDefault(); var t=$('gwish').value.trim(); if(!t){ $('gwish').focus(); return; } var b=$('ggo'); b.disabled=true;
+    rpc('send_wish',withTok({q_code:code,q_name:me,q_text:t})).then(function(rows){ b.disabled=false; var r=rows&&rows[0]; if(!r) return;
+      $('gwish').value=''; pts.wishes=r.wishes_left|0; drawPoints(); pmsg('Your wish "'+t+'" is on its way!'+(pts.wishes?' '+pts.wishes+' left.':' That was your last one.'),'ok');
+    }).catch(function(err){ b.disabled=false; var m=String(err&&err.message||''); pmsg(SPEND_ERR[m]||srvErr(err),'bad'); myPoints(); }); });
   var SPEND_SAY={'':'is on its way to the game',heard:'reached the game',queued:'is up next',chosen:'is up next',building:'is being built',
-    spawned:'is in the dungeon!',passed:'couldn\'t be made, so your points are back',failed:'couldn\'t be made, so your points are back'};
+    spawned:'is in the dungeon!',passed:'couldn\'t be made, so your DP is back',failed:'couldn\'t be made, so your DP is back'};
   function followSpends(){
     var open=spends.filter(function(s){ return !s.done; }); if(!open.length||document.hidden) return;
     rpc('my_spends',{q_ids:open.map(function(s){ return s.id; })}).then(function(rows){ (rows||[]).forEach(function(r){
       var s=open.filter(function(x){ return x.id===r.id; })[0]; if(!s) return;
       var st=r.refunded||r.answered_ok===false?'failed':(r.status||'');
       if(st===s.last) return; s.last=st; if(st==='spawned'||st==='failed'||st==='passed') s.done=true;
-      pmsg('"'+(r.thing||s.text)+'" '+(SPEND_SAY[st]||SPEND_SAY['']),st==='failed'||st==='passed'?'bad':'ok');
-      if(s.done&&st!=='spawned') myPoints();
+      if(s.act==='genie') pmsg(st==='spawned'?'You\'re the genie! Type your 3 wishes below.':st==='failed'||st==='passed'?'The genie couldn\'t appear, so your DP is back.':'Summoning you as the genie...',st==='failed'||st==='passed'?'bad':'ok');
+      else if(st==='spawned'&&r.thing&&(s.act==='random_item'||s.act==='random_gun'||s.act==='random_event')) pmsg(s.text+': "'+r.thing+'" is in the game!','ok');
+      else pmsg('"'+(r.thing||s.text)+'" '+(SPEND_SAY[st]||SPEND_SAY['']),st==='failed'||st==='passed'?'bad':'ok');
+      if(s.done) myPoints();
     }); }).catch(function(){});
   }
+  /* ---- the top bar: account menu, shop, and the account's pages ---- */
+  function closeMenu(){ $('acctmenu').hidden=true; $('acctbtn').setAttribute('aria-expanded','false'); }
+  $('acctbtn').addEventListener('click',function(e){ e.stopPropagation(); var m=$('acctmenu'); m.hidden=!m.hidden; this.setAttribute('aria-expanded',m.hidden?'false':'true'); });
+  document.addEventListener('click',function(e){ if(!$('acctmenu').hidden&&!$('acctmenu').contains(e.target)) closeMenu(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeMenu(); ['shopwrap','custwrap','setwrap'].forEach(function(id){ $(id).hidden=true; }); } });
+  function openShop(tab){ closeMenu(); smsg(''); $('shopwrap').hidden=false; pickTab(tab||'dp'); myPoints(); }
+  function pickTab(t){ [].forEach.call(document.querySelectorAll('.tabs [data-tab]'),function(b){ b.setAttribute('aria-selected',b.getAttribute('data-tab')===t?'true':'false'); });
+    [].forEach.call(document.querySelectorAll('.tabp'),function(p){ p.hidden=p.getAttribute('data-panel')!==t; }); smsg(''); }
+  [].forEach.call(document.querySelectorAll('.tabs [data-tab]'),function(b){ b.addEventListener('click',function(){ pickTab(b.getAttribute('data-tab')); }); });
+  $('shopbtn').addEventListener('click',function(){ openShop('dp'); });
+  $('rbtn').addEventListener('click',function(){ openShop('rubies'); });
+  $('shopclose').addEventListener('click',function(){ $('shopwrap').hidden=true; });
+  ['shopwrap','custwrap','setwrap'].forEach(function(id){ $(id).addEventListener('click',function(e){ if(e.target===this) this.hidden=true; }); });
+  function buyPack(k,b){ if(!pts.account){ openAccount(); return; } b.disabled=true;
+    rpc('buy_points',withTok({q_name:me,q_pack:k})).then(function(rows){ var r=rows&&rows[0]; if(!r) return; pts.n=r.points|0; pts.rubies=r.rubies|0; drawPoints(); smsg('+'+k+' Dungeon Points!','ok'); })
+    .catch(function(e){ var m=String(e&&e.message||''); smsg(SPEND_ERR[m]||srvErr(e),'bad'); drawTop(); }); }
+  [].forEach.call(document.querySelectorAll('#rubypacks .pack'),function(b){ b.addEventListener('click',function(){ smsg('Buying rubies isn\'t open yet. For now, earn them by visiting, watching and dungeon finds.'); }); });
+  $('mcustom').addEventListener('click',function(){ closeMenu(); $('custwrap').hidden=false; });
+  $('custclose').addEventListener('click',function(){ $('custwrap').hidden=true; });
+  $('msettings').addEventListener('click',function(){ closeMenu(); $('setstream').checked=!$('stream').hidden; $('setwrap').hidden=false; });
+  $('setclose').addEventListener('click',function(){ $('setwrap').hidden=true; });
+  $('setstream').addEventListener('change',function(){ showStream(this.checked); layout(); });
+  $('mleave').addEventListener('click',function(){ closeMenu(); var t=tokenFor(me); if(t) rpc('logout_name',{q_token:t}).catch(function(){}); store('cdTok',null); store('cdTokName',null); locked=false; $('leave').click(); });
+  $('tbmake').addEventListener('click',openAccount);
+  $('tblogin').addEventListener('click',function(){ $('leave').click(); $('err').textContent='Type your account name, then its password.'; $('name').focus(); $('name').select(); });
   /* the energy button: straight top-up (REWARDED_ADS false), or the recharge page in a new tab */
   $('adbtn').addEventListener('click',function(e){
     if(REWARDED_ADS) return;
@@ -860,14 +1089,14 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     $('join').hidden=true; $('room').hidden=true; $('recharge').hidden=false; layout();
     var n=15, cl=$('adclaim'), cnt=$('adcount');
     var adName=load('cdName'), adTok=tokenFor(adName);
-    if(!adTok){ $('admsg').textContent='Ads earn points for accounts. Go back, make an account, then come here again.'; cl.hidden=true; clearInterval(0); }
-    var iv=setInterval(function(){ n--; cnt.textContent=Math.max(n,0); if(n<=0){ clearInterval(iv); cl.disabled=!adTok; cl.textContent='Claim your points'; } },1000);
+    if(!adTok){ $('admsg').textContent='Ads earn rubies for accounts. Go back, make an account, then come here again.'; cl.hidden=true; clearInterval(0); }
+    var iv=setInterval(function(){ n--; cnt.textContent=Math.max(n,0); if(n<=0){ clearInterval(iv); cl.disabled=!adTok; cl.textContent='Claim your rubies'; } },1000);
     cl.addEventListener('click',function(){ cl.disabled=true;
-      rpc('points_ad_reward',{q_name:adName,q_token:adTok}).then(function(rows){ var r=rows&&rows[0]||{};
-        $('admsg').textContent='Done: you have '+(r.points|0)+' points now'+(r.ads_left>0?' ('+r.ads_left+' more ad'+(r.ads_left===1?'':'s')+' today)':'')+'. Close this tab to get back to the stream.';
+      rpc('ruby_ad_reward',{q_name:adName,q_token:adTok}).then(function(rows){ var r=rows&&rows[0]||{};
+        $('admsg').textContent='Done: you have '+(r.rubies|0)+' rubies now'+(r.ads_left>0?' ('+r.ads_left+' more ad'+(r.ads_left===1?'':'s')+' today)':'')+'. Close this tab to get back to the stream.';
         cl.textContent='Claimed'; })
       .catch(function(e){ var m=String(e&&e.message||'');
-        $('admsg').textContent=m==='ad limit'?'That\'s all the ads for today. Free points come back tomorrow.':m==='no account'?'Ads earn points for accounts. Make one first.':'Couldn\'t reach the server. Try again in a moment.';
+        $('admsg').textContent=m==='ad limit'?'That\'s all the ads for today. More tomorrow.':m==='no account'?'Ads earn rubies for accounts. Make one first.':'Couldn\'t reach the server. Try again in a moment.';
         if(m!=='ad limit'&&m!=='no account') cl.disabled=false; });
     });
   }
