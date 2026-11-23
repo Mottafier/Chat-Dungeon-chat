@@ -767,7 +767,6 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
   .stabs [data-side=avatar]{flex:0 0 40px;font-size:0;gap:0}
   .pline:not(:has(.pmsg:not(:empty):not([hidden]),form:not([hidden]),.gbox:not([hidden]))){display:none}
 }
-}
 /* phones: the reward buttons live in a Rewards tab beside Chat (they're moved there by placeStore) */
 .stabs [data-side=rewards]{display:none}
 .sview.rewv{padding:10px;overflow-y:auto}
@@ -779,6 +778,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .sview.rewv .act .an{white-space:nowrap;overflow:visible;max-height:none;font-size:13.5px;letter-spacing:-.2px}
 @media (max-width:379px){ .sview.rewv .act .an{font-size:12px} }
 @media (max-width:640px) and (min-height:560px){ .stabs [data-side=rewards]{flex:1.4 1 0} .stabs [data-side=avatar],.stabs [data-side=account]{flex:0 0 36px} }
+@media (max-width:640px) and (min-height:560px){ .stabs [data-side=rewards]{display:flex} }
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
