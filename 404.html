@@ -239,7 +239,7 @@ label{font-size:13px;color:var(--parch-dim)}
   .app.theatre .stream .screen{width:100%;max-height:none}
   .app.theatre .head,.app.theatre .draw,.app.theatre .feed,.app.theatre .say{grid-column:2;min-width:0}
 }
-/* ---- Dungeon Points (2026-11-22): the online page shows the stream, the stream's real Twitch chat, and buttons under
+/* ---- Power (2026-11-22): the online page shows the stream, the stream's real Twitch chat, and buttons under
    the stream that spend points. The site's own chat, energy pips and pledges are gone from the page. ---- */
 .points,.tchat,.popchat{display:none}
 .room.online .draw,.room.online .feed,.room.online .say,.room.online .energy{display:none!important}
@@ -273,7 +273,7 @@ label{font-size:13px;color:var(--parch-dim)}
 .tchat .off{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;color:var(--parch-dim);font-size:14px}
 .room.online .popchat{display:block;font-size:12px;text-align:right;color:var(--parch-dim)}
 .popchat a{color:var(--parch-dim)} .popchat a:hover{color:var(--flame)}
-/* ---- Rubies and the new buttons (2026-11-22 evening): a top bar with the account, rubies and the shop; Dungeon Points
+/* ---- Rubies and the new buttons (2026-11-22 evening): a top bar with the account, rubies and the shop; Power
    (the sun) are spent on the buttons under the stream. ---- */
 .topbar,.chatfoot,.rfind,.gbox{display:none}
 .room.online .head{display:none!important}
@@ -299,7 +299,7 @@ label{font-size:13px;color:var(--parch-dim)}
 .menu[hidden]{display:none}
 .menu button{text-align:left;background:none;border:0;color:var(--parch);font:inherit;font-size:14px;padding:10px;cursor:pointer;border-radius:2px}
 .menu button:hover,.menu button:focus-visible{background:var(--slab-hi);color:var(--flame)}
-/* Dungeon Points: the sun */
+/* Power: the sun */
 .room.online .bal{color:#ffd77a}
 .bal svg.sun{width:26px;height:26px;filter:drop-shadow(0 0 5px rgba(255,170,30,.55))}
 .ptop{min-height:36px}
@@ -362,7 +362,7 @@ label{font-size:13px;color:var(--parch-dim)}
 .shopmsg .ok{color:#b7f5a2}.shopmsg .bad{color:var(--bad)}
 .setrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--mortar);font-size:14px}
   .vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);border:0;opacity:0}
-/* ==== Redesign (2026-11-22 night): the top bar sits on the top edge; the stream and the Dungeon Points store are one column,
+/* ==== Redesign (2026-11-22 night): the top bar sits on the top edge; the stream and the Power store are one column,
    and the right column is one panel with tabs (Chat / Shop / Avatar / Account). Nothing ever opens over the stream. ==== */
 .stage,.lcol{display:contents}
 .side{display:none}
@@ -407,7 +407,7 @@ label{font-size:13px;color:var(--parch-dim)}
 .room.online .stream{border:3px solid var(--line);border-radius:0;box-shadow:0 0 0 2px var(--mortar),0 5px 0 2px rgba(0,0,0,.5);margin:2px}
 .room.online .stream .x{display:none}
 .room.online .stream .screen{max-height:none}
-/* ---- the store: a DP bar and six small things to buy ---- */
+/* ---- the store: a Power bar and six small things to buy ---- */
 .room.online .points{position:relative;display:flex;flex-direction:column;gap:8px;padding:10px 12px;margin:2px;box-sizing:border-box;
   background:var(--panel);border:3px solid var(--line);border-radius:0;box-shadow:0 0 0 2px var(--mortar),0 5px 0 2px rgba(0,0,0,.5)}
 .dpbar{position:relative;display:flex;align-items:center;height:48px;flex:0 0 auto}
@@ -590,7 +590,7 @@ label{font-size:13px;color:var(--parch-dim)}
 }
 @media (min-width:1300px){ .app.inroom .room.online{--gut:60px} }
 @media (prefers-reduced-motion:reduce){ .act,.act *,.item *,.keeper .kp,.stand .float,.sp,#chestbtn .px,.dpmeter::after,.tb-room i::before,.stabs .px{animation:none!important;transition:none!important} .fly{display:none} }
-/* ---- round 2 (Mott): a plain, thinner DP bar; on a PC the buttons are near-square, icon top left, name along the bottom ---- */
+/* ---- round 2 (Mott): a plain, thinner Power bar; on a PC the buttons are near-square, icon top left, name along the bottom ---- */
 .dpbar{height:36px;gap:8px}
 .dpico{margin-right:0;filter:none}
 .dpnum{position:static;transform:none;flex:0 0 auto;text-shadow:none;color:#ffe7b5}
@@ -709,7 +709,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .authtabs button{flex:1 1 0;padding:6px 4px;font-family:var(--display);font-size:15px;color:var(--parch-dim);background:#130d07;border:2px solid #000;box-shadow:inset 0 0 0 2px #3d2e18;cursor:pointer}
 .authtabs button[aria-pressed=true]{color:#1a1205;background:var(--flame);box-shadow:inset 0 0 0 2px #ffe08a}
 @media (prefers-reduced-motion:reduce){ .item.rp .ii::after,.dday .px,.tbb.daily .px,.tbb.daily .dot{animation:none!important} }
-/* round 6: every ruby button green (red read as "bad"), DP packs on warm gold */
+/* round 6: every ruby button green (red read as "bad"), Power packs on warm gold */
 .item.rp,.item.rp.ad{background:linear-gradient(#2a6b32,#0d2812);box-shadow:inset 0 0 0 2px #5fcf4a,0 3px 0 var(--line)}
 .item.rp .ii,.item.rp.ad .ii{background:radial-gradient(circle at 50% 62%,rgba(200,255,184,.3),transparent 62%)}
 .item.rp:hover,.item.rp:focus-visible,.item.rp.ad:hover,.item.rp.ad:focus-visible{background:linear-gradient(#38903f,#123a19);box-shadow:inset 0 0 0 2px #c8ffb8,0 5px 0 var(--line),0 0 14px rgba(95,207,74,.5)}
@@ -865,15 +865,15 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
             <div class="ehint" id="ehint"></div>
             <a class="adbtn" id="adbtn" href="?recharge" target="_blank" rel="noopener" hidden title="Watch a short ad for 2 more pips"></a>
           </div>
-          <div class="points" id="points" hidden aria-label="Dungeon Points">
+          <div class="points" id="points" hidden aria-label="Power">
             <div class="dpbar">
               <span class="dpico" id="dpico" data-px="suns:36"></span>
               <span class="dpnum"><b id="pnum">0</b></span>
-              <div class="dpmeter" id="dpmeter" role="img" aria-label="Dungeon Points">
+              <div class="dpmeter" id="dpmeter" role="img" aria-label="Power">
                 <div class="dpfill" id="dpfill"></div>
                 <div class="dpticks" id="dpticks"></div>
               </div>
-              <button class="tbb dpget" id="pbuy" type="button">Get DP</button>
+              <button class="tbb dpget" id="pbuy" type="button">Get Power</button>
             </div>
             <div class="pacts" id="pacts">
               <button type="button" class="act" data-act="random_enemy" data-desc="Spawn a random enemy instantly"><span class="ai" data-px="enemy:40"></span><span class="an">Random Enemy</span><span class="ap"><span data-px="suns:24"></span><i data-price="random_enemy">20</i></span><span class="ad">Spawn a random enemy instantly</span></button>
@@ -914,7 +914,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
           <div class="sview shopv" data-view="shop" hidden>
             <div class="awning" aria-hidden="true"></div>
             <div class="keeper"><span class="kp" id="keeper" data-px="keeper:72"></span><div class="bubble" id="shopmsg" role="status" aria-live="polite"></div></div>
-            <h3><span data-px="suns:24"></span>Dungeon Points</h3>
+            <h3><span data-px="suns:24"></span>Power</h3>
             <div class="shelf" id="dppacks"></div>
             <div class="plank" aria-hidden="true"></div>
             <h3><span data-px="ruby:24"></span>Rubies</h3>
@@ -1351,7 +1351,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   pile('ruby2',20,[[1,2],[7,7]]);
   pile('ruby3',20,[[4,0],[0,7],[8,8]]);
   pile('ruby4',24,[[6,0],[0,4],[12,5],[3,11],[10,12]]);
-  /* the DP sun with its letters, drawn by rule on a 24 grid */
+  /* the Power sun with its letters, drawn by rule on a 24 grid */
   (function(){ var n=24, g=[], x, y, D=['bb.','b.b','b.b','b.b','bb.'], P=['bbb','b.b','bbb','b..','b..'];
     for(y=0;y<n;y++){ var row=''; for(x=0;x<n;x++){ var dx=x-11.5, dy=y-11.5, r=Math.sqrt(dx*dx+dy*dy), ch='.';
         if(r<7.3) ch=(dx+dy>5.2)?'Y':(r<6&&dx+dy<-4.5&&dx+dy>-7.5)?'o':'y';
@@ -1451,7 +1451,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   }
   function drawLock(){ var b=$('lockbtn'); if(!ON){ b.hidden=true; return; } if(typeof drawTop==='function') drawTop(); b.hidden=false; b.classList.toggle('on',locked);
     b.innerHTML='<svg viewBox="0 0 9 11" aria-hidden="true"><path d="'+(locked?'M2 4V3a2.5 2.5 0 0 1 5 0v1h1v7H1V4zm1 0h3V3a1.5 1.5 0 0 0-3 0z':'M2 4V3a2.5 2.5 0 0 1 5 0h-1a1.5 1.5 0 0 0-3 0v1h5v7H1V4z')+'"/></svg>'+(locked?'':'Make account');
-    b.title=locked?'Your account (your name is locked with a password)':'Make an account: lock your name and get free Dungeon Points'; b.setAttribute('aria-label',b.title); }
+    b.title=locked?'Your account (your name is locked with a password)':'Make an account: lock your name and get free Power'; b.setAttribute('aria-label',b.title); }
   function tryJoin(auto){
     if(joining) return; var c=$('code').value.trim().toUpperCase(), n=$('name').value.trim().replace(/[^A-Za-z0-9_]/g,'').slice(0,25), pw=$('pass').value;
     if(c.length<4){ $('err').textContent='Room codes are 4 letters.'; $('code').focus(); return; }
@@ -1475,12 +1475,12 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   $('joinform').addEventListener('submit',function(e){ e.preventDefault(); tryJoin(false); });
   $('name').addEventListener('input',function(){ if(!$('passrow').hidden){ $('passrow').hidden=true; $('pass').value=''; $('err').textContent=''; } });
   /* ---- the account form in the side panel: make an account (name + password) or log in. Guests only meet it when they
-     press a Dungeon Points button, claim rubies, or choose to. ---- */
+     press a Power button, claim rubies, or choose to. ---- */
   var authMode='make';
   function drawAuth(){ var lg=authMode==='login'; $('authmake').setAttribute('aria-pressed',lg?'false':'true'); $('authlog').setAttribute('aria-pressed',lg?'true':'false');
     $('pass2row').hidden=lg; $('newpass').autocomplete=lg?'current-password':'new-password'; $('newpass').placeholder=lg?'':'At least 6 characters';
     $('locksubmit').textContent=lg?'Log in':'Make account'; $('lockerr').textContent='';
-    $('lockinfo').innerHTML=lg?'Welcome back.':'Free <b>Dungeon Points</b> every day, and <b>rubies</b> to spend in the shop.'; }
+    $('lockinfo').innerHTML=lg?'Welcome back.':'Free <b>Power</b> every day, and <b>rubies</b> to spend in the shop.'; }
   function openAccount(mode){ if(locked) return; authMode=mode==='login'?'login':'make'; drawAuth(); $('newpass').value=''; $('newpass2').value='';
     if(!$('authname').value) $('authname').value=load('cdName');
     $('lockwrap').hidden=false; sideTab('account',true); ($('authname').value?$('newpass'):$('authname')).focus(); }
@@ -1488,7 +1488,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   $('lockbtn').addEventListener('click',openAccount);
   $('lockcancel').addEventListener('click',function(){ $('lockwrap').hidden=true; wantDaily=false; drawTop(); });
   function signedIn(name,tok,isNew){ store('cdTok',tok); store('cdTokName',name); store('cdName',name); me=name; locked=true; $('lockwrap').hidden=true; $('newpass').value=''; $('newpass2').value='';
-    drawLock(); sideTab('chat'); pmsg(isNew?'Account made! You get free Dungeon Points every day.':'Welcome back, '+name+'.','ok'); if(isNew) wantDaily=true; myPoints(); }
+    drawLock(); sideTab('chat'); pmsg(isNew?'Account made! You get free Power every day.':'Welcome back, '+name+'.','ok'); if(isNew) wantDaily=true; myPoints(); }
   $('lockform').addEventListener('submit',function(e){ e.preventDefault(); var n=$('authname').value.trim().replace(/[^A-Za-z0-9_]/g,'').slice(0,25), a=$('newpass').value, b=$('newpass2').value, er=$('lockerr'), sb=$('locksubmit');
     if(!n){ er.textContent='Pick a name (letters, numbers and _).'; $('authname').focus(); return; }
     if(sb.disabled) return;
@@ -1780,7 +1780,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     $('poplink').href='https://www.twitch.tv/popout/'+encodeURIComponent(channel)+'/chat?popout='; $('popchat').hidden=false;
   }
 
-  /* ---------- Dungeon Points: a bar and six small things to buy under the stream ----------
+  /* ---------- Power: a bar and six small things to buy under the stream ----------
      An account (a locked name) gets daily free points (the database: my_points, spend_points). A paid request is built
      before any free chat idea; if nothing comes of it, the points come back. Nothing here ever opens over the stream:
      the shop, the avatar and the account live in the side panel's tabs. */
@@ -1796,7 +1796,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   function pmsg(t,cls){ clearTimeout(pCurT); pCur=t?[t,cls||'']:null; if(t) pCurT=setTimeout(function(){ pCur=null; pline(); },10000); pline(); }
   /* the keeper's speech bubble in the shop, typed out */
   var sayT=0;
-  function smsg(t,cls){ var m=$('shopmsg'), i=0; clearInterval(sayT); m.className='bubble'+(cls==='bad'?' bad':''); t=t||'Rubies buy Dungeon Points.';
+  function smsg(t,cls){ var m=$('shopmsg'), i=0; clearInterval(sayT); m.className='bubble'+(cls==='bad'?' bad':''); t=t||'Rubies buy Power.';
     if(still){ m.textContent=t; return; } m.textContent=''; sayT=setInterval(function(){ i+=2; m.textContent=t.slice(0,i); if(i>=t.length) clearInterval(sayT); },22);
     if(cls){ var k=$('keeper'); k.classList.remove('nod'); void k.offsetWidth; k.classList.add('nod'); } }
   function once(el,cls,ms){ if(!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(function(){ el.classList.remove(cls); },ms||600); }
@@ -1833,14 +1833,14 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   function drawPoints(){
     tween($('pnum'),pts.n);
     var m=$('dpmeter'); $('dpfill').style.width=Math.min(100,pts.n/DP_FULL*100)+'%'; m.classList.toggle('over',pts.n>DP_FULL);
-    m.setAttribute('aria-label',pts.n+' Dungeon Points');
+    m.setAttribute('aria-label',pts.n+' Power');
     [].forEach.call(document.querySelectorAll('[data-price]'),function(i){ var p=pts.prices[i.getAttribute('data-price')]; if(p!=null) i.textContent=p; });
     /* a notch on the bar at every price, so the bar shows what you can afford */
     var tk=$('dpticks'), key=JSON.stringify(pts.prices); if(tk.getAttribute('data-k')!==key){ tk.setAttribute('data-k',key); tk.textContent=''; var seen2={};
       [].forEach.call(document.querySelectorAll('.act [data-price]'),function(i){ var p=+i.textContent; if(p>0&&p<DP_FULL&&!seen2[p]){ seen2[p]=1; var n=document.createElement('i'); n.style.left=(p/DP_FULL*100)+'%'; tk.appendChild(n); } }); }
     [].forEach.call(document.querySelectorAll('.act[data-act]'),function(b){ b.classList.toggle('poor',pts.account&&pts.n<price(b.getAttribute('data-act'))); });
-    pIdle=!pts.known?'':pts.account?'':'Make an account to get rubies and Dungeon Points.';
-    $('pbuy').textContent=pts.account||!pts.known?'Get DP':'Make account';
+    pIdle=!pts.known?'':pts.account?'':'Make an account to get rubies and Power.';
+    $('pbuy').textContent=pts.account||!pts.known?'Get Power':'Make account';
     var g=$('geniebtn'), busyGenie=pts.genie&&!pts.genieMine;
     g.classList.toggle('busy',!!busyGenie);
     var gd=busyGenie?pts.genie+' is the genie right now':pts.genieMine?'You\'re the genie!':'Spawn into the game as a genie and grant 3 wishes instantly';
@@ -1864,7 +1864,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
         b.innerHTML='<span class="ii">'+pix(PACK_ART[Math.min(i,2)],60)+'</span><span class="il">+'+esc(k)+SUN_SVG+'</span><span class="tag">'+RUBY_SVG+esc(pts.packs[k])+'</span>';
         for(var q=0;q<=i;q++){ var sp=document.createElement('i'); sp.className='sp'; sp.style.left=(20+((q*37+i*23)%50))+'%'; sp.style.top=(14+((q*29+i*17)%36))+'px'; sp.style.animationDelay=(q*.9+i*.5)+'s'; b.querySelector('.ii').appendChild(sp); }
         b.addEventListener('click',function(){ buyPack(+k,b); });
-        b.addEventListener('mouseenter',function(){ if(!b.classList.contains('poor')) smsg(k+' DP for '+pts.packs[k]+' rubies.'); });
+        b.addEventListener('mouseenter',function(){ if(!b.classList.contains('poor')) smsg(k+' Power for '+pts.packs[k]+' rubies.'); });
         dp.appendChild(b); }); }
     [].forEach.call(dp.children,function(b){ b.classList.toggle('poor',pts.rubies<(pts.packs[b.getAttribute('data-pack')]|0)); });
   }
@@ -1909,9 +1909,9 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     b.addEventListener('mouseleave',function(){ pHover=''; pline(); });
     b.addEventListener('click',function(){
       var a=b.getAttribute('data-act'); pHover='';
-      if(!pts.account){ pmsg('Dungeon Points need an account. Make one and you get free DP every day.'); openAccount(); return; }
+      if(!pts.account){ pmsg('Power needs an account. Make one and you get free Power every day.'); openAccount(); return; }
       if(a==='genie'&&pts.genie){ once(b,'no',450); pmsg(pts.genieMine?'You\'re the genie already: type your wishes below.':pts.genie+' is the genie right now. Try again when they\'re done.',pts.genieMine?'ok':'bad'); return; }
-      if(pts.n<price(a)){ closeAsk(); once(b,'no',450); once($('dpmeter'),'shake',450); pmsg('Not enough DP. You need '+(price(a)-pts.n)+' more.','bad'); sideTab('shop'); smsg('You need '+(price(a)-pts.n)+' more DP for that.','bad'); return; }
+      if(pts.n<price(a)){ closeAsk(); once(b,'no',450); once($('dpmeter'),'shake',450); pmsg('Not enough Power. You need '+(price(a)-pts.n)+' more.','bad'); sideTab('shop'); smsg('You need '+(price(a)-pts.n)+' more Power for that.','bad'); return; }
       if(!ASK[a]){ closeAsk(); spend(a,''); return; }
       closeAsk(); asking=a; b.classList.add('on'); $('pask').hidden=false; $('pmsg').hidden=true; $('ptext').value=''; $('ptext').placeholder=ASK[a][0];
       $('pgo').textContent=ASK[a][1]+' · '+price(a); $('ptext').focus(); pmsg('');
@@ -1919,9 +1919,9 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   $('pcancel').addEventListener('click',closeAsk);
   $('pask').addEventListener('submit',function(e){ e.preventDefault(); var t=$('ptext').value.trim(); if(!t){ $('ptext').focus(); return; } spend(asking,t); });
   $('pbuy').addEventListener('click',function(){ if(pts.known&&!pts.account){ openAccount(); return; } sideTab('shop',true); });
-  var SPEND_ERR={'not enough points':'Not enough DP for that.','room closed':'The streamer\'s game isn\'t running right now. Try again when it\'s live.',
+  var SPEND_ERR={'not enough points':'Not enough Power for that.','room closed':'The streamer\'s game isn\'t running right now. Try again when it\'s live.',
     'slow down':'One at a time: wait a few seconds.','too busy':'Lots of people are using the buttons. Try again in a moment.','too long':'Keep it under 100 characters.',
-    'empty':'Type something first.','no account':'Dungeon Points need an account. Make one first.','name taken':'This name is locked. Log in with its password.',
+    'empty':'Type something first.','no account':'Power needs an account. Make one first.','name taken':'This name is locked. Log in with its password.',
     'bad name':'Your name needs letters or numbers. Pick another.','genie busy':'Someone else is the genie right now. Try again soon.',
     'not the genie':'You\'re not the genie any more.','no wishes left':'That was your last wish!','not enough rubies':'Not enough rubies for that.'};
   function spend(a,t){
@@ -1942,14 +1942,14 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       $('gwish').value=''; pts.wishes=r.wishes_left|0; drawPoints(); pmsg('Your wish "'+t+'" is on its way!'+(pts.wishes?' '+pts.wishes+' left.':' That was your last one.'),'ok');
     }).catch(function(err){ b.disabled=false; var m=String(err&&err.message||''); pmsg(SPEND_ERR[m]||srvErr(err),'bad'); myPoints(); }); });
   var SPEND_SAY={'':'is on its way to the game',heard:'reached the game',queued:'is up next',chosen:'is up next',building:'is being built',
-    spawned:'is in the dungeon!',passed:'couldn\'t be made, so your DP is back',failed:'couldn\'t be made, so your DP is back'};
+    spawned:'is in the dungeon!',passed:'couldn\'t be made, so your Power is back',failed:'couldn\'t be made, so your Power is back'};
   function followSpends(){
     var open=spends.filter(function(s){ return !s.done; }); if(!open.length||document.hidden) return;
     rpc('my_spends',{q_ids:open.map(function(s){ return s.id; })}).then(function(rows){ (rows||[]).forEach(function(r){
       var s=open.filter(function(x){ return x.id===r.id; })[0]; if(!s) return;
       var st=r.refunded||r.answered_ok===false?'failed':(r.status||'');
       if(st===s.last) return; s.last=st; if(st==='spawned'||st==='failed'||st==='passed') s.done=true;
-      if(s.act==='genie') pmsg(st==='spawned'?'You\'re the genie! Type your 3 wishes below.':st==='failed'||st==='passed'?'The genie couldn\'t appear, so your DP is back.':'Summoning you as the genie...',st==='failed'||st==='passed'?'bad':'ok');
+      if(s.act==='genie') pmsg(st==='spawned'?'You\'re the genie! Type your 3 wishes below.':st==='failed'||st==='passed'?'The genie couldn\'t appear, so your Power is back.':'Summoning you as the genie...',st==='failed'||st==='passed'?'bad':'ok');
       else if(st==='spawned'&&r.thing&&(s.act==='random_item'||s.act==='random_gun'||s.act==='random_event')) pmsg(s.text+': "'+r.thing+'" is in the game!','ok');
       else pmsg('"'+(r.thing||s.text)+'" '+(SPEND_SAY[st]||SPEND_SAY['']),st==='failed'||st==='passed'?'bad':'ok');
       if(st==='spawned') once(actBtn(s.act),'bought',600);
@@ -1985,7 +1985,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     var cost=pts.packs[k]|0; if(pts.rubies<cost){ once(b,'no',450); smsg('You need '+(cost-pts.rubies)+' more rubies.','bad'); return; }
     if(b.classList.contains('wait')) return; b.classList.add('wait');
     rpc('buy_points',withTok({q_name:me,q_pack:k})).then(function(rows){ b.classList.remove('wait'); var r=rows&&rows[0]; if(!r) return;
-      var n=r.points|0; pts.rubies=r.rubies|0; drawTop(); smsg('+'+k+' Dungeon Points.','ok'); once(b,'bought',600);
+      var n=r.points|0; pts.rubies=r.rubies|0; drawTop(); smsg('+'+k+' Power.','ok'); once(b,'bought',600);
       fly(RUBY_SVG,$('rbtn'),b.querySelector('.tag'),3);
       burst(SUN_SVG,b.querySelector('.ii'),Math.min(8,Math.max(4,Math.round(k/40))));  /* (nothing flies across the stream) */
       pts.n=n; drawPoints(); once($('dpico'),'bump',450); floatUp($('dpico').parentNode,'+'+k);
