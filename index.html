@@ -798,6 +798,13 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
   .stabs{padding:3px 3px 0;gap:3px}
   .stabs button{height:32px}
 }
+/* phones: Twitch's login often can't stick inside an embedded chat (the phone's browser blocks it), so the way out stays on show, as one slim line */
+@media (max-width:640px) and (min-height:560px){
+  .room.online .chatfoot{display:flex;padding:2px 6px 3px;border-top:2px solid var(--line)}
+  .room.online .chatfoot .chatcap{display:none}
+  .room.online .popchat{font-size:12px;line-height:1.3}
+  .room.online .popchat a{color:var(--flame)}
+}
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
