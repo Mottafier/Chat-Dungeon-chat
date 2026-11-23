@@ -2162,8 +2162,8 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       pts.n=r.points|0; drawPoints(); closeAsk();
       if(b){ fly(SUN_SVG,$('dpico'),b.querySelector('.ai'),Math.min(6,Math.max(2,Math.round(cost/30)))); once($('dpico'),'bump',450);
         setTimeout(function(){ once(b,'bought',600); var m=document.createElement('span'); m.className='minus'; m.textContent='-'+cost; b.appendChild(m); setTimeout(function(){ m.remove(); },1000); },still?0:420); }
-      spends.push({id:r.id,text:a==='custom_enemy'||a==='random_enemy'?r.text:NAMES[a],act:a,last:''}); spends=spends.slice(-5);
-      pmsg(a==='genie'?'Summoning you as the genie...':a==='random_enemy'?'Random Enemy: "'+r.text+'" is on its way. Watch the stream!':'"'+(a==='custom_enemy'?r.text:NAMES[a])+'" is on its way. Watch the stream!','ok');
+      spends.push({id:r.id,text:a==='custom_enemy'?r.text:NAMES[a],act:a,last:''}); spends=spends.slice(-5);
+      pmsg(a==='genie'?'Summoning you as the genie...':a==='random_enemy'?'A random enemy is on its way. Watch the stream!':'"'+(a==='custom_enemy'?r.text:NAMES[a])+'" is on its way. Watch the stream!','ok');
       if(a==='genie') myPoints();
       if(sideNow==='rewards') setTimeout(function(){ if(sideNow==='rewards') sideTab('chat'); },1100);  /* (back to chat to watch it arrive) */
     }).catch(function(e){ busy.disabled=false; if(b){ b.classList.remove('wait'); once(b,'no',450); } var m=String(e&&e.message||'');
@@ -2182,7 +2182,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       var st=r.refunded||r.answered_ok===false?'failed':(r.status||'');
       if(st===s.last) return; s.last=st; if(st==='spawned'||st==='failed'||st==='passed') s.done=true;
       if(s.act==='genie') pmsg(st==='spawned'?'You\'re the genie! Type your 3 wishes below.':st==='failed'||st==='passed'?'The genie couldn\'t appear, so your Power is back.':'Summoning you as the genie...',st==='failed'||st==='passed'?'bad':'ok');
-      else if(st==='spawned'&&r.thing&&(s.act==='random_item'||s.act==='random_gun'||s.act==='random_event')) pmsg(s.text+': "'+r.thing+'" is in the game!','ok');
+      else if(st==='spawned'&&r.thing&&(s.act==='random_enemy'||s.act==='random_item'||s.act==='random_gun'||s.act==='random_event')) pmsg(s.text+': "'+r.thing+'" is in the game!','ok');
       else pmsg('"'+(r.thing||s.text)+'" '+(SPEND_SAY[st]||SPEND_SAY['']),st==='failed'||st==='passed'?'bad':'ok');
       if(st==='spawned') once(actBtn(s.act),'bought',600);
       if(s.done) myPoints();
