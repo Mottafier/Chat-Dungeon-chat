@@ -1859,7 +1859,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     var tk=$('dpticks'), key=JSON.stringify(pts.prices); if(tk.getAttribute('data-k')!==key){ tk.setAttribute('data-k',key); tk.textContent=''; var seen2={};
       [].forEach.call(document.querySelectorAll('.act [data-price]'),function(i){ var p=+i.textContent; if(p>0&&p<DP_FULL&&!seen2[p]){ seen2[p]=1; var n=document.createElement('i'); n.style.left=(p/DP_FULL*100)+'%'; tk.appendChild(n); } }); }
     [].forEach.call(document.querySelectorAll('.act[data-act]'),function(b){ b.classList.toggle('poor',pts.account&&pts.n<price(b.getAttribute('data-act'))); });
-    pIdle=!pts.known?'':pts.account?'':'Make an account to get rubies and Power.';
+    pIdle='';
     $('pbuy').textContent=pts.account||!pts.known?'Get Power':'Make account';
     var g=$('geniebtn'), busyGenie=pts.genie&&!pts.genieMine;
     g.classList.toggle('busy',!!busyGenie);
