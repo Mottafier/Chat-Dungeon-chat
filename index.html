@@ -760,7 +760,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 }
 /* round 9, phones: the stream, the store and the chat all on one screen (no scrolling); the store is two rows of small buttons */
 .pmsg:empty{display:none}
-@media (max-width:640px) and (min-height:560px){
+@media (max-width:640px) and (min-height:560px), (max-width:640px) and (pointer:coarse){
   .app.inroom .room.online{height:100dvh;min-height:0;display:flex;flex-direction:column;overflow:hidden}
   .room.online .topbar{flex:0 0 auto}
   .room.online .stage{flex:1 1 auto;min-height:0;gap:6px;padding:6px}
@@ -786,12 +786,12 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .sview.rewv .act .ai .px{width:36px;height:36px}
 .sview.rewv .act .an{white-space:nowrap;overflow:visible;max-height:none;font-size:13.5px;letter-spacing:-.2px}
 @media (max-width:379px){ .sview.rewv .act .an{font-size:12px} }
-@media (max-width:640px) and (min-height:560px){ .stabs [data-side=rewards]{flex:1.4 1 0} .stabs [data-side=avatar],.stabs [data-side=account]{flex:0 0 36px} }
-@media (max-width:640px) and (min-height:560px){ .stabs [data-side=rewards]{display:flex} }
+@media (max-width:640px) and (min-height:560px), (max-width:640px) and (pointer:coarse){ .stabs [data-side=rewards]{flex:1.4 1 0} .stabs [data-side=avatar],.stabs [data-side=account]{flex:0 0 36px} }
+@media (max-width:640px) and (min-height:560px), (max-width:640px) and (pointer:coarse){ .stabs [data-side=rewards]{display:flex} }
 /* phones, second pass (Mott: the Twitch chat was far too small): everything that isn't the stream or the chat is slimmed.
    The Power count moves into the top bar, the bar under the stream goes, the wall margins and gaps go. */
 .tbb.powc{display:none}
-@media (max-width:640px) and (min-height:560px){
+@media (max-width:640px) and (min-height:560px), (max-width:640px) and (pointer:coarse){
   .room.online .topbar{min-height:38px;padding:0 5px;gap:5px;box-shadow:none}
   .room.online .topbar .tbb{height:30px;padding:0 6px}
   .tbb.powc{display:inline-flex;background:#2a1a05;box-shadow:inset 0 0 0 2px #8a5a2b,inset 0 -5px 0 rgba(0,0,0,.3);padding-left:4px}
@@ -808,7 +808,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
   .stabs button{height:32px}
 }
 /* phones: Twitch's login often can't stick inside an embedded chat (the phone's browser blocks it), so the way out stays on show, as one slim line */
-@media (max-width:640px) and (min-height:560px){
+@media (max-width:640px) and (min-height:560px), (max-width:640px) and (pointer:coarse){
   .room.online .chatfoot{display:flex;padding:2px 6px 3px;border-top:2px solid var(--line)}
   .room.online .chatfoot .chatcap{display:none}
   .room.online .popchat{font-size:12px;line-height:1.3}
@@ -1967,11 +1967,17 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
 
   /* phones: when the keyboard opens, the browser slides the whole page up to show the box you tapped. Instead the room is
      held to the part of the screen still on show: the stream stays put and the chat shrinks above the keyboard. */
-  (function(){ var vv=window.visualViewport; if(!vv) return; var on=false;
-    function fit(){ var r=$('room'), kb=phoneMq.matches&&app.classList.contains('inroom')&&window.innerHeight-vv.height>120;
-      if(kb){ r.style.flex='0 0 auto'; r.style.height=Math.round(vv.height)+'px'; r.style.transform='translateY('+Math.max(0,Math.round(vv.pageTop))+'px)'; if(!on&&ocLog){ var L=ocLog; setTimeout(function(){ L.scrollTop=L.scrollHeight; },60); } on=true; }
-      else if(on){ on=false; r.style.flex=''; r.style.height=''; r.style.transform=''; window.scrollTo(0,0); } }
-    vv.addEventListener('resize',fit); vv.addEventListener('scroll',fit); window.addEventListener('scroll',fit,{passive:true}); })();
+  (function(){ var vv=window.visualViewport; if(!vv) return; var on=false, ty=0, base=0, baseW=0;
+    function typing(){ var a=document.activeElement; return !!a&&/^(INPUT|TEXTAREA)$/.test(a.tagName)&&!/^(checkbox|radio|button|submit)$/.test(a.type); }
+    function fit(){ var r=$('room'); if(vv.width!==baseW){ baseW=vv.width; base=0; } if(!typing()&&vv.height>base) base=vv.height; if(vv.height>base) base=vv.height;
+      var kb=phoneMq.matches&&app.classList.contains('inroom')&&typing()&&(base-vv.height>120||window.innerHeight-vv.height>120);
+      if(kb){ r.style.flex='0 0 auto'; r.style.height=Math.round(vv.height)+'px';
+        ty=Math.round(ty+vv.offsetTop-r.getBoundingClientRect().top); r.style.transform=ty?'translateY('+ty+'px)':'';   /* wherever the browser slid the page, the room goes back to the top of what's on show */
+        if(!on&&ocLog){ var L=ocLog; setTimeout(function(){ L.scrollTop=L.scrollHeight; },60); } on=true; }
+      else if(on){ on=false; ty=0; r.style.flex=''; r.style.height=''; r.style.transform=''; window.scrollTo(0,0); } }
+    function soon(){ fit(); [60,200,400,800].forEach(function(t){ setTimeout(fit,t); }); }
+    vv.addEventListener('resize',fit); vv.addEventListener('scroll',fit); window.addEventListener('scroll',fit,{passive:true});
+    document.addEventListener('focusin',soon); document.addEventListener('focusout',soon); })();
 
   /* ---------- Power: a bar and six small things to buy under the stream ----------
      An account (a locked name) gets daily free points (the database: my_points, spend_points). A paid request is built
@@ -2152,7 +2158,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   /* ---- the side panel's tabs: Chat, Shop, Avatar, Account. The Twitch chat stays loaded behind the other tabs. ---- */
   var sideNow='chat';
   /* on a phone the reward buttons sit in their own tab, so the stream and the chat fit on one screen; anywhere else they're under the stream */
-  var phoneMq=window.matchMedia('(max-width:640px) and (min-height:560px)');
+  var phoneMq=window.matchMedia('(max-width:640px) and (min-height:560px), (max-width:640px) and (pointer:coarse)');
   function placeStore(){ var ph=phoneMq.matches&&app.classList.contains('inroom'), home=$('points'), tab=$('rewv'), pa=$('pacts');
     if(ph&&pa.parentNode!==tab) tab.appendChild(pa);
     else if(!ph&&pa.parentNode!==home){ home.insertBefore(pa,home.querySelector('.pline')); if(sideNow==='rewards') sideTab('chat'); } }
