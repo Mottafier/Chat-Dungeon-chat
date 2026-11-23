@@ -1,0 +1,2063 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>if(location.pathname.indexOf("/live/")===0) document.write("<base href=\"/\">");</script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Chat Dungeon</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="alternate icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="description" content="Type anything in chat and it comes to life in the dungeon.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Chat Dungeon">
+<meta property="og:title" content="Chat Dungeon">
+<meta property="og:description" content="Type anything in chat and it comes to life in the dungeon.">
+<meta property="og:url" content="https://chatdungeon.io/">
+<meta property="og:image" content="https://chatdungeon.io/preview.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Chat Dungeon">
+<meta name="twitter:description" content="Type anything in chat and it comes to life in the dungeon.">
+<meta name="twitter:image" content="https://chatdungeon.io/preview.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+15&text=0123456789%2B%2D%24%2C.%2F%25&display=swap">
+<style>
+/* Layout: phone first. One column on the dungeon wall: sign and room on top, the draw timer,
+   the feed as a dark stone slab, the composer pinned at the bottom. On a PC the same column sits centred between the torches. */
+:root{
+  color-scheme: dark;
+  --pit:#0b0908;
+  --mortar:#2b241a;
+  --slab:#14100c;         /* feed and plaques */
+  --slab-hi:#211a13;      /* other people's lines, inputs */
+  --parch:#ead9ae;
+  --parch-dim:#b9a67c;
+  --flame:#ffb23a;        /* the accent: torchlight, your own things */
+  --good:#9be28a; --bad:#f2a08c;
+  --display:'Jersey 15','Pixelify Sans','Courier New',monospace;
+  --body:Inter,system-ui,sans-serif;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--pit);color:var(--parch);font-family:var(--body);font-size:16px;overflow:hidden}
+.app{position:relative;height:100%;box-sizing:border-box;display:flex;justify-content:center;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px}
+#wall{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
+.col{position:relative;width:100%;max-width:540px;min-height:0;display:flex;flex-direction:column;gap:10px}
+
+.sign{align-self:center;font-family:var(--display);font-weight:700;font-size:26px;line-height:1;letter-spacing:.06em;color:#ffe9a6;background:#1c0f08;
+  padding:10px 16px 8px;border:3px solid #0d0806;text-shadow:0 0 9px rgba(255,180,70,.55);box-shadow:0 3px 0 #000}
+.plaque{font-family:var(--display);font-weight:500;font-size:16px;letter-spacing:.04em;color:var(--parch);background:var(--slab);
+  border:2px solid var(--mortar);border-radius:3px;min-height:44px;padding:0 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.06),inset 0 -3px 0 rgba(0,0,0,.45),0 2px 0 #000;text-decoration:none;box-sizing:border-box}
+.plaque:hover{color:#fff;border-color:#6b5a3c}
+.plaque.go{background:var(--flame);color:#1a1205;border-color:#1a1205;font-weight:700}
+.plaque.go:hover{background:#ffc869;color:#1a1205}
+:focus-visible{outline:2px solid var(--flame);outline-offset:2px}
+input{font-family:var(--body);font-size:16px;color:var(--parch);background:var(--slab-hi);border:2px solid var(--mortar);border-radius:3px;min-height:48px;padding:0 12px;box-sizing:border-box;min-width:0;width:100%}
+input::placeholder{color:#8f7f5e}
+label{font-size:13px;color:var(--parch-dim)}
+
+/* join */
+.join{margin:auto 0;display:flex;flex-direction:column;gap:18px;padding-bottom:6vh}
+.card{background:var(--slab);border:2px solid var(--mortar);border-radius:4px;padding:18px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 4px 0 #000}
+.card .gap{height:6px}
+#code{font-family:var(--display);font-size:30px;letter-spacing:.3em;text-align:center;text-transform:uppercase;min-height:60px}
+.err{margin:0;color:var(--bad);font-size:14px;min-height:1.3em}
+.fine{margin:0;text-align:center;font-size:13px;color:var(--parch);text-shadow:0 1px 0 #000}
+
+/* room */
+.room{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px}
+.head{display:flex;align-items:center;gap:10px;padding:0 50px}
+.head .who{flex:1 1 auto;min-width:0;font-family:var(--display);font-size:16px;line-height:1.25;text-shadow:0 2px 0 #000}
+.head .who b{color:var(--flame);letter-spacing:.14em}
+.head .who span{display:block;font-family:var(--body);font-size:12px;color:var(--parch);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.head .plaque{min-height:40px;padding:0 10px;font-size:14px;flex:0 0 auto}
+.draw{background:var(--slab);border:2px solid var(--mortar);border-radius:3px;padding:8px 12px 10px;display:flex;flex-direction:column;gap:6px}
+.draw .row{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--parch-dim)}
+.draw .row b{font-family:var(--display);font-size:16px;color:var(--parch);font-variant-numeric:tabular-nums}
+.fuse{height:8px;background:#000;border:1px solid var(--mortar)}
+.fuse i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#e2531b,var(--flame));transform-origin:left;transition:transform 1s linear}
+.feed{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;background:rgba(16,12,9,.9);border:2px solid var(--mortar);border-radius:3px;
+  padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.line{font-size:15px;line-height:1.4;overflow-wrap:anywhere}
+.line .n{font-weight:600}
+.line.sys{color:var(--parch-dim);font-size:13px}
+.line.pick{font-family:var(--display);font-size:15px;color:var(--parch);border-left:0;background:#241a0e;padding:6px 8px;border-radius:2px}
+.line.pick b{color:var(--flame)}
+.line.me{background:var(--slab-hi);border:1px solid #6b5a3c;border-radius:3px;padding:8px 10px}
+.line.me .n{color:var(--flame)}
+.line.me .st{display:block;margin-top:4px;font-size:12px;color:var(--parch-dim)}
+.line.me .st.win{color:var(--good)}
+.line.me .st.lose{color:var(--bad)}
+/* live status chips (online page): what the game made of each line, from chat.py through the database */
+.line.ch{display:flex;align-items:flex-start;gap:8px}
+.line.ch .tx{flex:1 1 auto;min-width:0}
+.chip{flex:0 0 auto;position:relative;width:26px;height:26px;margin:-2px 0;display:flex;align-items:center;justify-content:center;border-radius:3px;
+  color:var(--parch-dim);transition:color .3s,background .3s}
+.chip svg{width:16px;height:16px;display:block;image-rendering:pixelated}
+.chip .dots{display:flex;gap:3px}
+.chip .dots i{width:4px;height:4px;background:currentColor;animation:dot 1.2s infinite ease-in-out}
+.chip .dots i:nth-child(2){animation-delay:.2s} .chip .dots i:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+.chip.s-queued{color:var(--parch);animation:pop .35s cubic-bezier(.3,1.6,.6,1)}
+.chip.s-chosen{color:var(--flame);background:rgba(255,178,58,.12);animation:pop .35s cubic-bezier(.3,1.6,.6,1),wig .5s .35s 3}
+.chip.s-building{color:var(--flame);background:rgba(255,178,58,.14);animation:flick .45s infinite alternate}
+.chip.s-building::after{content:"";position:absolute;inset:-1px;border:2px dashed rgba(255,178,58,.75);border-radius:50%;animation:spin 1.6s linear infinite}
+.chip.s-spawned{color:#ffe9a6;background:linear-gradient(#e2531b,#ffb23a);box-shadow:0 0 10px rgba(255,178,58,.7);animation:pop .4s cubic-bezier(.3,1.8,.6,1)}
+.chip.s-spawned::after{content:"";position:absolute;inset:0;border-radius:3px;animation:burst .8s ease-out 1 forwards}
+.chip.s-spawned svg{filter:drop-shadow(0 1px 0 #1a1205)}
+.chip.s-passed{opacity:.45}
+.chip.s-failed{color:var(--bad)}
+@keyframes pop{0%{transform:scale(.2);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes wig{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+@keyframes flick{0%{opacity:.75;transform:scale(.95)}100%{opacity:1;transform:scale(1.06)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes burst{0%{box-shadow:0 0 0 0 rgba(255,214,120,.9)}100%{box-shadow:0 0 0 16px rgba(255,214,120,0)}}
+.line.won{background:linear-gradient(90deg,rgba(255,178,58,.16),rgba(255,178,58,0) 70%);border-radius:3px;box-shadow:inset 3px 0 0 var(--flame)}
+.line.won:not(.me){padding:4px 6px;margin:0 -6px}
+@media (prefers-reduced-motion:reduce){.chip,.chip::after,.chip .dots i{animation:none!important}}
+.say{display:flex;gap:8px}
+.say input{flex:1 1 auto}
+.say .plaque{min-height:48px;flex:0 0 auto}
+.host{display:none}
+/* the host's stream: optional, closes to nothing (for people watching on another screen) */
+.head .plaque.tv{padding:0 9px;gap:6px}
+.head .plaque.tv[aria-pressed="true"]{border-color:#6b5a3c;color:var(--flame)}
+.tv svg{width:18px;height:18px;flex:0 0 auto}
+.stream{position:relative;flex:0 0 auto;background:#000;border:2px solid var(--mortar);border-radius:3px;box-shadow:0 3px 0 #000;overflow:hidden}
+.stream .screen{position:relative;width:100%;aspect-ratio:16/9;max-height:38vh;margin:0 auto}
+.stream iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+.stream .off{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:12px;
+  font-family:var(--display);font-size:15px;color:var(--parch);background:repeating-linear-gradient(0deg,#0d0a08 0 3px,#120e0a 3px 6px)}
+.stream .off small{font-family:var(--body);font-size:12px;color:var(--parch-dim)}
+.stream .x{position:absolute;top:6px;right:6px;z-index:2;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  font-size:20px;line-height:1;color:var(--parch);background:rgba(20,16,12,.85);border:2px solid var(--mortar);border-radius:3px}
+.stream .x:hover{color:#fff;border-color:#6b5a3c}
+@media (max-height:560px){ .stream .screen{max-height:30vh} }
+/* ---- energy pips and pledges (online page): viewers spend pips on enemy ideas; 3 (a boss 5) brings one to life ---- */
+.room.online .draw{display:none}
+.head .who i.live{display:none;font-style:normal;margin-left:8px;font-size:12px;letter-spacing:.12em;color:#ff7a6e;vertical-align:1px}
+.head .who i.live::before{content:"";display:inline-block;width:7px;height:7px;margin-right:5px;border-radius:50%;background:#ff4b3e;box-shadow:0 0 6px #ff4b3e;vertical-align:1px}
+.head .who i.live.on{display:inline}
+.energy{display:flex;align-items:center;gap:10px;background:var(--slab);border:2px solid var(--mortar);border-radius:3px;padding:6px 10px}
+.pips{display:flex;gap:5px;flex:0 0 auto}
+.pip{position:relative;width:20px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:3px;
+  background:#1d1b19;border:2px solid #34302b;transition:background .3s,border-color .3s,box-shadow .3s}
+.pip svg{width:12px;height:19px;fill:#47423b;display:block}
+.pip .fill{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;clip-path:inset(var(--cut,100%) 0 0 0)}
+.pip .fill svg{fill:#9a6fd6}
+.pip.full{background:#2a1a44;border-color:#8456d0;box-shadow:0 0 8px rgba(160,92,255,.35)}
+.pip.full svg{fill:#d3a6ff;filter:drop-shadow(0 0 3px #a05cff)}
+.pip.part{border-color:#4a3d5e}
+.pip.part .fill{animation:charge 1.6s ease-in-out infinite}
+@keyframes charge{50%{opacity:.6}}
+.pip.gone{animation:pipgone .5s ease-out}
+@keyframes pipgone{0%{transform:scale(1.25);box-shadow:0 0 16px #c78bff}100%{transform:scale(1)}}
+.pips.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+.ehint{flex:1 1 auto;min-width:0;font-size:12px;line-height:1.3;color:var(--parch-dim)}
+.ehint b{color:#c99bff;font-weight:600;font-variant-numeric:tabular-nums}
+.adbtn{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;min-height:34px;padding:0 10px;border-radius:3px;text-decoration:none;
+  font-family:var(--display);font-size:14px;color:#f3e6ff;background:linear-gradient(#6b35b8,#4a2386);border:2px solid #a77ae8;box-shadow:0 2px 0 #1a0c2e}
+.adbtn:hover{background:linear-gradient(#7a42c9,#552a98)}
+.adbtn svg{width:8px;height:13px;fill:currentColor}
+.adbtn small{font-family:var(--body);font-size:11px;opacity:.85}
+.adbtn .chg{display:block;width:26px;height:6px;background:#2a1a44;border:1px solid #c99bff;border-radius:2px;overflow:hidden}
+.adbtn .chg i{display:block;height:100%;background:#e6c6ff;box-shadow:0 0 6px #c78bff;animation:chg .7s linear forwards}
+@keyframes chg{from{width:0}to{width:100%}}
+@media (max-width:459px){ .adbtn small{display:none} .ehint .long{display:none} .head .who i.live{font-size:0;margin-left:6px} .head .who i.live::before{margin-right:0} }
+/* the pledge button on an enemy idea: its progress in small bars, tap to put one of your pips in */
+.pl{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;height:26px;margin:-2px 0;padding:0 7px;border-radius:3px;cursor:pointer;
+  font-family:var(--display);font-size:13px;color:#e3cbff;background:rgba(120,70,200,.18);border:1px solid #7a4cc4;font-variant-numeric:tabular-nums}
+.pl:hover{background:rgba(140,85,230,.32);color:#fff}
+.pl svg{width:8px;height:13px;fill:#c99bff}
+.pl .bars{display:flex;gap:2px}
+.pl .bars i{width:4px;height:10px;background:#3a3430;border-radius:1px}
+.pl .bars i.on{background:#c99bff;box-shadow:0 0 4px #a05cff}
+.pl.mine{border-color:#c99bff}
+.pl.done{cursor:default;color:#fff;background:linear-gradient(#7a42c9,#4a2386);border-color:#c99bff;box-shadow:0 0 10px rgba(160,92,255,.55)}
+.pl.done .bars i{background:#f0dcff}
+.pl.shut{cursor:default;opacity:.45;background:transparent;border-color:#4a4038;color:var(--parch-dim)}
+.pl.hit{animation:plhit .45s cubic-bezier(.3,1.7,.6,1)}
+@keyframes plhit{0%{transform:scale(1.3);box-shadow:0 0 18px #c78bff}100%{transform:scale(1)}}
+.chip.s-funded{color:#f0dcff;background:rgba(160,92,255,.28);animation:pop .35s cubic-bezier(.3,1.6,.6,1)}
+.line.bump{animation:bump 1.4s ease-out}
+@keyframes bump{0%{background:rgba(160,92,255,.35);box-shadow:inset 3px 0 0 #c99bff}100%{background:transparent;box-shadow:inset 3px 0 0 transparent}}
+.line.ch.funded{box-shadow:inset 3px 0 0 #a77ae8;background:linear-gradient(90deg,rgba(160,92,255,.14),rgba(160,92,255,0) 70%);border-radius:3px}
+.line.ch.funded:not(.me){padding:4px 6px;margin:0 -6px}
+.zap{position:fixed;z-index:50;width:12px;height:19px;pointer-events:none;transition:transform .5s cubic-bezier(.4,0,.6,1),opacity .5s}
+.zap svg{width:100%;height:100%;fill:#e6c6ff;filter:drop-shadow(0 0 5px #a05cff)}
+.newpill{position:sticky;bottom:0;align-self:center;flex:0 0 auto;z-index:3;margin-top:-4px;padding:5px 12px;border-radius:14px;cursor:pointer;
+  font-family:var(--display);font-size:13px;color:#1a1205;background:var(--flame);border:2px solid #1a1205;box-shadow:0 2px 6px rgba(0,0,0,.6)}
+/* a banner ad under the stream (PC layout only; an empty placeholder until an ad network is chosen) */
+.adslot{display:none}
+.head .who .mewrap{display:flex;min-width:0}
+.head .who .mewrap #me{display:block;min-width:0;flex:0 1 auto}
+.head .who .mewrap .legal{display:inline;flex:0 0 auto;overflow:visible;padding-left:4px}
+.head .who .mewrap .legal[hidden]{display:none}
+.head .who .legal,.head .who .legal a{color:var(--parch-dim);text-decoration:none}
+.head .who .legal a:hover{color:var(--flame);text-decoration:underline}
+.passrow{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.lockbtn{display:inline-flex;align-items:center;gap:3px;margin-left:5px;padding:0 3px;height:16px;border:0;background:none;cursor:pointer;
+  font:12px var(--body);color:var(--parch-dim);vertical-align:-2px;flex:0 0 auto}
+.lockbtn svg{width:9px;height:11px;fill:currentColor}
+.lockbtn:hover{color:var(--flame)}
+.lockbtn.on{color:var(--flame);cursor:default}
+.lockwrap{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.6)}
+.lockcard{width:100%;max-width:380px;box-sizing:border-box}
+.lockcard h2{margin:0;font-family:var(--display);font-size:20px;color:var(--flame)}
+.lockinfo{margin:0 0 6px;font-size:14px;line-height:1.45;color:var(--parch)}
+.lockbtns{display:flex;gap:8px;justify-content:flex-end}
+.foot{display:flex;justify-content:center;gap:18px;font-size:13px}
+.foot a{color:var(--parch);text-decoration:none;text-shadow:0 1px 0 #000;padding:6px 2px}
+.foot a:hover{color:var(--flame);text-decoration:underline}
+@media (prefers-reduced-motion:reduce){.pip .fill,.pl,.line.bump,.pips.shake{animation:none!important}.zap{display:none}}
+/* the recharge page (?recharge): a stand-in for a rewarded ad, away from the stream */
+.recharge{margin:auto 0;display:flex;flex-direction:column;gap:18px;padding-bottom:6vh}
+.recharge .adbox{height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:2px dashed #4a3d5e;border-radius:3px;
+  background:#120e16;color:#8f7fa8;font-size:13px;text-align:center;padding:10px}
+.recharge .adbox b{font-family:var(--display);font-size:34px;color:#d3a6ff}
+.recharge p{margin:0;font-size:14px;line-height:1.45;color:var(--parch)}
+
+@media (max-width:459px){ .head .plaque.tv{width:44px;padding:0} .tv .lbl{position:absolute;left:-999em} }
+@media (min-width:760px){
+  .app{padding-block:24px}
+  .head{padding:0}
+  .host{display:inline-flex}
+}
+/* PC with the stream showing: like Twitch, the stream big on the left, chat filling a column on the right */
+@media (min-width:1000px){
+  .app.theatre .col{max-width:none}
+  .app.theatre .room{display:grid;grid-template-columns:minmax(0,1fr) clamp(320px,27vw,420px);grid-template-rows:auto auto minmax(0,1fr) auto;column-gap:16px;row-gap:10px}
+  /* the box hugs the 16:9 player (no black bars on very wide windows); the brick wall and torches fill the rest */
+  .app.theatre .stream{grid-column:1;grid-row:1/-1;align-self:start;justify-self:center;min-height:0;width:min(100%,calc((100dvh - 52px)*16/9))}
+  .app.theatre .stream .screen{width:100%;max-height:none}
+  .app.theatre .head,.app.theatre .draw,.app.theatre .feed,.app.theatre .say{grid-column:2;min-width:0}
+}
+/* ---- Dungeon Points (2026-11-22): the online page shows the stream, the stream's real Twitch chat, and buttons under
+   the stream that spend points. The site's own chat, energy pips and pledges are gone from the page. ---- */
+.points,.tchat,.popchat{display:none}
+.room.online .draw,.room.online .feed,.room.online .say,.room.online .energy{display:none!important}
+.room.online .points{display:flex;flex-direction:column;gap:8px;background:var(--slab);border:2px solid var(--mortar);border-radius:3px;padding:8px 10px;box-shadow:0 3px 0 #000}
+.room.online .points[hidden]{display:none}
+.ptop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bal{display:flex;align-items:center;gap:6px;font-family:var(--display);font-size:20px;color:#e9d2ff}
+.bal svg{width:20px;height:20px;flex:0 0 auto;filter:drop-shadow(0 0 4px #a05cff)}
+.bal small{font-family:var(--body);font-size:12px;color:var(--parch-dim)}
+.pinfo{flex:1 1 160px;min-width:0;font-size:13px;line-height:1.35;color:var(--parch)}
+.pbtn{min-height:36px;padding:0 12px;font-size:14px;white-space:nowrap}
+.pacts{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:6px}
+.act{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-height:52px;padding:6px 44px 6px 9px;text-align:left;cursor:pointer;
+  background:#1c1524;border:2px solid #3d2f52;border-radius:3px;color:var(--parch);font:inherit}
+.act b{font-size:14px;color:#f1e4ff}
+.act small{font-size:11.5px;line-height:1.25;color:var(--parch-dim)}
+.act i{position:absolute;top:50%;right:7px;transform:translateY(-50%);font-style:normal;font-family:var(--display);font-size:15px;color:#d3a6ff}
+.act:hover:not(:disabled){border-color:#8456d0;background:#241a30}
+.act.on{border-color:#a970ff;box-shadow:0 0 0 2px rgba(169,112,255,.35)}
+.act.soon{opacity:.45;cursor:default}
+.act.soon i{font-family:var(--body);font-size:11px}
+.pask{display:flex;gap:6px}
+.pask[hidden]{display:none}
+.pask input{flex:1 1 auto;min-width:0}
+.pask .plaque{min-height:44px;flex:0 0 auto}
+.pmsg{font-size:13px;line-height:1.35;color:var(--parch);min-height:0}
+.pmsg:empty{display:none}
+.pmsg .ok{color:#b7f5a2}.pmsg .bad{color:var(--bad)}
+.room.online .tchat{display:block;position:relative;flex:1 1 auto;min-height:420px;height:62vh;background:#18181b;border:2px solid var(--mortar);border-radius:3px;overflow:hidden}
+.tchat iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+.tchat .off{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;color:var(--parch-dim);font-size:14px}
+.room.online .popchat{display:block;font-size:12px;text-align:right;color:var(--parch-dim)}
+.popchat a{color:var(--parch-dim)} .popchat a:hover{color:var(--flame)}
+/* ---- Rubies and the new buttons (2026-11-22 evening): a top bar with the account, rubies and the shop; Dungeon Points
+   (the sun) are spent on the buttons under the stream. ---- */
+.topbar,.chatfoot,.rfind,.gbox{display:none}
+.room.online .head{display:none!important}
+.room.online .topbar{display:flex;align-items:center;gap:8px;background:var(--slab);border:2px solid var(--mortar);border-radius:3px;padding:5px 8px;box-shadow:0 3px 0 #000;position:relative;z-index:20}
+.tb-logo{display:flex;align-items:center;gap:7px;font-family:var(--display);font-size:17px;color:var(--flame);text-decoration:none;white-space:nowrap}
+.tb-logo svg{width:22px;height:22px}
+.tb-room{font-size:13px;color:var(--parch-dim);white-space:nowrap;display:flex;align-items:center;gap:6px}
+.tb-room b{font-family:var(--display);color:var(--parch);font-weight:500}
+.tb-room i{display:none;font-style:normal;font-size:11px;letter-spacing:.12em;color:#ff7a6e}
+.tb-room i.on{display:inline}
+.tb-sp{flex:1 1 auto}
+.tb-btn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 10px;font-size:14px;flex:0 0 auto;position:relative}
+.tb-btn[hidden]{display:none}
+.tb-btn svg{width:18px;height:18px;flex:0 0 auto}
+.rubyc b{font-family:var(--display);font-size:17px;color:#ffd3da;font-weight:500}
+.acct .nm{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--body);font-size:14px;letter-spacing:0}
+.acct .caret{width:9px;height:9px}
+.plus{position:absolute;left:50%;top:-4px;transform:translateX(-50%);font-family:var(--display);font-size:16px;color:#ff8da0;pointer-events:none;
+  text-shadow:0 2px 0 #000;animation:plusup 1.6s ease-out forwards;white-space:nowrap}
+@keyframes plusup{0%{opacity:0;transform:translate(-50%,6px)}15%{opacity:1}100%{opacity:0;transform:translate(-50%,-26px)}}
+.menu{position:absolute;right:6px;top:calc(100% + 4px);min-width:210px;background:var(--slab);border:2px solid var(--mortar);border-radius:3px;box-shadow:0 6px 0 #000;
+  display:flex;flex-direction:column;padding:4px;z-index:30}
+.menu[hidden]{display:none}
+.menu button{text-align:left;background:none;border:0;color:var(--parch);font:inherit;font-size:14px;padding:10px;cursor:pointer;border-radius:2px}
+.menu button:hover,.menu button:focus-visible{background:var(--slab-hi);color:var(--flame)}
+/* Dungeon Points: the sun */
+.room.online .bal{color:#ffd77a}
+.bal svg.sun{width:26px;height:26px;filter:drop-shadow(0 0 5px rgba(255,170,30,.55))}
+.ptop{min-height:36px}
+.act{background:#1f170c;border-color:#4a3618}
+.act b{color:#ffe7b5}
+.act i{color:#ffc14a}
+.act:hover:not(:disabled){border-color:#c48a2a;background:#2a1f10}
+.act.on{border-color:#ffb21f;box-shadow:0 0 0 2px rgba(255,178,31,.35)}
+.act.busy{opacity:.5;cursor:default}
+.phint{font-size:13px;color:var(--parch-dim);flex:1 1 160px}
+/* your genie: the wishes box */
+.room.online .gbox{display:flex;flex-direction:column;gap:6px;padding:8px;border:2px solid #7a52c7;border-radius:3px;background:#1a1426}
+.room.online .gbox[hidden]{display:none}
+.gbox p{margin:0;font-size:13.5px;color:#e6d7ff}
+.gbox form{display:flex;gap:6px}
+.gbox input{flex:1 1 auto;min-width:0}
+.gbox .plaque{min-height:44px}
+/* under the Twitch chat */
+.room.online .chatfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.chatcap{font-family:var(--display);font-size:15px;color:var(--flame)}
+.room.online .popchat{text-align:right}
+/* a dungeon find: the banner over the stream */
+.stream{position:relative}
+.room.online .rfind{display:flex;flex-direction:column;align-items:center;gap:2px;position:absolute;left:50%;top:14%;transform:translateX(-50%);z-index:5;
+  padding:10px 18px;background:rgba(20,6,10,.88);border:2px solid #d81a3a;border-radius:4px;box-shadow:0 4px 0 #000,0 0 24px rgba(216,26,58,.5);
+  text-align:center;pointer-events:none;animation:rfind 6s ease forwards;max-width:90%}
+.room.online .rfind[hidden]{display:none}
+.rfind b{font-family:var(--display);font-size:22px;color:#fff;display:flex;align-items:center;gap:6px;font-weight:500}
+.rfind b svg{width:22px;height:22px}
+.rfind small{font-size:13px;color:#ffc2cc}
+@keyframes rfind{0%{opacity:0;transform:translate(-50%,-10px) scale(.9)}8%{opacity:1;transform:translate(-50%,0) scale(1)}85%{opacity:1}100%{opacity:0}}
+/* the shop, and the account's pages: a panel over the page */
+.shopwrap{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.66);display:flex;align-items:center;justify-content:center;padding:16px}
+.shopwrap[hidden]{display:none}
+.shop{width:min(560px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:var(--slab);border:2px solid var(--mortar);border-radius:4px;box-shadow:0 6px 0 #000;padding:12px}
+.shophead{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.shophead h2{margin:0;font-family:var(--display);font-weight:500;font-size:22px;color:var(--flame);flex:1 1 auto}
+.shophead .plaque{min-height:36px;padding:0 10px;font-size:14px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.tabs button{flex:1 1 auto;min-height:36px;padding:0 10px;background:#1b150f;border:2px solid var(--mortar);border-radius:3px;color:var(--parch-dim);font:inherit;font-size:13.5px;cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--flame);border-color:var(--flame)}
+.tabp{display:flex;flex-direction:column;gap:8px}
+.tabp[hidden]{display:none}
+.tabp p{margin:0;font-size:13.5px;color:var(--parch-dim);line-height:1.4}
+.packs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.pack{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:#1f170c;border:2px solid #4a3618;border-radius:3px;color:var(--parch);font:inherit;cursor:pointer}
+.pack:hover:not(:disabled){border-color:#c48a2a}
+.pack:disabled{opacity:.5;cursor:default}
+.pack .big{display:flex;align-items:center;gap:6px;font-family:var(--display);font-size:20px;color:#ffe7b5}
+.pack .big svg{width:24px;height:24px}
+.pack .cost{display:flex;align-items:center;gap:4px;font-size:14px;color:#ffd3da}
+.pack .cost svg{width:15px;height:15px}
+.pack.ruby{background:#21090e;border-color:#5a1a26}
+.pack.ruby .big{color:#ffd3da}
+.soonbox{display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 10px;text-align:center}
+.soonbox svg{width:72px;height:72px}
+.soonbox b{font-family:var(--display);font-weight:500;font-size:20px;color:var(--parch)}
+.shopmsg{font-size:13.5px;min-height:0}
+.shopmsg:empty{display:none}
+.shopmsg .ok{color:#b7f5a2}.shopmsg .bad{color:var(--bad)}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--mortar);font-size:14px}
+  .vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);border:0;opacity:0}
+/* ==== Redesign (2026-11-22 night): the top bar sits on the top edge; the stream and the Dungeon Points store are one column,
+   and the right column is one panel with tabs (Chat / Shop / Avatar / Account). Nothing ever opens over the stream. ==== */
+.stage,.lcol{display:contents}
+.side{display:none}
+.px{display:block;flex:0 0 auto}
+[data-px]{display:inline-flex;flex:0 0 auto}
+.app.inroom{padding:0;display:block;overflow-y:auto;overflow-x:hidden}
+.app.inroom #wall{position:fixed}
+.app.inroom .col{max-width:none;min-height:100%;gap:0}
+.app.inroom .room.online{display:flex;flex-direction:column;gap:0;flex:1 0 auto;min-height:100dvh;
+  --line:#000;--panel:#15100b;--panel2:#1d1610;--wood:#8a5a2b}
+/* top bar */
+.room.online .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;min-height:48px;box-sizing:border-box;padding:0 12px;
+  background:#120d09;border:0;border-bottom:3px solid var(--line);border-radius:0;box-shadow:inset 0 -3px 0 #2b241a,0 4px 0 rgba(0,0,0,.35)}
+.tb-logo{gap:8px;font-size:19px;font-weight:700;letter-spacing:.03em;text-shadow:0 2px 0 #000}
+.tb-room b{letter-spacing:.1em}
+.tb-room i{font-family:var(--display)}
+.tb-room i::before{content:"";display:inline-block;width:8px;height:8px;margin-right:5px;background:#ff4b3e;box-shadow:0 0 0 2px #000;animation:liveblink 1.6s steps(2) infinite}
+@keyframes liveblink{50%{background:#7a1a14}}
+.tbb{position:relative;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 10px;cursor:pointer;flex:0 0 auto;
+  font-family:var(--display);font-weight:500;font-size:15px;color:var(--parch);background:#211910;border:3px solid var(--line);border-radius:0;
+  box-shadow:inset 0 0 0 2px #4a3a22,inset 0 -5px 0 rgba(0,0,0,.3);transition:transform .06s}
+.tbb:hover{color:#fff;box-shadow:inset 0 0 0 2px #c48a2a,inset 0 -5px 0 rgba(0,0,0,.3)}
+.tbb:active{transform:translateY(2px)}
+.tbb.go{background:var(--flame);color:#1a1205;box-shadow:inset 0 0 0 2px #ffe08a,inset 0 -5px 0 rgba(160,80,0,.35);font-weight:700}
+.tbb.rubyc{background:#2a0a11;box-shadow:inset 0 0 0 2px #7a1c2c,inset 0 -5px 0 rgba(0,0,0,.3);padding-left:6px}
+.tbb.rubyc:hover{box-shadow:inset 0 0 0 2px #e8324a,inset 0 -5px 0 rgba(0,0,0,.3)}
+.tbb.rubyc b{font-size:18px;color:#ffd6dc;font-weight:500;min-width:1ch;text-align:right}
+.tbb.rubyc.bump .px{animation:hop .4s steps(4)}
+.tbb .caret{width:9px;height:9px}
+.tbb.acct{padding-left:6px}
+.plus{top:auto;bottom:-6px;color:#ff8a9c;font-size:18px;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000;animation:plusdn 1.6s ease-out forwards;z-index:40}
+@keyframes plusdn{0%{opacity:0;transform:translate(-50%,-6px)}15%{opacity:1}100%{opacity:0;transform:translate(-50%,30px)}}
+.menu{right:10px;top:calc(100% + 2px);border:3px solid var(--line);border-radius:0;box-shadow:inset 0 0 0 2px #4a3a22,0 5px 0 rgba(0,0,0,.6);background:#1a130d;padding:6px}
+.menu button{font-family:var(--display);font-size:15px}
+/* a dungeon find: the banner lives in the top bar, never over the stream */
+.room.online .rfind{position:static;transform:none;flex-direction:row;align-items:center;gap:10px;margin:0 auto;padding:3px 12px;max-width:none;top:auto;left:auto;
+  background:#2a070f;border:3px solid var(--line);border-radius:0;box-shadow:inset 0 0 0 2px #d81a3a,0 0 18px rgba(232,50,74,.55);animation:rfind2 6.2s ease forwards;pointer-events:none}
+.rfind b{font-size:17px;gap:5px;white-space:nowrap}
+.rfind small{font-size:12px;white-space:nowrap}
+@keyframes rfind2{0%{opacity:0;transform:translateY(-14px)}6%{opacity:1;transform:translateY(0)}10%{transform:translateY(-3px)}14%{transform:translateY(0)}88%{opacity:1}100%{opacity:0}}
+/* the stream */
+.room.online .stream{border:3px solid var(--line);border-radius:0;box-shadow:0 0 0 2px var(--mortar),0 5px 0 2px rgba(0,0,0,.5);margin:2px}
+.room.online .stream .x{display:none}
+.room.online .stream .screen{max-height:none}
+/* ---- the store: a DP bar and six small things to buy ---- */
+.room.online .points{position:relative;display:flex;flex-direction:column;gap:8px;padding:10px 12px;margin:2px;box-sizing:border-box;
+  background:var(--panel);border:3px solid var(--line);border-radius:0;box-shadow:0 0 0 2px var(--mortar),0 5px 0 2px rgba(0,0,0,.5)}
+.dpbar{position:relative;display:flex;align-items:center;height:48px;flex:0 0 auto}
+.dpbar .minus{right:auto;left:120px;top:-2px;color:#fff3c4;font-size:20px}
+.dpico{position:relative;z-index:2;margin-right:-16px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.55))}
+.dpico.bump{animation:hop .4s steps(4)}
+.dpmeter{position:relative;flex:1 1 auto;min-width:0;height:30px;background:#0a0705;border:3px solid var(--line);box-shadow:inset 0 0 0 2px #2b241a;overflow:hidden}
+.dpfill{position:absolute;left:0;top:0;bottom:0;width:0;transition:width .7s cubic-bezier(.2,.9,.3,1);
+  background:linear-gradient(#fff0a8 0 4px,#ffd24a 4px 12px,#f6a61c 12px 19px,#d9730d 19px);box-shadow:3px 0 0 #fff3c4}
+.dpfill::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 9px,rgba(90,46,8,.28) 9px 12px)}
+.dpticks i{position:absolute;top:0;bottom:0;width:3px;margin-left:-1px;background:rgba(0,0,0,.6)}
+.dpticks i::after{content:"";position:absolute;left:-3px;top:0;border:4px solid transparent;border-top-color:#000;border-bottom:0;width:1px}
+.dpnum{position:absolute;left:30px;top:50%;transform:translateY(-52%);display:flex;align-items:baseline;gap:4px;font-family:var(--display);color:#fff;
+  text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000,2px 2px #000,-2px 2px #000,2px -2px #000,-2px -2px #000}
+.dpnum b{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.dpnum small{font-size:13px;color:#ffe9a6}
+.dpmeter.over .dpfill{background:linear-gradient(#fff 0 4px,#fff0a8 4px 12px,#ffd24a 12px 19px,#f08a12 19px)}
+.dpmeter.over::after{content:"";position:absolute;top:0;bottom:0;left:0;width:40px;background:linear-gradient(100deg,transparent,rgba(255,255,255,.75),transparent);animation:sheen 1.8s linear infinite}
+@keyframes sheen{from{transform:translateX(-60px)}to{transform:translateX(1700px)}}
+.dpmeter.over{box-shadow:inset 0 0 0 2px #ffe08a,0 0 12px rgba(255,190,60,.6)}
+.dpmeter.shake{animation:shake .4s}
+.dpget{margin-left:8px;white-space:nowrap}
+.pacts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:64px;gap:8px 6px;padding-bottom:3px}
+.act{position:relative;display:grid;grid-template-columns:44px minmax(0,max-content);justify-content:center;grid-template-rows:1fr auto auto 1fr;column-gap:9px;align-items:center;min-height:0;height:auto;padding:0 8px;
+  text-align:left;cursor:pointer;background:#261b0f;border:3px solid var(--line);border-radius:0;color:var(--parch);font:inherit;
+  box-shadow:inset 0 0 0 2px #5a4322,inset 0 -7px 0 rgba(0,0,0,.28),0 3px 0 var(--line);transition:transform .07s,background .1s}
+.act .ai{grid-column:1;grid-row:1/5;align-self:center;width:44px;height:44px;align-items:center;justify-content:center;background:#130d07;box-shadow:inset 0 0 0 2px #3d2e18,inset 0 4px 0 rgba(0,0,0,.45)}
+.act .an{grid-column:2;grid-row:2;font-family:var(--display);font-weight:500;font-size:14.5px;line-height:1;color:#ffe7b5;overflow:hidden;max-height:2em}
+.act .ap{grid-column:2;grid-row:3;display:flex;align-items:center;gap:1px;margin-top:3px;width:max-content;height:24px;padding:0 7px 0 0;background:#130d07;box-shadow:inset 0 0 0 2px #3d2e18;font-family:var(--display);font-size:17px;line-height:1;color:#ffc93a}
+.act .ap i{position:static;transform:none;font-style:normal;font-family:inherit;font-size:inherit;color:inherit}
+.act .ad{display:none;grid-column:1/3;font-size:12px;line-height:1.25;color:var(--parch-dim)}
+.act:hover:not(:disabled),.act:focus-visible{background:#35260f;transform:translateY(-2px);box-shadow:inset 0 0 0 2px #e0a030,inset 0 -7px 0 rgba(0,0,0,.28),0 5px 0 var(--line)}
+.act:hover .ai .px{animation:hop .45s steps(4)}
+.act:active:not(:disabled){transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,inset 0 -3px 0 rgba(0,0,0,.28),0 0 0 var(--line)}
+.act.on{background:#3a2a10;box-shadow:inset 0 0 0 2px #ffc93a,inset 0 -7px 0 rgba(0,0,0,.28),0 3px 0 var(--line)}
+.act.poor .ap{color:#e58f7b}
+.act.poor .ai{filter:saturate(.35) brightness(.72)}
+.act.busy{opacity:.55;cursor:default}
+.act.wait{pointer-events:none}
+.act.wait .ai .px{animation:hop .3s steps(3) infinite}
+.act.bought{animation:bought .55s cubic-bezier(.3,1.6,.5,1)}
+.act.bought::after{content:"";position:absolute;inset:-3px;border:3px solid #fff3c4;animation:ring .55s ease-out forwards;pointer-events:none}
+.act.no{animation:shake .4s}
+@keyframes hop{0%,100%{transform:translateY(0)}35%{transform:translateY(-5px)}70%{transform:translateY(1px)}}
+@keyframes bought{0%{transform:scale(.92)}45%{transform:scale(1.07);background:#6b4a12}100%{transform:scale(1)}}
+@keyframes ring{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.18,1.4)}}
+.minus{position:absolute;right:6px;top:-4px;z-index:5;font-family:var(--display);font-size:18px;color:#ffe9a6;pointer-events:none;
+  text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000;animation:minus 1s ease-out forwards}
+@keyframes minus{0%{opacity:0;transform:translateY(8px)}20%{opacity:1}100%{opacity:0;transform:translateY(-26px)}}
+.fly{position:fixed;z-index:80;left:0;top:0;pointer-events:none;will-change:transform;transition:transform .55s cubic-bezier(.5,-.3,.6,1),opacity .55s}
+.fly.out{transition:transform .6s cubic-bezier(.1,.7,.3,1),opacity .6s ease-in}
+.pline{flex:0 0 auto;min-height:40px;display:flex;align-items:center}
+.pline>*{flex:1 1 auto;min-width:0}
+.pmsg{font-size:13.5px;line-height:1.3;min-height:0}
+.pmsg:empty{display:block}
+.pmsg .dim{color:var(--parch-dim)}
+.pask{gap:6px;align-items:center}
+.pask input,.gbox input{min-height:40px}
+.pask .plaque,.gbox .plaque{min-height:40px;border-radius:0;border:3px solid #000}
+.room.online .gbox{flex-direction:row;align-items:center;gap:8px;padding:0;border:0;background:none}
+.gbox p{flex:0 1 auto;font-family:var(--display);font-size:14.5px;color:#d9c4ff}
+.gbox form{flex:1 1 220px;min-width:0}
+.room.online.genie .points{box-shadow:0 0 0 2px #7a52c7,0 5px 0 2px rgba(0,0,0,.5),0 0 18px rgba(143,107,216,.45)}
+/* ---- the side panel ---- */
+.room.online .side{display:flex;flex-direction:column;min-width:0;min-height:0;margin:2px;background:var(--panel);border:3px solid var(--line);
+  box-shadow:0 0 0 2px var(--mortar),0 5px 0 2px rgba(0,0,0,.5)}
+.stabs{display:flex;flex:0 0 auto;gap:4px;padding:6px 6px 0;background:#0b0806;border-bottom:3px solid var(--line)}
+.stabs button{position:relative;flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:5px;height:36px;padding:0 4px;white-space:nowrap;margin-bottom:-3px;cursor:pointer;
+  font-family:var(--display);font-weight:500;font-size:15px;color:var(--parch-dim);background:#1b140d;border:3px solid var(--line);border-radius:0;box-shadow:inset 0 2px 0 rgba(255,255,255,.05)}
+.stabs button:hover{color:var(--parch)}
+.stabs button:hover .px{animation:hop .45s steps(4)}
+.stabs button[aria-selected="true"]{color:var(--flame);background:var(--panel);border-bottom-color:var(--panel);box-shadow:inset 0 3px 0 var(--flame)}
+.stabs button.ic{flex:0 0 40px;padding:0}
+.stabs .dot{position:absolute;top:3px;right:3px;width:8px;height:8px;background:#e8324a;box-shadow:0 0 0 2px #000}
+.sview{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px;padding:12px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#4a3a22 transparent}
+.sview.chatv{padding:0;gap:0;overflow:hidden}
+.room.online .side .tchat{flex:1 1 auto;min-height:0;height:auto;border:0;border-radius:0}
+.room.online .chatfoot{flex:0 0 auto;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:7px 10px 8px;border-top:3px solid var(--line);background:#120d09;text-align:center}
+.room.online .popchat{text-align:center;font-size:12px}
+.sview h3{display:flex;align-items:center;gap:8px;margin:6px 0 0;font-family:var(--display);font-weight:500;font-size:16px;color:var(--flame)}
+.sview h3::after{content:"";flex:1 1 auto;height:3px;background:repeating-linear-gradient(90deg,#3a2d1a 0 6px,transparent 6px 9px)}
+.sview .dim{margin:0;font-size:13px;line-height:1.4;color:var(--parch-dim);text-align:center}
+/* the shop: a keeper who talks, and shelves */
+.keeper{display:flex;align-items:flex-end;gap:10px;flex:0 0 auto;padding:4px 0 0}
+.keeper .kp{animation:bob 1.4s steps(2) infinite}
+.keeper .kp.nod{animation:hop .4s steps(4) 2}
+@keyframes bob{50%{transform:translateY(-3px)}}
+.bubble{position:relative;flex:1 1 auto;min-width:0;min-height:44px;box-sizing:border-box;margin-bottom:14px;padding:8px 10px;font-family:var(--display);font-size:15px;line-height:1.2;
+  color:#1a1205;background:var(--parch);border:3px solid var(--line);box-shadow:inset -3px -3px 0 #b9a67c}
+.bubble::before{content:"";position:absolute;left:-9px;bottom:8px;width:6px;height:6px;background:var(--parch);box-shadow:0 0 0 3px var(--line)}
+.bubble.bad{background:#f4c4b6}
+.shelf{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;flex:0 0 auto}
+.shelf::before{content:"";position:absolute;left:0;right:0;top:66px;height:8px;background:linear-gradient(#b07a3c 0 3px,#8a5a2b 3px 6px,#5c3a1c 6px);border:3px solid var(--line);box-shadow:0 4px 0 rgba(0,0,0,.4)}
+.item{position:relative;display:flex;flex-direction:column;align-items:center;gap:0;padding:0 0 4px;background:none;border:0;color:inherit;font:inherit;cursor:pointer}
+.item .ii{height:66px;display:flex;align-items:flex-end;justify-content:center}
+.item .il{margin-top:20px;font-family:var(--display);font-size:16px;color:#ffe7b5}
+.item .tag{position:relative;display:flex;align-items:center;gap:3px;margin-top:4px;padding:1px 8px 1px 5px;white-space:nowrap;font-family:var(--display);font-size:16px;color:#1a1205;
+  background:var(--parch);border:3px solid var(--line);box-shadow:inset -2px -2px 0 #b9a67c}
+.item:hover .ii .px,.item:focus-visible .ii .px{animation:hop .45s steps(4)}
+.item:hover .tag{background:#fff3c4}
+.item:active .tag{transform:translateY(2px)}
+.item.poor .tag{color:#9c1c2e}
+.item.poor .ii{filter:saturate(.4) brightness(.75)}
+.item.no{animation:shake .4s}
+.item.bought .ii .px{animation:bought .55s cubic-bezier(.3,1.6,.5,1)}
+.item.locked .ii{position:relative}
+.item.locked .lk{position:absolute;right:-8px;bottom:-2px}
+.item.locked.no .ii .px{animation:rattle .4s steps(4)}
+@keyframes rattle{25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+.shelf.soon .item{cursor:default}
+.shelf.soon .ii{filter:saturate(.55) brightness(.7)}
+.shelf.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.shelf.four .item .il{font-size:14px}
+.shelf.four .tag{font-size:13px;padding:1px 5px}
+.soonsign{align-self:center;padding:2px 10px;font-family:var(--display);font-size:14px;color:#1a1205;background:#c9962e;border:3px solid var(--line);box-shadow:inset -2px -2px 0 #8a5a2b;transform:rotate(-2deg)}
+.earn{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.earn li{display:flex;align-items:center;gap:8px;padding:5px 8px;font-size:13.5px;background:var(--panel2);border:2px solid #2b241a}
+.earn li span{flex:1 1 auto;min-width:0}
+.earn li b{display:flex;align-items:center;gap:2px;font-family:var(--display);font-weight:500;font-size:16px;color:#ffd6dc;white-space:nowrap}
+.earn li a{font-family:var(--display);font-size:14px;color:#1a1205;background:var(--flame);border:2px solid #000;padding:1px 8px;text-decoration:none}
+.earn li a:hover{background:#ffc869}
+.sview.shopv{padding-top:0}
+.awning{position:relative;flex:0 0 auto;height:22px;margin:0 -12px 12px;background:repeating-linear-gradient(90deg,#b3122d 0 24px,#ead9ae 24px 48px);border-bottom:3px solid var(--line);box-shadow:inset 0 3px 0 rgba(255,255,255,.18)}
+.awning::after{content:"";position:absolute;left:0;right:0;top:calc(100% + 3px);height:9px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='9' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h24v3h-3v3h-3v3H6V6H3V3H0z' fill='%238f0e24'/%3E%3Cpath d='M24 0h24v3h-3v3h-3v3H30V6h-3V3h-3z' fill='%23b9a67c'/%3E%3C/svg%3E") repeat-x}
+.sp{position:absolute;width:3px;height:3px;background:#fff;box-shadow:3px 0 #fff,-3px 0 #fff,0 3px #fff,0 -3px #fff;opacity:0;animation:twinkle 2.8s steps(1) infinite;pointer-events:none}
+@keyframes twinkle{0%{opacity:0}8%{opacity:1}16%{opacity:.5}22%{opacity:0}}
+.item .ii{position:relative}
+#chestbtn .ii>.px:first-child,#chestbtn .ii [data-px="chest:60"] .px{animation:rattle2 5s steps(1) infinite}
+@keyframes rattle2{0%,90%,100%{transform:rotate(0)}92%{transform:rotate(-5deg)}94%{transform:rotate(5deg)}96%{transform:rotate(-3deg)}98%{transform:rotate(3deg)}}
+/* the avatar tab */
+.avv{align-items:center;text-align:center}
+.stand{position:relative;flex:0 0 auto;width:100%;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;
+  background:radial-gradient(ellipse at 50% 62%,rgba(143,107,216,.35),transparent 62%)}
+.stand .float{animation:bob2 2.4s steps(4) infinite}
+.stand .lamp{margin-top:-18px}
+@keyframes bob2{50%{transform:translateY(-8px)}}
+.nameplate{padding:3px 14px;font-family:var(--display);font-size:18px;color:#1a1205;background:var(--parch);border:3px solid var(--line);box-shadow:inset -3px -3px 0 #b9a67c}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%}
+.slot{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px 6px;background:var(--panel2);border:3px solid var(--line);box-shadow:inset 0 0 0 2px #2b241a}
+.slot .px{opacity:.75}
+.slot small{font-family:var(--display);font-size:13px;color:var(--parch-dim)}
+/* the account tab */
+.room.online .side .lockwrap{position:static;display:block;padding:0;background:none}
+.room.online .side .lockcard{max-width:none;border-radius:0;border:3px solid var(--line);box-shadow:inset 0 0 0 2px #4a3a22;background:var(--panel2)}
+.room.online .side .plaque{border-radius:0;border:3px solid #000}
+.setbox{display:flex;flex-direction:column;gap:0}
+.setrow{border-top:2px solid #2b241a}
+.setrow input[type=checkbox]{width:22px;height:22px;min-height:0;accent-color:var(--flame)}
+.acv .foot{margin-top:auto;padding-top:10px}
+.acv .foot a{color:var(--parch-dim);font-size:12.5px}
+@media (max-width:999px){
+  .room.online .stage{display:flex;flex-direction:column;gap:10px;padding:10px 8px 14px}
+  .room.online .lcol{display:flex;flex-direction:column;gap:10px;min-width:0}
+  .room.online .side{height:min(680px,82dvh)}
+  .room.online .topbar{flex-wrap:wrap;padding:0 8px;gap:6px}
+  .room.online .rfind{order:9;flex:1 1 100%;justify-content:center;margin:0 0 6px;flex-wrap:wrap}
+  .room.online .gbox{flex-wrap:wrap;padding:4px 0}
+  .pacts{grid-auto-rows:72px}
+}
+@media (max-width:640px){ .tb-room{display:none} .acct .nm{display:none} .tb-logo span.tb-name{display:none} .tbb.acct .caret{display:none} }
+@media (max-width:380px){ .act .an{font-size:13px} .act{padding:0 5px;column-gap:5px} }
+@media (min-width:1000px){
+  .app.inroom{overflow:hidden}
+  .app.inroom .room.online{height:100dvh;min-height:0;--sw:clamp(320px,25vw,400px);--gut:16px;--store:190px}
+  .room.online .stage{display:grid;flex:1 1 auto;min-height:0;box-sizing:border-box;padding:12px var(--gut);gap:12px;justify-content:center;overflow:hidden;
+    grid-template-columns:max(520px,min(calc(100vw - var(--sw) - 12px - 2*var(--gut)),calc((100dvh - 88px - var(--store))*16/9))) var(--sw);grid-template-rows:minmax(0,1fr)}
+  .room.online .lcol{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0}
+  .room.online .stream{width:auto;flex:0 0 auto;align-self:stretch;justify-self:auto}
+  .room.online .points{flex:1 1 auto;min-height:var(--store);container-type:size;container-name:store;justify-content:center}
+  .pacts{grid-template-columns:repeat(6,minmax(0,1fr))}
+  @container store (max-width:860px){ .pacts{grid-template-columns:repeat(3,minmax(0,1fr))} }
+  @container store (min-height:268px){
+    .pacts{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(64px,96px);flex:0 1 auto}
+  }
+  @container store (min-height:330px){
+    .act{grid-template-rows:1fr auto auto auto 1fr;padding:6px 10px}
+    .act .ai{grid-row:2/4}
+    .act .ad{display:block;grid-row:4;margin-top:4px}
+  }
+}
+@media (min-width:1300px){ .app.inroom .room.online{--gut:60px} }
+@media (prefers-reduced-motion:reduce){ .act,.act *,.item *,.keeper .kp,.stand .float,.sp,#chestbtn .px,.dpmeter::after,.tb-room i::before,.stabs .px{animation:none!important;transition:none!important} .fly{display:none} }
+/* ---- round 2 (Mott): a plain, thinner DP bar; on a PC the buttons are near-square, icon top left, name along the bottom ---- */
+.dpbar{height:36px;gap:8px}
+.dpico{margin-right:0;filter:none}
+.dpnum{position:static;transform:none;flex:0 0 auto;text-shadow:none;color:#ffe7b5}
+.dpnum b{font-size:19px;font-weight:500}
+.dpnum small{color:var(--parch-dim)}
+.dpmeter{height:14px;border-width:2px;box-shadow:none;background:#0d0906}
+.dpfill{background:linear-gradient(#f3c14a 0 3px,#dc9a22 3px);box-shadow:none}
+.dpfill::after,.dpticks{display:none}
+.dpmeter.over .dpfill{background:linear-gradient(#ffe9a6 0 3px,#f3c14a 3px)}
+.dpmeter.over{box-shadow:0 0 8px rgba(255,190,60,.45)}
+.dpmeter.over::after{width:26px;opacity:.7}
+.dpbar .minus{left:44px;top:-10px}
+.dpget{margin-left:0}
+@media (min-width:1000px){
+  .app.inroom .room.online{--store:212px}
+  .room.online .points{container-type:normal}
+  .pacts{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;flex:0 0 auto}
+  .act{flex:0 0 132px;width:132px;height:100px;box-sizing:border-box;grid-template-columns:60px minmax(0,1fr);grid-template-rows:60px auto;justify-content:stretch;align-content:center;column-gap:6px;row-gap:5px;padding:6px 7px 7px}
+  .act .ai{grid-column:1;grid-row:1;width:60px;height:60px}
+  .act .ai .px{width:60px;height:60px}
+  .act .ap{grid-column:2;grid-row:1;flex-direction:column;justify-content:center;justify-self:center;align-self:center;gap:0;margin:0;width:auto;height:auto;padding:2px 6px 4px;font-size:18px}
+  .act .an{grid-column:1/3;grid-row:2;text-align:center;white-space:nowrap;max-height:none;font-size:14.5px}
+  .act .ad{display:none!important}
+}
+@media (min-width:1000px){
+  .room.online .points{container-type:inline-size}
+  @container store (max-width:880px){
+    .pacts{flex-wrap:nowrap;gap:6px}
+    .act{flex:1 1 0;width:auto;min-width:0;max-width:132px;height:92px;grid-template-columns:44px minmax(0,1fr);grid-template-rows:44px auto;column-gap:3px;padding:6px 4px 6px}
+    .act .ai{width:44px;height:44px}
+    .act .ai .px{width:40px;height:40px}
+    .act .ap{font-size:16px;padding:1px 3px 3px}
+    .act .an{font-size:12px;white-space:normal;line-height:1.05;max-height:2.1em}
+  }
+}
+/* ---- round 3 (Mott): every shop item is one button (the amount is a badge on the icon, the price is its bottom strip); wood planks divide the sections ---- */
+.shelf::before{display:none}
+.shelf{gap:8px;padding-bottom:4px}
+.shopv h3::after{display:none}
+.plank{flex:0 0 auto;height:8px;margin:8px -4px 0;background:linear-gradient(#b07a3c 0 3px,#8a5a2b 3px 6px,#5c3a1c 6px);border:3px solid var(--line);box-shadow:0 4px 0 rgba(0,0,0,.4)}
+.item{padding:0;overflow:visible;background:#261b0f;border:3px solid var(--line);box-shadow:inset 0 0 0 2px #5a4322,0 3px 0 var(--line);transition:transform .07s,background .1s}
+.item .ii{height:auto;width:100%;box-sizing:border-box;padding:8px 0 6px;align-items:center}
+.item .il{position:absolute;right:5px;top:44px;margin:0;display:flex;align-items:center;gap:0;font-family:var(--display);font-weight:700;font-size:18px;line-height:1;color:#fff;pointer-events:none;
+  text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000,2px 2px #000,-2px 2px #000,2px -2px #000,-2px -2px #000}
+.item .tag{margin:0;width:100%;box-sizing:border-box;justify-content:center;padding:2px 4px 3px;color:#ffd6dc;background:#130d07;border:0;border-top:2px solid #3d2e18;box-shadow:inset 2px 0 0 #5a4322,inset -2px 0 0 #5a4322,inset 0 -2px 0 #5a4322}
+.item:hover .tag{background:#1c130a}
+button.item:hover,button.item:focus-visible{background:#35260f;transform:translateY(-2px);box-shadow:inset 0 0 0 2px #e0a030,0 5px 0 var(--line)}
+button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,0 0 0 var(--line)}
+.item:active .tag{transform:none}
+.item.poor .tag{color:#e58f7b}
+.shelf.four{gap:5px}
+.shelf.four .item .il{font-size:13px;top:42px;right:3px}
+.shelf.four .tag{font-size:13px;color:var(--parch-dim)}
+.shelf.soon .item{opacity:.8}
+.item.locked .il{position:static;padding:3px 2px 5px;font-size:13px;font-weight:500;color:var(--parch-dim);text-shadow:none;justify-content:center;width:100%;box-sizing:border-box;background:#130d07;border-top:2px solid #3d2e18}
+.item.locked .ii{padding-bottom:8px}
+.item.locked .lk{right:calc(50% - 44px);bottom:4px}
+/* ---- round 4 (Mott): numbers use Jersey 15 (clearer digits), sized up to match; a pack you can't afford yet keeps its shine, only its price turns red ---- */
+.item.poor .ii{filter:none}
+.tbb.rubyc b{font-size:22px;line-height:1}
+.dpnum b{font-size:24px;line-height:1}
+.act .ap{font-size:21px}
+.item .il{font-size:23px;font-weight:400;top:42px}
+.item .tag{font-size:20px;line-height:1.1}
+.earn li b{font-size:19px}
+.shelf.four .item .il{font-size:16px;top:42px}
+.shelf.four .tag{font-size:16px}
+.minus,.plus{font-size:22px}
+@media (min-width:1000px){
+  .act .ap{font-size:22px}
+  @container store (max-width:880px){ .act .ap{font-size:19px} }
+}
+/* ---- round 5: daily reward by the ruby count, ruby packs as bright buttons, one account form ---- */
+.tbb.daily{padding:0 7px;background:#2a1a05;box-shadow:inset 0 0 0 2px #8a5a2b,inset 0 -5px 0 rgba(0,0,0,.3)}
+.tbb.daily:hover,.tbb.daily[aria-expanded=true]{box-shadow:inset 0 0 0 2px #ffc93a,inset 0 -5px 0 rgba(0,0,0,.3)}
+.tbb.daily .dot{position:absolute;right:-4px;top:-4px;width:8px;height:8px;background:#ff4b3e;box-shadow:0 0 0 2px #000;animation:liveblink 1.2s steps(2) infinite}
+.tbb.daily.ready .px{animation:hop 1.4s steps(4) infinite}
+.dpop{position:absolute;right:10px;top:calc(100% + 2px);z-index:30;width:324px;max-width:calc(100vw - 20px);box-sizing:border-box;padding:10px;display:flex;flex-direction:column;gap:8px;
+  background:#1a130d;border:3px solid var(--line);box-shadow:inset 0 0 0 2px #4a3a22,0 5px 0 rgba(0,0,0,.6)}
+.dpop h3{margin:0;display:flex;align-items:center;gap:6px;font-family:var(--display);font-weight:500;font-size:17px;color:#ffe7b5}
+.days{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.dday{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 0 4px;background:#261b0f;border:2px solid #000;box-shadow:inset 0 0 0 2px #3d2e18}
+.dday small{font-family:var(--display);font-size:13px;color:var(--parch-dim);white-space:nowrap}
+.dday b{font-family:var(--display);font-weight:400;font-size:21px;line-height:1;color:#ffd6dc}
+.dday.now{background:#4a1220;box-shadow:inset 0 0 0 2px #ffc93a,0 0 10px rgba(255,201,58,.35)}
+.dday.now small{color:#ffe7b5}
+.dday.now .px:not(.tick){animation:hop 1.1s steps(4) infinite}
+.dday.got{background:#17110a}
+.dday.got>.px:not(.tick),.dday.got b{opacity:.45}
+.dday .tick{position:absolute;left:50%;top:20px;margin-left:-12px}
+.dday.pop{animation:bought .55s cubic-bezier(.3,1.6,.5,1)}
+.dpop .plaque{width:100%;box-sizing:border-box}
+.dpop .plaque:disabled{opacity:.55;cursor:default}
+.dnext{margin:0;font-size:12.5px;line-height:1.35;color:var(--parch-dim);text-align:center}
+@media (max-width:999px){ .dpop{position:static;order:10;flex:1 1 100%;width:auto;max-width:none;margin:0 0 6px;box-shadow:inset 0 0 0 2px #4a3a22} }
+.shelf.rb{grid-template-columns:repeat(3,minmax(0,1fr))}
+.item.rp{text-decoration:none;background:linear-gradient(#7a1730,#2c0911);box-shadow:inset 0 0 0 2px #e8324a,0 3px 0 var(--line)}
+.item.rp .ii{overflow:hidden;background:radial-gradient(circle at 50% 62%,rgba(255,138,156,.42),transparent 62%)}
+.item.rp .ii::after{content:"";position:absolute;top:0;bottom:0;left:-45%;width:32%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.3),transparent);animation:sheen 3.4s ease-in-out infinite;pointer-events:none}
+.item.rp:nth-child(2) .ii::after{animation-delay:.5s}.item.rp:nth-child(3) .ii::after{animation-delay:1s}.item.rp:nth-child(4) .ii::after{animation-delay:1.5s}.item.rp:nth-child(5) .ii::after{animation-delay:2s}
+@keyframes sheen{0%,55%{left:-45%}100%{left:130%}}
+.item.rp .tag{color:#1a1205;background:#ffc93a;border-top:2px solid #000;box-shadow:inset 0 -3px 0 #f08a12}
+.item.rp:hover .tag{background:#ffe08a}
+.item.rp:hover,.item.rp:focus-visible{background:linear-gradient(#a32040,#3d0d19);transform:translateY(-2px);box-shadow:inset 0 0 0 2px #ffd6dc,0 5px 0 var(--line),0 0 14px rgba(232,50,74,.55)}
+.item.rp:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #ffd6dc,0 0 0 var(--line)}
+.item.rp.ad{background:linear-gradient(#235a2a,#0c2410);box-shadow:inset 0 0 0 2px #5fcf4a,0 3px 0 var(--line)}
+.item.rp.ad .ii{background:radial-gradient(circle at 50% 62%,rgba(159,230,255,.35),transparent 62%)}
+.item.rp.ad:hover,.item.rp.ad:focus-visible{background:linear-gradient(#2f7a38,#103016);box-shadow:inset 0 0 0 2px #c8ffb8,0 5px 0 var(--line),0 0 14px rgba(95,207,74,.5)}
+.item.rp.ad .tag{font-size:17px}
+.item.rp.best{grid-column:span 2;background:linear-gradient(#b0203f,#4a0f1f);box-shadow:inset 0 0 0 2px #ffc93a,0 3px 0 var(--line),0 0 12px rgba(255,201,58,.3)}
+.item.rp.best .ii{padding:2px 0 0}
+.item.rp.best .il{font-size:26px;right:8px}
+.rib{position:absolute;left:-3px;top:6px;z-index:2;padding:0 8px 1px;font-family:var(--display);font-size:14px;color:#1a1205;background:#ffc93a;border:2px solid #000;box-shadow:inset 0 -2px 0 #f08a12;transform:rotate(-3deg)}
+.item .il b{font-weight:inherit}
+.authtabs{display:flex;gap:4px;margin:0 0 10px}
+.authtabs button{flex:1 1 0;padding:6px 4px;font-family:var(--display);font-size:15px;color:var(--parch-dim);background:#130d07;border:2px solid #000;box-shadow:inset 0 0 0 2px #3d2e18;cursor:pointer}
+.authtabs button[aria-pressed=true]{color:#1a1205;background:var(--flame);box-shadow:inset 0 0 0 2px #ffe08a}
+@media (prefers-reduced-motion:reduce){ .item.rp .ii::after,.dday .px,.tbb.daily .px,.tbb.daily .dot{animation:none!important} }
+/* round 6: every ruby button green (red read as "bad"), DP packs on warm gold */
+.item.rp,.item.rp.ad{background:linear-gradient(#2a6b32,#0d2812);box-shadow:inset 0 0 0 2px #5fcf4a,0 3px 0 var(--line)}
+.item.rp .ii,.item.rp.ad .ii{background:radial-gradient(circle at 50% 62%,rgba(200,255,184,.3),transparent 62%)}
+.item.rp:hover,.item.rp:focus-visible,.item.rp.ad:hover,.item.rp.ad:focus-visible{background:linear-gradient(#38903f,#123a19);box-shadow:inset 0 0 0 2px #c8ffb8,0 5px 0 var(--line),0 0 14px rgba(95,207,74,.5)}
+.item.rp:active{box-shadow:inset 0 0 0 2px #c8ffb8,0 0 0 var(--line)}
+.item.rp.best{background:linear-gradient(#3a9a44,#12401b);box-shadow:inset 0 0 0 2px #ffc93a,0 3px 0 var(--line),0 0 12px rgba(255,201,58,.3)}
+#dppacks .item{background:linear-gradient(#7a4d10,#3a2206);box-shadow:inset 0 0 0 2px #c48a2a,0 3px 0 var(--line)}
+#dppacks .item .ii{background:radial-gradient(circle at 50% 62%,rgba(255,201,58,.3),transparent 62%)}
+#dppacks button.item:hover,#dppacks button.item:focus-visible{background:linear-gradient(#9a6416,#4a2c08);box-shadow:inset 0 0 0 2px #ffe08a,0 5px 0 var(--line),0 0 12px rgba(255,201,58,.4)}
+#dppacks .item .tag{background:#241505}
+#dppacks .item .tag{color:#1a1205;background:#ffc93a;border-top:2px solid #000;box-shadow:inset 0 -3px 0 #f08a12}
+#dppacks .item:hover .tag{background:#ffe08a}
+#dppacks .item.poor .tag{color:#9c1c2e}
+/* round 7: the store tiles under the stream as warm buttons; on a PC the name is a gold strip along the bottom */
+.act{background:linear-gradient(#4a2f0c,#261706)}
+.act:hover:not(:disabled),.act:focus-visible{background:linear-gradient(#63400f,#33200a)}
+.act.on{background:linear-gradient(#6b4712,#3a2409)}
+.act .an{text-shadow:0 2px 0 rgba(0,0,0,.6)}
+@media (min-width:1000px){
+  .act{overflow:hidden;row-gap:4px;align-content:start;padding-bottom:0}
+  .act .an{align-self:end;margin:0 -7px;padding:3px 2px 5px;color:#1a1205;text-shadow:none;font-weight:700;background:#ffc93a;border-top:2px solid #000;box-shadow:inset 0 -3px 0 #f08a12,inset 2px 0 0 #000,inset -2px 0 0 #000}
+  .act:hover .an{background:#ffe08a}
+  .act.poor .an{background:#c9a24a;box-shadow:inset 0 -3px 0 #a8742a,inset 2px 0 0 #000,inset -2px 0 0 #000}
+  .act{grid-template-rows:60px 1fr}
+  @container store (max-width:880px){
+    .act{grid-template-rows:44px 1fr;padding-bottom:0}
+    .act .an{margin:0 -4px;display:flex;align-items:center;justify-content:center;min-height:2.3em;padding:1px 2px 3px;max-height:none}
+  }
+}
+/* round 8: gold outline on the store tiles; a tile you can't afford yet is all gray, only its price is red */
+.act{box-shadow:inset 0 0 0 2px #c48a2a,inset 0 -7px 0 rgba(0,0,0,.28),0 3px 0 var(--line)}
+.act:hover:not(:disabled),.act:focus-visible{box-shadow:inset 0 0 0 2px #ffe08a,inset 0 -7px 0 rgba(0,0,0,.28),0 5px 0 var(--line),0 0 12px rgba(255,201,58,.35)}
+.act.poor,.act.poor:hover:not(:disabled),.act.poor:focus-visible{background:linear-gradient(#3b3b3b,#1d1d1d);box-shadow:inset 0 0 0 2px #7d7d7d,inset 0 -7px 0 rgba(0,0,0,.28),0 3px 0 var(--line)}
+.act.poor .ai{filter:grayscale(1) brightness(.8)}
+.act.poor .ap .px{filter:grayscale(1) brightness(.85)}
+.act.poor .ap{color:#ff5a4a;box-shadow:inset 0 0 0 2px #444}
+.act.poor .an{color:#b5b5b5}
+@media (min-width:1000px){
+  .act.poor .an,.act.poor:hover .an{color:#1c1c1c;background:#9c9c9c;box-shadow:inset 0 -3px 0 #6e6e6e,inset 2px 0 0 #000,inset -2px 0 0 #000}
+}
+/* round 9, phones: the stream, the store and the chat all on one screen (no scrolling); the store is two rows of small buttons */
+.pmsg:empty{display:none}
+@media (max-width:640px) and (min-height:560px){
+  .app.inroom .room.online{height:100dvh;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+  .room.online .topbar{flex:0 0 auto}
+  .room.online .stage{flex:1 1 auto;min-height:0;gap:6px;padding:6px}
+  .room.online .lcol{flex:0 0 auto;gap:6px}
+  .room.online .side{flex:1 1 auto;height:auto;min-height:0}
+  .room.online .chatfoot{display:none}
+  .room.online .points{padding:5px 7px 6px;gap:5px}
+  .dpbar{height:28px}
+  .pline{min-height:0}
+  .pmsg{font-size:12.5px;padding:2px 0}
+  .stabs [data-side=rewards]{display:flex}
+  .stabs button{font-size:13.5px;gap:3px;padding-left:3px;padding-right:3px}
+  .stabs [data-side=avatar]{flex:0 0 40px;font-size:0;gap:0}
+  .pline:not(:has(.pmsg:not(:empty):not([hidden]),form:not([hidden]),.gbox:not([hidden]))){display:none}
+}
+}
+/* phones: the reward buttons live in a Rewards tab beside Chat (they're moved there by placeStore) */
+.stabs [data-side=rewards]{display:none}
+.sview.rewv{padding:10px;overflow-y:auto}
+.sview.rewv .pacts{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:66px;gap:8px 6px}
+.sview.rewv .pacts{grid-auto-rows:66px;gap:8px 6px}
+.sview.rewv .act{grid-template-columns:40px minmax(0,1fr);column-gap:6px;padding:0 6px;justify-content:stretch}
+.sview.rewv .act .ai{width:40px;height:40px}
+.sview.rewv .act .ai .px{width:36px;height:36px}
+.sview.rewv .act .an{white-space:nowrap;overflow:visible;max-height:none;font-size:13.5px;letter-spacing:-.2px}
+@media (max-width:379px){ .sview.rewv .act .an{font-size:12px} }
+@media (max-width:640px) and (min-height:560px){ .stabs [data-side=rewards]{flex:1.4 1 0} .stabs [data-side=avatar],.stabs [data-side=account]{flex:0 0 36px} }
+</style>
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="app" id="app">
+  <canvas id="wall" aria-hidden="true"></canvas>
+  <div class="col">
+
+    <section class="join" id="join" aria-labelledby="signj">
+      <div class="sign" id="signj">CHAT DUNGEON</div>
+      <form class="card" id="joinform" novalidate>
+        <label for="code">Room code</label>
+        <input id="code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" value="KQ7F">
+        <div class="gap"></div>
+        <label for="name">Your name</label>
+        <input id="name" name="username" maxlength="20" autocomplete="username" placeholder="What Mott will see">
+        <div id="passrow" class="passrow" hidden>
+          <label for="pass">Password</label>
+          <input id="pass" name="password" type="password" maxlength="72" autocomplete="current-password" placeholder="This name is registered">
+        </div>
+        <p class="err" id="err" role="alert"></p>
+        <button class="plaque go" type="submit">Join</button>
+      </form>
+      <p class="fine">No account, no app. The code is on the host's screen.</p>
+      <nav class="foot" aria-label="About this site"><a href="about.html">About</a><a href="privacy.html">Privacy</a><a href="mailto:mottafier@gmail.com">Contact</a></nav>
+    </section>
+
+    <section class="recharge" id="recharge" hidden aria-labelledby="signr">
+      <h1 class="sign" id="signr">Recharge</h1>
+      <div class="card">
+        <div class="adbox" id="adbox"><b id="adcount">15</b><span>Ad space: no ad network yet, so this only stands in for one.</span></div>
+        <p id="admsg">Watch a short ad and get 20 rubies.</p>
+        <button class="plaque go" id="adclaim" disabled>Wait for it…</button>
+        <a class="plaque" href="./">Back to the stream</a>
+      </div>
+      <nav class="foot" aria-label="About this site"><a href="about.html">About</a><a href="privacy.html">Privacy</a><a href="mailto:mottafier@gmail.com">Contact</a></nav>
+    </section>
+
+    <section class="room" id="room" hidden aria-label="Chat room">
+      <div class="topbar" id="topbar">
+        <a class="tb-logo" href="./" title="Chat Dungeon"><span data-px="logo:24"></span><span class="tb-name">Chat Dungeon</span></a>
+        <span class="tb-room"><b id="tbroom"></b><i id="tblive">LIVE</i></span>
+        <div class="rfind" id="rfind" hidden role="status"><b id="rfindt"></b><small id="rfinds"></small></div>
+        <span class="tb-sp"></span>
+        <button type="button" class="tbb" id="tblogin" hidden>Log in</button>
+        <button type="button" class="tbb go" id="tbmake" hidden>Make account</button>
+        <button type="button" class="tbb daily" id="dbtn" hidden title="Daily reward" aria-label="Daily reward" aria-haspopup="true" aria-expanded="false" aria-controls="dpop"><span data-px="gift:24"></span><i class="dot" id="ddot" hidden></i></button>
+        <button type="button" class="tbb rubyc" id="rbtn" hidden title="Your rubies"><span data-px="ruby:24"></span><b id="rnum">0</b></button>
+        <button type="button" class="tbb acct" id="acctbtn" hidden aria-haspopup="true" aria-expanded="false" aria-controls="acctmenu" title="Account"><span data-px="user:24"></span><span class="nm" id="acctname"></span><svg class="caret" viewBox="0 0 9 9" aria-hidden="true" shape-rendering="crispEdges"><path d="M0 2h9v2H8v1H7v1H6v1H5v1H4V7H3V6H2V5H1V4H0z" fill="currentColor"/></svg></button>
+        <div class="menu" id="acctmenu" hidden role="menu">
+          <button type="button" role="menuitem" id="mcustom">Customize</button>
+          <button type="button" role="menuitem" id="msettings">Settings</button>
+          <button type="button" role="menuitem" id="mleave">Log out</button>
+        </div>
+        <div class="dpop" id="dpop" hidden role="dialog" aria-label="Daily rewards">
+          <h3><span data-px="gift:24"></span>Daily rewards</h3>
+          <div class="days" id="ddays"></div>
+          <button type="button" class="plaque go" id="dclaim">Claim</button>
+          <p class="dnext" id="dnext"></p>
+        </div>
+      </div>
+      <div class="head">
+        <div class="who">Room <b id="rc">KQ7F</b><i class="live" id="livetag">LIVE</i><span class="mewrap"><span id="me"></span><button type="button" class="lockbtn" id="lockbtn" hidden></button><span class="legal" hidden>· <a href="about.html" target="_blank" rel="noopener">About</a> · <a href="privacy.html" target="_blank" rel="noopener">Privacy</a></span></span></div>
+        <a class="plaque host" id="hostlink" href="instant.html">Play your own</a>
+        <button class="plaque tv" id="tvbtn" aria-pressed="false" aria-controls="stream" title="Show or hide the stream"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="1"/><path d="M8 21h8M12 17v4"/></svg><span class="lbl">Stream</span></button>
+        <button class="plaque" id="leave">Leave</button>
+      </div>
+      <div class="stage">
+        <div class="lcol" id="lcol">
+          <div class="stream" id="stream" hidden aria-label="The host's stream">
+            <button class="x" id="tvclose" aria-label="Hide the stream" title="Hide the stream">&times;</button>
+            <div class="screen" id="screen"></div>
+            <div class="adslot" id="adslot" aria-label="Advertisement">Ad space</div>
+          </div>
+          <div class="draw">
+            <div class="row"><span id="drawlabel">The dungeon picks one idea in</span><b id="clock">0:20</b></div>
+            <div class="fuse" aria-hidden="true"><i id="fuse"></i></div>
+          </div>
+          <div class="feed" id="feed" role="log" aria-live="polite"></div>
+          <div class="energy" id="energy" hidden>
+            <div class="pips" id="pips" role="img" aria-label="Energy"></div>
+            <div class="ehint" id="ehint"></div>
+            <a class="adbtn" id="adbtn" href="?recharge" target="_blank" rel="noopener" hidden title="Watch a short ad for 2 more pips"></a>
+          </div>
+          <div class="points" id="points" hidden aria-label="Dungeon Points">
+            <div class="dpbar">
+              <span class="dpico" id="dpico" data-px="suns:36"></span>
+              <span class="dpnum"><b id="pnum">0</b></span>
+              <div class="dpmeter" id="dpmeter" role="img" aria-label="Dungeon Points">
+                <div class="dpfill" id="dpfill"></div>
+                <div class="dpticks" id="dpticks"></div>
+              </div>
+              <button class="tbb dpget" id="pbuy" type="button">Get DP</button>
+            </div>
+            <div class="pacts" id="pacts">
+              <button type="button" class="act" data-act="random_enemy" data-desc="Spawn a random enemy instantly"><span class="ai" data-px="enemy:40"></span><span class="an">Random Enemy</span><span class="ap"><span data-px="suns:24"></span><i data-price="random_enemy">20</i></span><span class="ad">Spawn a random enemy instantly</span></button>
+              <button type="button" class="act" data-act="random_item" data-desc="Spawn a random item for the player instantly"><span class="ai" data-px="item:40"></span><span class="an">Random Item</span><span class="ap"><span data-px="suns:24"></span><i data-price="random_item">20</i></span><span class="ad">Spawn a random item for the player instantly</span></button>
+              <button type="button" class="act" data-act="random_gun" data-desc="Spawn a random gun for the player instantly"><span class="ai" data-px="gun:40"></span><span class="an">Random Gun</span><span class="ap"><span data-px="suns:24"></span><i data-price="random_gun">40</i></span><span class="ad">Spawn a random gun for the player instantly</span></button>
+              <button type="button" class="act" data-act="custom_enemy" data-desc="Create a custom enemy that will appear in game instantly"><span class="ai" data-px="custom:40"></span><span class="an">Custom Enemy</span><span class="ap"><span data-px="suns:24"></span><i data-price="custom_enemy">60</i></span><span class="ad">Create a custom enemy that will appear in game instantly</span></button>
+              <button type="button" class="act" data-act="random_event" data-desc="Anything you say will happen"><span class="ai" data-px="event:40"></span><span class="an">Random Event</span><span class="ap"><span data-px="suns:24"></span><i data-price="random_event">100</i></span><span class="ad">Anything you say will happen</span></button>
+              <button type="button" class="act" data-act="genie" id="geniebtn" data-desc="Spawn into the game as a genie and grant 3 wishes instantly"><span class="ai" data-px="genie:40"></span><span class="an">Become a Genie</span><span class="ap"><span data-px="suns:24"></span><i data-price="genie">200</i></span><span class="ad" id="geniesub">Spawn into the game as a genie and grant 3 wishes instantly</span></button>
+            </div>
+            <div class="pline">
+              <div class="pmsg" id="pmsg" role="status" aria-live="polite"></div>
+              <form class="pask" id="pask" hidden>
+                <label for="ptext" class="vh">What to make</label>
+                <input id="ptext" maxlength="100" autocomplete="off" enterkeyhint="send">
+                <button class="plaque go" type="submit" id="pgo">Go</button>
+                <button class="plaque" type="button" id="pcancel">Cancel</button>
+              </form>
+              <div class="gbox" id="gbox" hidden>
+                <p id="gtext">You're the genie!</p>
+                <form id="gform"><label for="gwish" class="vh">Your wish</label><input id="gwish" maxlength="100" autocomplete="off" enterkeyhint="send" placeholder="e.g. a golden rocket launcher"><button class="plaque go" type="submit" id="ggo">Wish</button></form>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="side" id="side">
+          <div class="stabs" role="tablist" aria-label="Side panel">
+            <button type="button" role="tab" data-side="chat" aria-selected="true"><span data-px="chat:24"></span>Chat</button>
+            <button type="button" role="tab" data-side="rewards" aria-selected="false"><span data-px="suns:24"></span>Rewards</button>
+            <button type="button" role="tab" data-side="shop" aria-selected="false"><span data-px="bag:24"></span>Shop</button>
+            <button type="button" role="tab" data-side="avatar" aria-selected="false"><span data-px="face:24"></span>Avatar</button>
+            <button type="button" role="tab" data-side="account" aria-selected="false" class="ic" title="Account and settings" aria-label="Account and settings"><span data-px="gear:24"></span></button>
+          </div>
+          <div class="sview chatv" data-view="chat">
+            <div class="tchat" id="tchat" aria-label="Stream chat"></div>
+            <div class="chatfoot" id="chatfoot"><span class="chatcap">Your chats come to life</span><div class="popchat" id="popchat"><a id="poplink" href="#" target="_blank" rel="noopener">Can't log in to chat? Open it in its own window</a></div></div>
+          </div>
+          <div class="sview rewv" id="rewv" data-view="rewards" hidden></div>
+          <div class="sview shopv" data-view="shop" hidden>
+            <div class="awning" aria-hidden="true"></div>
+            <div class="keeper"><span class="kp" id="keeper" data-px="keeper:72"></span><div class="bubble" id="shopmsg" role="status" aria-live="polite"></div></div>
+            <h3><span data-px="suns:24"></span>Dungeon Points</h3>
+            <div class="shelf" id="dppacks"></div>
+            <div class="plank" aria-hidden="true"></div>
+            <h3><span data-px="ruby:24"></span>Rubies</h3>
+            <div class="shelf rb" id="rubypacks">
+              <a class="item rp ad" id="shopad" href="?recharge" target="_blank" rel="noopener"><span class="ii" data-px="tv:60"></span><span class="il">+<b id="adamt">20</b><span data-px="ruby:24"></span></span><span class="tag">Watch Ad</span></a>
+              <button type="button" class="item rp" data-usd="1.99" data-n="200"><span class="ii" data-px="ruby:60"></span><span class="il">+200<span data-px="ruby:24"></span></span><span class="tag">$1.99</span></button>
+              <button type="button" class="item rp" data-usd="4.99" data-n="550"><span class="ii" data-px="ruby2:60"></span><span class="il">+550<span data-px="ruby:24"></span></span><span class="tag">$4.99</span></button>
+              <button type="button" class="item rp" data-usd="9.99" data-n="1,200"><span class="ii" data-px="ruby3:60"></span><span class="il">+1,200<span data-px="ruby:24"></span></span><span class="tag">$9.99</span></button>
+              <button type="button" class="item rp best" data-usd="19.99" data-n="2,600"><span class="rib">Best value</span><span class="ii" data-px="ruby4:72"></span><span class="il">+2,600<span data-px="ruby:24"></span></span><span class="tag">$19.99</span></button>
+            </div>
+            <div class="plank" aria-hidden="true"></div>
+            <h3><span data-px="lock:24"></span>Genie chests</h3>
+            <div class="shelf">
+              <span></span>
+              <button type="button" class="item locked" id="chestbtn"><span class="ii"><span data-px="chest:60"></span><span class="lk" data-px="lock:24"></span></span><span class="il">Coming soon</span></button>
+              <span></span>
+            </div>
+          </div>
+          <div class="sview avv" data-view="avatar" hidden>
+            <div class="stand"><span class="float" data-px="avatar:144"></span><span class="lamp" data-px="genie:80"></span></div>
+            <div class="nameplate" id="avname"></div>
+            <p class="dim">Your genie in the game.</p>
+            <div class="slots">
+              <div class="slot"><span data-px="lock:24"></span><small>Hat</small></div>
+              <div class="slot"><span data-px="lock:24"></span><small>Robe</small></div>
+              <div class="slot"><span data-px="lock:24"></span><small>Lamp</small></div>
+              <div class="slot"><span data-px="lock:24"></span><small>Trail</small></div>
+            </div>
+            <p class="dim">More looks coming soon.</p>
+          </div>
+          <div class="sview acv" data-view="account" hidden>
+            <div class="lockwrap" id="lockwrap" hidden>
+              <form class="card lockcard" id="lockform" novalidate aria-label="Account">
+                <div class="authtabs"><button type="button" id="authmake" aria-pressed="true">Make account</button><button type="button" id="authlog" aria-pressed="false">Log in</button></div>
+                <p class="lockinfo" id="lockinfo"></p>
+                <label for="authname">Name</label>
+                <input id="authname" name="username" type="text" maxlength="25" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="Letters, numbers and _">
+                <label for="newpass">Password</label>
+                <input id="newpass" name="password" type="password" maxlength="72" autocomplete="new-password">
+                <div id="pass2row"><label for="newpass2">Password again</label>
+                <input id="newpass2" type="password" maxlength="72" autocomplete="new-password"></div>
+                <p class="err" id="lockerr" role="alert"></p>
+                <div class="lockbtns"><button class="plaque" type="button" id="lockcancel">Cancel</button><button class="plaque go" type="submit" id="locksubmit">Make account</button></div>
+              </form>
+            </div>
+            <h3><span data-px="gear:24"></span>Settings</h3>
+            <div class="setbox">
+              <p class="setrow" style="margin:0"><span>Name</span><span id="setacct"></span></p>
+              <label class="setrow" for="setstream"><span>Show the stream</span><input type="checkbox" id="setstream"></label>
+            </div>
+            <button type="button" class="plaque go" id="setmake" hidden>Make account</button>
+            <button type="button" class="plaque" id="setlogin" hidden>Log in</button>
+            <button type="button" class="plaque" id="setleave" hidden>Log out</button>
+            <nav class="foot" aria-label="About this site"><a href="about.html" target="_blank" rel="noopener">About</a><a href="privacy.html" target="_blank" rel="noopener">Privacy</a><a href="mailto:mottafier@gmail.com">Contact</a></nav>
+          </div>
+        </div>
+      </div>
+      <form class="say" id="say">
+        <label for="text" style="position:absolute;left:-999em">Your idea</label>
+        <input id="text" maxlength="200" autocomplete="off" placeholder="Say something" enterkeyhint="send">
+        <button class="plaque go" type="submit">Send</button>
+      </form>
+    </section>
+
+  </div>
+</div>
+
+<script>
+/* The stream player refuses plain http pages: always use https on the real site */
+if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.hostname)) location.replace('https://'+location.host+location.pathname+location.search+location.hash);
+(function(){
+  /* The published copy (Online/publish_chat.py) fills this in: {url, key, room} of the online database. Empty = the local
+     test page (Tools/web_test.py) or a mockup. */
+  var ON={"url": "https://qxjrcdkiygobzhjvopvl.supabase.co", "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4anJjZGtpeWdvYnpoanZvcHZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxMDY1NDEsImV4cCI6MjExMDY4MjU0MX0.iWPbqh0sdKA3T2KXZHh9aWFy64pHz9Fl4K5EtjzIOBA", "room": "MOTT", "twitch": "mottafierr"};
+  var $=function(id){ return document.getElementById(id); };
+  var app=$('app'), cv=$('wall'), ctx=cv.getContext('2d'), col=document.querySelector('.col');
+  var still=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  /* ---------- pixel icons: every icon on the page is drawn here, on a small grid, and gets a black outline ---------- */
+  var PAL={k:'#0b0706',w:'#f4ecd8',s:'#b9ad94',r:'#e8324a',R:'#b3122d',d:'#6e0a1f',p:'#ff8a9c',P:'#ffd6dc',y:'#ffc93a',Y:'#f08a12',o:'#ffe9a6',
+    b:'#5a2e08',n:'#8a5a2b',N:'#6b4220',m:'#c9962e',g:'#6f6a66',G:'#47423e',l:'#a8a29a',u:'#4aa3ff',U:'#1e5fc4',c:'#9fe6ff',i:'#dff4ff',
+    v:'#8f6bd8',V:'#5b3aa6',q:'#c9a8ff',e:'#5fcf4a',E:'#2f8f2f',t:'#f1c27d',T:'#c98f52',h:'#5c3a1c',x:'#2b241a',z:'#4a4038',a:'#ead9ae',A:'#b9a67c'};
+  var ART={
+    ruby:[12,
+      '',
+      '.....pr',
+      '....Pprd',
+      '....prrd.p',
+      '.p..prrd.rd',
+      '.pr.prrdprd',
+      '.prdprrdrrd',
+      '.prdprRdrRd',
+      '.rRdpRRdRd',
+      '..zzzzzzz',
+      '...zxxxx'],
+    suns:[12,
+      '',
+      '.....yy',
+      '..y..yy..y',
+      '...yyyyyy',
+      '...yoyyyY',
+      '.yyyoyyyYyy',
+      '.yyyyyyyYyy',
+      '...yyyyYY',
+      '...yYYYYY',
+      '..y..yy..y',
+      '.....yy'],
+    enemy:[20,
+      '','',
+      '......wwwwwwww',
+      '....wwwwwwwwwwww',
+      '...wwwwwwwwwwwwww',
+      '...wwwwwwwwwwwwww',
+      '..wwwwwwwwwwwwwwww',
+      '..wwwkkkkwwkkkkwww',
+      '..wwkkkkkwwkkkkkww',
+      '..wwkkrrkwwkrrkkww',
+      '..wwkkrrkwwkrrkkww',
+      '..wwwkkkwwwwkkkwws',
+      '...wwwwwwkkwwwwws',
+      '...swwwwwkkwwwwss',
+      '....sswwwwwwwwss',
+      '.....wkwkwwkwkw',
+      '.....wwwwwwwwww',
+      '.....swkwkkwkws',
+      '......ssssssss'],
+    item:[20,
+      '','',
+      '........nnnn',
+      '........nNNn',
+      '.......llllll',
+      '........liil',
+      '........liil',
+      '.......lliill',
+      '......lliiiill',
+      '.....lliiiiiill',
+      '....lliiiiiiiill',
+      '....lrrrrrrrrrrl',
+      '....lrrprrrrrrRl',
+      '....lrpprrrprrRl',
+      '....lrrrrrrrrRRl',
+      '.....lrrrrrrRRl',
+      '......lRRRRRRl',
+      '.......llllll'],
+    gun:[20,
+      '','','','',
+      '..............y',
+      '.gggggggggggggygg',
+      '.gllllllllllllllg.o',
+      '.glGGGGGGGGGGGGGg',
+      '.ggggggggggggGGgg',
+      '..gggGGGggggggg',
+      '..nnngk.kg',
+      '..nNnngkkg',
+      '.nnNNn.gg',
+      '.nNNNn',
+      '.nNNnn',
+      '.nnnn'],
+    custom:[20,
+      '',
+      '..o..........o',
+      '..oo........oo',
+      '..ooy......yoo',
+      '...oyvvvvvvyo',
+      '..vvvvvvvvvvvv',
+      '..vvwwwvvwwwvv',
+      '..vvwkkvvwkkvv.....r',
+      '..vvwkkvvwkkvv....rpr',
+      '..vvvvvvvvvvvv...yor',
+      '..vVkwkwkwkwVv..yoY',
+      '..vVkkkkkkkkVv.yoY',
+      '...vVwkwkwkVv.yoY',
+      '....VVVVVVVV.toY',
+      '.............tt',
+      '............k'],
+    event:[20,
+      '','',
+      '......llll',
+      '....lliiiillll',
+      '...liiiiiiiiiil',
+      '..liiiiiiiiiiiill',
+      '..liiiiiiiiiiiiiil',
+      '..lsiiiiiiiiiiissl',
+      '...lsssssssssssl',
+      '....lllllllllll',
+      '.........oyy',
+      '........oyy',
+      '.......oyyyyy',
+      '..........yy',
+      '.........yy',
+      '........yy',
+      '.......y'],
+    genie:[20,
+      '',
+      '.........qq',
+      '........qvvq',
+      '.......qvvq',
+      '........vvq',
+      '.........vq',
+      '..........v',
+      '.........oo',
+      '........ommo',
+      '..mm...oyyyyyo',
+      '.m..m.oyyyyyyyy...oo',
+      '.m..myyoyyyyyyyy.oy',
+      '..mmyyyyyyyyyyyyyy',
+      '.....yyyyyyyyyyYY',
+      '......YYYYYYYYY',
+      '........YYYY',
+      '......YYYYYYYY'],
+    coins:[20,
+      '','','','','','','',
+      '.........yyyy',
+      '........yoyyyY',
+      '........yyyyYY',
+      '....yyyy.YYYY',
+      '...yoyyyY...yyyy',
+      '...yyyyYY..yoyyyY',
+      '....YYYY...yyyyYY',
+      '............YYYY'],
+    sack:[20,
+      '','',
+      '.......nn..nn',
+      '........nnnn',
+      '.......mmmmmm',
+      '........nnnn',
+      '.......nnnnnn',
+      '.....nnnnnnnnnn',
+      '....nnnnyyyynnnN',
+      '....nnnyoyyyYnnN',
+      '...nnnnyyyyyYnnNN',
+      '...nnnnyyyyYYnnNN',
+      '...nnnnnYYYYnnnNN',
+      '...nnnnnnnnnnnNNN',
+      '....nnnnnnnnnNNN',
+      '.....NNNNNNNNNN'],
+    hoard:[20,
+      '','',
+      '.....yy..yy...y',
+      '....yoyyyoyy.yoy',
+      '...yyyyyyyyyyyyyy',
+      '...yoyyyoyyyoyyyY',
+      '..nnnnnnnnnnnnnnnn',
+      '..nNNNNNNNNNNNNNNn',
+      '..mmmmmmmmmmmmmmmm',
+      '..nnnnnnnyynnnnnnn',
+      '..nnnnnnyooynnnnnN',
+      '..nnnnnnnyynnnnnnN',
+      '..nnnnnnnnnnnnnnNN',
+      '..nnnnnnnnnnnnnNNN',
+      '..mmmmmmmmmmmmmmmm',
+      '..NNNNNNNNNNNNNNNN'],
+    chest:[20,
+      '','','',
+      '...nnnnnnnnnnnnnn',
+      '..nnnnnnnnnnnnnnnn',
+      '..nnmnnnnnnnnnnmnN',
+      '..nnmnnnnnnnnnnmnN',
+      '..mmmmmmmggmmmmmmm',
+      '..nnmnnnggggnnnmnN',
+      '..nnmnnngkkgnnnmnN',
+      '..nnmnnnggggnnnmNN',
+      '..nnmnnnnnnnnnnmNN',
+      '..nnmnnnnnnnnnnmNN',
+      '..mmmmmmmmmmmmmmmm',
+      '..NNNNNNNNNNNNNNNN'],
+    lock:[12,
+      '','',
+      '....gggg',
+      '...gg..gg',
+      '...g....g',
+      '..yyyyyyyy',
+      '..yyykkyyY',
+      '..yyykkyyY',
+      '..yyyykyYY',
+      '..yYYYYYYY'],
+    chat:[12,
+      '','',
+      '..aaaaaaaa',
+      '.aaaaaaaaaa',
+      '.aakaakaaka',
+      '.aaaaaaaaaa',
+      '.aaaaaaaaaA',
+      '..aaaAAAAA',
+      '...aa',
+      '...a'],
+    bag:[12,
+      '',
+      '....mmmm',
+      '...m....m',
+      '..nnnnnnnn',
+      '..nnnnnnnN',
+      '..nnyynnnN',
+      '..nyyyynnN',
+      '..nnyynnNN',
+      '..nnnnnNNN',
+      '..NNNNNNNN'],
+    face:[12,
+      '',
+      '...hhhhhh',
+      '..hhhhhhhh',
+      '..hhtttthh',
+      '..httttttT',
+      '..tktttktT',
+      '..tttttttT',
+      '..ttkkkttT',
+      '...tttttT',
+      '....TTTT'],
+    gear:[12,
+      '',
+      '.....ll',
+      '..l.llll.l',
+      '..llllllll',
+      '...llGGll',
+      '.lllG..Glll',
+      '.lllG..Glll',
+      '...llGGll',
+      '..llllllgg',
+      '..l.llgg.g',
+      '.....gg'],
+    user:[12,
+      '','',
+      '....aaaa',
+      '...aaaaaa',
+      '...aaaaaA',
+      '...aaaaAA',
+      '....aAAA',
+      '..aaaaaaaa',
+      '.aaaaaaaaaA',
+      '.aaaaaaaAAA'],
+    logo:[12,
+      '',
+      '.xxxxxxxxxx',
+      '.xzzzzzzzzx',
+      '.xzzzzzzzzx',
+      '.xzyyzzyyzx',
+      '.xzyyzzyyzx',
+      '.xzzzzzzzzx',
+      '.xzzyyyyzzx',
+      '.xzzzzzzzzx',
+      '.xxxxxxxxxx'],
+    keeper:[24,
+      '','',
+      '.........VVVVVV',
+      '.......VVvvvvvvVV',
+      '......VvvvvvvvvvvV',
+      '.....VvvvvvvvvvvvvV',
+      '.....VvvkkkkkkkkvvV',
+      '....VvvkkkkkkkkkkvvV',
+      '....VvvkyykkkkyykvvV',
+      '....VvvkyykkkkyykvvV',
+      '....VvvkkkkkkkkkkvvV',
+      '....VvvvkkkkkkkkvvvV',
+      '.....VvvvvvvvvvvvvV',
+      '....VVvvvvvmmvvvvvVV',
+      '...VvvvvvvmyymvvvvvvV',
+      '..VvvvvvvvvmmvvvvvvvvV',
+      '..VvvvvvvvvvvvvvvvvvvV',
+      '..VvvVvvvvvvvvvvvvVvvV',
+      '..VvvVvvvvvvvvvvvvVvvV',
+      '..ttVVvvvvvvvvvvvvVVtt',
+      '....VVVVVVVVVVVVVVVV'],
+    avatar:[24,
+      '',
+      '.......hhhhhhhhhh',
+      '......hhhhhhhhhhhh',
+      '.....hhhhhhhhhhhhhh',
+      '.....hhhhtttttthhhh',
+      '.....hhtttttttttthh',
+      '.....httttttttttttT',
+      '.....ttkkttttttkktT',
+      '.....ttkkttttttkktT',
+      '.....tttttttttttttT',
+      '.....tttttkkkktttTT',
+      '......ttttttttttTT',
+      '.......TTTTTTTTTT',
+      '....uuuuuuuuuuuuuuuu',
+      '...uuuuuuuuuuuuuuuuUU',
+      '..ttuuuuuuuuuuuuuuUUtt',
+      '..ttuuuuuuuuuuuuuuUUtT',
+      '....uuuuuuuuuuuuuUUU',
+      '.....vvvvvvvvvvvVVV',
+      '......vvvvvvvvvVVV',
+      '.......qvvvvvvVV',
+      '........qvvvvVV',
+      '.........qvvV',
+      '..........qv']
+  };
+  ART.tick=[12,
+    '','',
+    '.........ee',
+    '........eeE',
+    '.......eeE',
+    '..ee..eeE',
+    '..eeeeeE',
+    '...eeeE',
+    '....eE'];
+  ART.gift=[12,
+    '',
+    '...rr..rr',
+    '..r..rr..r',
+    '...rrrrrr',
+    '.yyyyrryyyy',
+    '.yyyyrryyyY',
+    '.YYYYRRYYYY',
+    '..yyyrryyY',
+    '..yyyrryyY',
+    '..yyyrryyY',
+    '..yYYRRYYY'];
+  ART.tv=[20,
+    '','',
+    '......l......l',
+    '.......l....l',
+    '........l..l',
+    '..GGGGGGGGGGGGGGGG',
+    '..GggggggggggggggG',
+    '..GgUUUUUUUUUUUUgG',
+    '..GgUuuuuuuuuuuUgG',
+    '..GgUuuwuuuuuuuUgG',
+    '..GgUuuwwwuuuuuUgG',
+    '..GgUuuwwwwwuuuUgG',
+    '..GgUuuwwwuuuuuUgG',
+    '..GgUuuwuuuuuuuUgG',
+    '..GgUuuuuuuuuuuUgG',
+    '..GgUUUUUUUUUUUUgG',
+    '..GggggggggggggggG',
+    '..GGGGGGGGGGGGGGGG',
+    '....GG........GG'];
+  /* ruby piles for the ruby packs: the one crystal stamped a few times on a bigger grid (later stamps sit in front) */
+  function pile(name,n,at,under){ var g=[], x, y, i; for(y=0;y<n;y++){ g.push([]); for(x=0;x<n;x++) g[y].push('.'); }
+    function put(a,ox,oy){ for(var y=1;y<a.length;y++) for(var x=0;x<a[y].length;x++){ var c=a[y].charAt(x); if(c!=='.'&&g[y-1+oy]&&ox+x<n&&ox+x>=0) g[y-1+oy][ox+x]=c; } }
+    if(under) put(ART[under[0]],under[1],under[2]);
+    for(i=0;i<at.length;i++) put(ART.ruby,at[i][0],at[i][1]);
+    ART[name]=[n].concat(g.map(function(r){ return r.join(''); })); }
+  pile('ruby2',20,[[1,2],[7,7]]);
+  pile('ruby3',20,[[4,0],[0,7],[8,8]]);
+  pile('ruby4',24,[[6,0],[0,4],[12,5],[3,11],[10,12]]);
+  /* the DP sun with its letters, drawn by rule on a 24 grid */
+  (function(){ var n=24, g=[], x, y, D=['bb.','b.b','b.b','b.b','bb.'], P=['bbb','b.b','bbb','b..','b..'];
+    for(y=0;y<n;y++){ var row=''; for(x=0;x<n;x++){ var dx=x-11.5, dy=y-11.5, r=Math.sqrt(dx*dx+dy*dy), ch='.';
+        if(r<7.3) ch=(dx+dy>5.2)?'Y':(r<6&&dx+dy<-4.5&&dx+dy>-7.5)?'o':'y';
+        else if((Math.abs(dx)<1&&Math.abs(dy)<10.6)||(Math.abs(dy)<1&&Math.abs(dx)<10.6)) ch='y';
+        else if(Math.abs(Math.abs(dx)-7)<1.1&&Math.abs(Math.abs(dy)-7)<1.1) ch='y';
+        if(y>=9&&y<14){ if(x>=8&&x<11&&D[y-9][x-8]==='b') ch='b'; if(x>=13&&x<16&&P[y-9][x-13]==='b') ch='b'; }
+        row+=ch; } g.push(row); }
+    ART.sun=[n].concat(g); })();
+  var pxCache={};
+  function pix(name,size,cls){
+    var a=ART[name]; if(!a) return ''; var n=a[0], body=pxCache[name];
+    if(!body){ var g=[], x, y, s; for(y=0;y<n;y++){ s=a[y+1]||''; while(s.length<n) s+='.'; g.push(s.slice(0,n).split('')); }
+      var out=g.map(function(r){ return r.slice(); });
+      for(y=0;y<n;y++) for(x=0;x<n;x++) if(g[y][x]==='.'){
+        if((y>0&&g[y-1][x]!=='.')||(y<n-1&&g[y+1][x]!=='.')||(x>0&&g[y][x-1]!=='.')||(x<n-1&&g[y][x+1]!=='.')) out[y][x]='k'; }
+      body=''; for(y=0;y<n;y++){ x=0; while(x<n){ var c=out[y][x]; if(c==='.'){ x++; continue; } var x0=x; while(x<n&&out[y][x]===c) x++;
+          body+='<rect x="'+x0+'" y="'+y+'" width="'+(x-x0)+'" height="1" fill="'+(PAL[c]||'#f0f')+'"/>'; } }
+      pxCache[name]=body; }
+    return '<svg class="px'+(cls?' '+cls:'')+'" width="'+size+'" height="'+size+'" viewBox="0 0 '+n+' '+n+'" shape-rendering="crispEdges" aria-hidden="true">'+body+'</svg>';
+  }
+
+  /* ---------- the wall (same bricks and torches as the play page) ---------- */
+  var T=4, W=0, H=0, base, f0, f1, img, torch=[{x:0,y:0},{x:0,y:0}];
+  function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; var t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  var STONES=[[156,134,96],[143,122,86],[163,141,102],[134,114,79],[150,128,90],[128,110,80]], MOSS=[112,124,74], MORTAR=[52,43,30];
+  function build(){
+    W=Math.ceil(app.clientWidth/T); H=Math.ceil(app.clientHeight/T); cv.width=W; cv.height=H;
+    base=new Uint8ClampedArray(W*H*3); f0=new Float32Array(W*H); f1=new Float32Array(W*H); img=ctx.createImageData(W,H);
+    var r=rng(11), BW=12, BH=6, x, y, i;
+    for(var row=0; row*BH<H; row++){ var off=(row%2?BW/2:0)+Math.floor(r()*2);
+      for(var c0=-1; c0*BW<W; c0++){ var c=r()<.03?MOSS:STONES[Math.floor(r()*STONES.length)], sh=.9+r()*.2;
+        for(var by=0; by<BH; by++) for(var bx=0; bx<BW; bx++){ x=c0*BW+off+bx; y=row*BH+by; if(x<0||x>=W||y>=H) continue; i=(y*W+x)*3;
+          var m=(bx===0||by===0), k=m?1:sh*(by===1?1.08:by===BH-1?.86:1)*(.95+r()*.1), s=m?MORTAR:c; base[i]=s[0]*k; base[i+1]=s[1]*k; base[i+2]=s[2]*k; } } }
+    var a=app.getBoundingClientRect(), cr=col.getBoundingClientRect(), wide=a.width>=760;
+    var st=wide&&app.classList.contains('theatre')?document.getElementById('stream'):null;
+    torch.hide=false;
+    if(app.classList.contains('inroom')){  /* the online page: a torch in each gutter beside the stream and the side panel, when there's room */
+      var lc=$('lcol').getBoundingClientRect(), sd=$('side').getBoundingClientRect(), GL=lc.left-a.left, GR=a.right-Math.max(sd.right,lc.right);
+      torch.hide=GL<44||wide===false; torch[0].x=Math.round(GL/2/T); torch[1].x=Math.round((a.width-GR/2)/T);
+      torch[0].y=torch[1].y=Math.round((lc.top-a.top+Math.min(lc.height*.32,260))/T); }
+    else if(st&&!st.hidden){ var sr=st.getBoundingClientRect();  /* torches right beside the stream, where there's wall to hang them on */
+      /* with no wall to spare they sit in the gutters at the stream's edges (partly behind it), so the light still spills round it */
+      var L=sr.left-a.left, R=document.getElementById('feed').getBoundingClientRect().left-sr.right;
+      torch[0].x=L>=44?Math.round(L/T)-6:Math.round(L/2/T);
+      torch[1].x=R>=44?Math.round((sr.right-a.left)/T)+5:Math.round((sr.right-a.left+R/2)/T);
+      torch[0].y=torch[1].y=Math.round((sr.top-a.top+Math.min(sr.height*.3,220))/T); }
+    else if(wide){ torch[0].x=Math.round((cr.left-a.left)/T)-11; torch[1].x=Math.round((cr.right-a.left)/T)+10; torch[0].y=torch[1].y=Math.round(H*.3); }
+    else { torch[0].x=7; torch[1].x=W-8; var hdE=document.querySelector('.room:not([hidden]) .head, .join:not([hidden]) .sign, .recharge:not([hidden]) .sign'), hd=hdE?hdE.getBoundingClientRect():{top:a.top+40,bottom:a.top+80,height:40,left:a.left,right:a.right,width:a.width};
+      torch[0].y=torch[1].y=Math.round((hd.top+hd.height/2-a.top)/T)-2; }
+    for(y=0; y<H; y++) for(x=0; x<W; x++){ i=y*W+x; var p=x-torch[0].x, q=y-(torch[0].y-4), u=x-torch[1].x, v=y-(torch[1].y-4);
+      f0[i]=1.3/(1+(p*p+q*q)/900); f1[i]=1.3/(1+(u*u+v*v)/900); }
+  }
+  var fr=rng(99);
+  function px(x,y,c){ if(x<0||y<0||x>=W||y>=H) return; var j=(y*W+x)*4, d=img.data; d[j]=c[0]; d[j+1]=c[1]; d[j+2]=c[2]; }
+  function paint(){
+    var d=img.data, n=W*H, I0=still?1:.86+fr()*.14, I1=still?1:.86+fr()*.14;
+    for(var i=0, j=0, k=0; i<n; i++, j+=4, k+=3){ var warm=Math.round(Math.min(I0*f0[i]+I1*f1[i],1.3)*14)/14;
+      d[j]=base[k]*(.26+warm); d[j+1]=base[k+1]*(.27+warm*.84); d[j+2]=base[k+2]*(.34+warm*.6); d[j+3]=255; }
+    for(var t=0; t<2&&!torch.hide; t++){ var x=torch[t].x, y=torch[t].y;
+      for(var s=0; s<9; s++){ px(x,y+2+s,[70,46,24]); px(x-1,y+2+s,[46,30,16]); }
+      for(var c=-2; c<=2; c++){ px(x+c,y,[58,54,52]); px(x+c,y+1,[30,28,28]); }
+      px(x-3,y-1,[30,28,28]); px(x+3,y-1,[30,28,28]);
+      var hgt=8+(still?0:Math.floor(fr()*3)), sway=still?0:Math.round((fr()-.5)*1.6);
+      for(var r2=0; r2<hgt; r2++){ var half=Math.max(0,2.6-r2*.36+(still?0:(fr()-.5)*.9)), cx=x+Math.round(sway*r2/hgt);
+        for(var o=-3; o<=3; o++){ var ad=Math.abs(o); if(ad>half) continue;
+          px(cx+o,y-1-r2, ad<half-1.4&&r2<hgt-3?[255,241,168]:ad<half-.6?[255,178,58]:[226,83,27]); } }
+    }
+    ctx.putImageData(img,0,0);
+  }
+  var rz; function layout(){ clearTimeout(rz); rz=setTimeout(function(){ build(); paint(); },60); }
+  build(); paint(); if(!still) setInterval(paint,110);
+  window.addEventListener('resize',layout); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(layout);
+
+  /* ---------- joining ---------- */
+  var me='', code='KQ7F';
+  try{ $('name').value=localStorage.getItem('cdName')||''; }catch(e){}
+  if(ON){ $('code').value=ON.room||''; $('code').hidden=true; document.querySelector('label[for=code]').hidden=true; document.querySelector('.card .gap').hidden=true;
+    document.querySelector('.fine').textContent='Pick a name. Make it an account to earn rubies and mess with the stream.';
+    $('hostlink').hidden=true; $('text').maxLength=100; $('join').hidden=true; }
+  try{ var h=(location.hash||'').replace('#','').toUpperCase(); if(/^[A-Z0-9]{4}$/.test(h)) $('code').value=h; }catch(e){}
+  var autoJoin=!!(ON&&$('name').value);  /* (the online page: a remembered name goes straight in, see tryJoin) */
+  /* ---------- names: remembered on this device; a registered (locked) name needs its password once per device ----------
+     Like Pokemon Showdown: any free name can be used; "Lock name" sets a password so only you can chat as it. The login
+     token from the database is kept in localStorage (cdTok, for the name in cdTokName). */
+  function store(k,v){ try{ if(v==null) localStorage.removeItem(k); else localStorage.setItem(k,v); }catch(e){} }
+  function load(k){ try{ return localStorage.getItem(k)||''; }catch(e){ return ''; } }
+  function tokenFor(n){ return load('cdTokName').toLowerCase()===String(n||'').toLowerCase()?load('cdTok'):''; }
+  /* the token is only sent when there is one, so chat keeps working against a database from before names */
+  /* a failed fetch is a connection problem; anything else is the server's own message, shown so it can be reported */
+  function srvErr(e){ var m=String(e&&e.message||''); return (!m||e instanceof TypeError)?'Couldn\'t reach the server. Try again.':'Server said: '+m.slice(0,120); }
+  function withTok(a){ var t=tokenFor(me); if(t) a.q_token=t; return a; }
+  var locked=false, joining=false;
+  function enter(c,n){
+    me=n; code=c; if(n) store('cdName',n);
+    $('err').textContent=''; $('pass').value=''; $('passrow').hidden=true; $('rc').textContent=c; $('me').textContent='You are '+n+(ON?'':' · 5 in the room');
+    drawLock(); $('join').hidden=true; $('room').hidden=false; showStream(wantStream()); layout(); start(); if(!ON) $('text').focus();
+  }
+  function drawLock(){ var b=$('lockbtn'); if(!ON){ b.hidden=true; return; } if(typeof drawTop==='function') drawTop(); b.hidden=false; b.classList.toggle('on',locked);
+    b.innerHTML='<svg viewBox="0 0 9 11" aria-hidden="true"><path d="'+(locked?'M2 4V3a2.5 2.5 0 0 1 5 0v1h1v7H1V4zm1 0h3V3a1.5 1.5 0 0 0-3 0z':'M2 4V3a2.5 2.5 0 0 1 5 0h-1a1.5 1.5 0 0 0-3 0v1h5v7H1V4z')+'"/></svg>'+(locked?'':'Make account');
+    b.title=locked?'Your account (your name is locked with a password)':'Make an account: lock your name and get free Dungeon Points'; b.setAttribute('aria-label',b.title); }
+  function tryJoin(auto){
+    if(joining) return; var c=$('code').value.trim().toUpperCase(), n=$('name').value.trim().replace(/[^A-Za-z0-9_]/g,'').slice(0,25), pw=$('pass').value;
+    if(c.length<4){ $('err').textContent='Room codes are 4 letters.'; $('code').focus(); return; }
+    if(!n){ $('err').textContent=ON?'Pick a name (letters, numbers and _).':'Pick a name first.'; $('name').focus(); return; }
+    if(!ON){ locked=false; return enter(c,n); }
+    joining=true;
+    var go=function(){ joining=false; };
+    if(!$('passrow').hidden&&pw){
+      rpc('login_name',{q_name:n,q_password:pw}).then(function(rows){ go(); var r=rows&&rows[0];
+        if(!r||!r.token){ $('err').textContent='Wrong password for '+n+'.'; $('pass').select(); return; }
+        store('cdTok',r.token); store('cdTokName',r.name); locked=true; enter(c,r.name);
+      }).catch(function(e){ go(); $('err').textContent=String(e&&e.message)==='slow down'?'Too many tries. Wait a few minutes and try again.':srvErr(e); });
+      return;
+    }
+    rpc('name_status',{q_name:n,q_token:tokenFor(n)}).then(function(rows){ go(); var r=rows&&rows[0]||{};
+      if(r.reserved){ $('err').textContent='That name belongs to a streamer. Pick another.'; if(!auto) $('name').focus(); return; }
+      if(r.registered&&!r.mine){ $('passrow').hidden=false; $('err').textContent=n+' is locked with a password. Enter it, or pick another name.'; $('pass').focus(); return; }
+      locked=!!r.registered; enter(c,r.name||n);
+    }).catch(function(){ go(); locked=false; enter(c,n); });  /* (a database without names yet: join as before) */
+  }
+  $('joinform').addEventListener('submit',function(e){ e.preventDefault(); tryJoin(false); });
+  $('name').addEventListener('input',function(){ if(!$('passrow').hidden){ $('passrow').hidden=true; $('pass').value=''; $('err').textContent=''; } });
+  /* ---- the account form in the side panel: make an account (name + password) or log in. Guests only meet it when they
+     press a Dungeon Points button, claim rubies, or choose to. ---- */
+  var authMode='make';
+  function drawAuth(){ var lg=authMode==='login'; $('authmake').setAttribute('aria-pressed',lg?'false':'true'); $('authlog').setAttribute('aria-pressed',lg?'true':'false');
+    $('pass2row').hidden=lg; $('newpass').autocomplete=lg?'current-password':'new-password'; $('newpass').placeholder=lg?'':'At least 6 characters';
+    $('locksubmit').textContent=lg?'Log in':'Make account'; $('lockerr').textContent='';
+    $('lockinfo').innerHTML=lg?'Welcome back.':'Free <b>Dungeon Points</b> every day, and <b>rubies</b> to spend in the shop.'; }
+  function openAccount(mode){ if(locked) return; authMode=mode==='login'?'login':'make'; drawAuth(); $('newpass').value=''; $('newpass2').value='';
+    if(!$('authname').value) $('authname').value=load('cdName');
+    $('lockwrap').hidden=false; sideTab('account',true); ($('authname').value?$('newpass'):$('authname')).focus(); }
+  $('authmake').addEventListener('click',function(){ authMode='make'; drawAuth(); }); $('authlog').addEventListener('click',function(){ authMode='login'; drawAuth(); });
+  $('lockbtn').addEventListener('click',openAccount);
+  $('lockcancel').addEventListener('click',function(){ $('lockwrap').hidden=true; wantDaily=false; drawTop(); });
+  function signedIn(name,tok,isNew){ store('cdTok',tok); store('cdTokName',name); store('cdName',name); me=name; locked=true; $('lockwrap').hidden=true; $('newpass').value=''; $('newpass2').value='';
+    drawLock(); sideTab('chat'); pmsg(isNew?'Account made! You get free Dungeon Points every day.':'Welcome back, '+name+'.','ok'); if(isNew) wantDaily=true; myPoints(); }
+  $('lockform').addEventListener('submit',function(e){ e.preventDefault(); var n=$('authname').value.trim().replace(/[^A-Za-z0-9_]/g,'').slice(0,25), a=$('newpass').value, b=$('newpass2').value, er=$('lockerr'), sb=$('locksubmit');
+    if(!n){ er.textContent='Pick a name (letters, numbers and _).'; $('authname').focus(); return; }
+    if(sb.disabled) return;
+    if(authMode==='login'){ if(!a){ er.textContent='Type your password.'; return; } sb.disabled=true;
+      rpc('login_name',{q_name:n,q_password:a}).then(function(rows){ sb.disabled=false; var r=rows&&rows[0];
+        if(!r||!r.token){ er.textContent='Wrong name or password.'; $('newpass').select(); return; } signedIn(r.name||n,r.token,false);
+      }).catch(function(e2){ sb.disabled=false; er.textContent=String(e2&&e2.message)==='slow down'?'Too many tries. Wait a few minutes and try again.':srvErr(e2); });
+      return; }
+    if(a.length<6){ er.textContent='Use at least 6 characters.'; return; } if(a!==b){ er.textContent='The two passwords don\'t match.'; return; }
+    sb.disabled=true;
+    rpc('register_name',{q_name:n,q_password:a}).then(function(tok){ sb.disabled=false; signedIn(n,tok,true); })
+    .catch(function(e2){ sb.disabled=false; var m=String(e2&&e2.message||'');
+      er.textContent={'taken':'That name is taken. If it\'s yours, log in.','reserved':'That name belongs to a streamer.','slow down':'You can make one account a day. Try again tomorrow.','short password':'Use 6 to 72 characters.','bad name':'That name can\'t be used. Try another.'}[m]||srvErr(e2); });
+  });
+  $('leave').addEventListener('click',function(){ stop(); app.classList.remove('inroom'); $('lockwrap').hidden=true; showStream(false,true); $('room').hidden=true; $('join').hidden=false; $('feed').textContent=''; pill.hidden=true; layout(); });
+
+  /* ---------- the host's stream ----------
+     Twitch's player, embedded under the room header. On by default (handy on a phone), one tap hides it and the choice is
+     remembered, for people who have chat on the phone and the stream on a PC. Hidden = the player is removed, so it stops
+     using data. The channel comes from the room (the server will know the host's Twitch); for now ?channel=name sets it. */
+  var channel='';
+  /* a streamer's own page is chatdungeon.io/live/<twitch name> (the link the bot posts in their chat) */
+  var want='';
+  try{ var lm=/^\/live\/([A-Za-z0-9_]{3,25})\/?$/.exec(location.pathname); want=lm?lm[1]:(new URLSearchParams(location.search).get('channel')||'').replace(/[^A-Za-z0-9_]/g,'').slice(0,25); }catch(e){}
+  channel=want; if(ON&&ON.twitch&&!channel) channel=ON.twitch;
+  /* the online page goes straight in. A remembered account is checked; everyone else watches as a guest. */
+  function siteIn(){ var n=load('cdTokName'), t=load('cdTok'), c0=String(ON.room||'').toUpperCase();
+    function go(c){ if(!n||!t){ locked=false; enter(c,''); return; }
+      rpc('name_status',{q_name:n,q_token:t}).then(function(rows){ var r=rows&&rows[0]||{};
+        if(r.registered&&r.mine){ locked=true; enter(c,r.name||n); } else { store('cdTok',null); store('cdTokName',null); locked=false; enter(c,''); }
+      }).catch(function(){ locked=true; enter(c,n); }); }
+    if(want&&want.toLowerCase()!==String(ON.twitch||'').toLowerCase())
+      rpc('room_for',{q_twitch:want}).then(function(x){ if(x&&typeof x==='string') go(x); else { channel=ON.twitch||''; go(c0); } }).catch(function(){ channel=ON.twitch||''; go(c0); });
+    else go(c0); }
+  function wantStream(){ try{ return localStorage.getItem('cdStream')!=='off'; }catch(e){ return true; } }
+  function showStream(on,keepChoice){
+    var box=$('stream'), scr=$('screen');
+    box.hidden=!on; $('tvbtn').setAttribute('aria-pressed',on?'true':'false');
+    app.classList.toggle('theatre',on&&!$('room').hidden);
+    if(!keepChoice){ try{ localStorage.setItem('cdStream',on?'on':'off'); }catch(e){} }
+    scr.textContent='';
+    if(!on) return;
+    if(!channel){ scr.innerHTML='<div class="off">The host\'s stream shows here<small>when they\'re live on Twitch</small></div>'; return; }
+    var f=document.createElement('iframe');
+    /* Twitch only plays inside pages on https (localhost aside) whose address is listed as a parent */
+    var host=location.hostname||'localhost', parents=[host], bare=host.replace(/^www\./,'');
+    if(bare!==host) parents.push(bare); else if(host.indexOf('.')>0&&!/^[\d.]+$/.test(host)) parents.push('www.'+host);
+    f.src='https://player.twitch.tv/?channel='+encodeURIComponent(channel)+parents.map(function(h){ return '&parent='+encodeURIComponent(h); }).join('')+'&autoplay=true&muted=false';
+    f.title=channel+' on Twitch'; f.allow='autoplay; fullscreen; picture-in-picture'; f.allowFullscreen=true;
+    scr.appendChild(f);
+  }
+  $('tvbtn').addEventListener('click',function(){ showStream($('stream').hidden); layout(); });
+  $('tvclose').addEventListener('click',function(){ showStream(false); layout(); $('tvbtn').focus(); });
+  $('hostlink').addEventListener('click',function(e){ if(this.getAttribute('href')==='#'){ e.preventDefault(); sys('On the real site this opens the play page.'); } });
+
+  /* ---------- the room (simulated: four friends, a draw every 20 seconds) ---------- */
+  var feed=$('feed'), ROUND=20, left=ROUND, timers=[], pool=[], mine=null;
+  var BOTS=[['sam','#7dd3fc'],['priya','#f0abfc'],['jonno','#86efac'],['megthemod','#fca5a5']];
+  var IDEAS=['a goblin that sells you bad advice','make it rain angry ducks','a skeleton DJ that drops beats on him','spawn 5 angry clowns','give mott a banana launcher',
+             'a knight made of spoons','goo him','a mimic that looks like the exit door','heal him, he looks rough','a very polite dragon'];
+  /* The feed keeps the last 200 lines. Scrolled up to read back, it stays put and a "new messages" pill says there's more. */
+  var pill=document.createElement('button'); pill.type='button'; pill.className='newpill'; pill.hidden=true; pill.textContent='\u2193 New messages';
+  pill.addEventListener('click',function(){ feed.scrollTop=feed.scrollHeight; pill.hidden=true; });
+  function nearEnd(){ return feed.scrollHeight-feed.scrollTop-feed.clientHeight<60; }
+  function place(d,near){ if(pill.parentNode!==feed) feed.appendChild(pill); feed.insertBefore(d,pill);
+    while(feed.children.length>201){ var f=feed.firstChild; if(f===pill) break; feed.removeChild(f); }
+    if(near) feed.scrollTop=feed.scrollHeight; else if(d.className.indexOf(' me')<0) pill.hidden=false; }
+  function add(cls,html){ var near=nearEnd(), d=document.createElement('div'); d.className='line '+cls; d.innerHTML=html; place(d,near); return d; }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function sys(t){ add('sys',esc(t)); }
+  function botSay(){ var b=BOTS[Math.floor(Math.random()*BOTS.length)], t=IDEAS[Math.floor(Math.random()*IDEAS.length)];
+    add('','<span class="n" style="color:'+b[1]+'">'+b[0]+'</span> '+esc(t)); pool=pool.filter(function(p){ return p.who!==b[0]; }); pool.push({who:b[0],text:t});
+    timers.push(setTimeout(botSay,4000+Math.random()*6000)); }
+  function tickClock(){ $('clock').textContent='0:'+(left<10?'0':'')+left; $('fuse').style.transform='scaleX('+(left/ROUND)+')'; }
+  function tick(){ left--; if(left<=0){ draw(); left=ROUND; } tickClock(); }
+  function draw(){
+    if(!pool.length){ sys('No ideas this round.'); return; }
+    var win=(mine&&Math.random()<.6)?mine:pool[Math.floor(Math.random()*pool.length)];
+    add('pick','The dungeon picked <b>'+esc(win.who)+'</b>: '+esc(win.text));
+    if(mine){ var st=mine.st;
+      if(win===mine){ st.className='st win'; st.textContent='Picked. The dungeon is building it';
+        timers.push(setTimeout(function(){ st.textContent='It is in the room with Mott. Watch the screen'; },4000)); }
+      else { st.className='st lose'; st.textContent='Not picked this round. Send another'; } }
+    pool=[]; mine=null;
+  }
+  function start(){ if(ON) return onlineStart(); if(live) return liveStart(); left=ROUND; pool=[]; mine=null; tickClock();
+    sys('Type anything: an enemy, a weapon, armor, an ally, a bomb. Every 20 seconds the dungeon picks one idea and builds it in front of Mott.');
+    add('','<span class="n" style="color:#7dd3fc">sam</span> a goblin that sells you bad advice'); pool.push({who:'sam',text:'a goblin that sells you bad advice'});
+    add('','<span class="n" style="color:#f0abfc">priya</span> give mott a banana launcher'); pool.push({who:'priya',text:'give mott a banana launcher'});
+    timers.push(setInterval(tick,1000)); timers.push(setTimeout(botSay,3000)); }
+  function stop(){ timers.forEach(function(t){ clearTimeout(t); clearInterval(t); }); timers=[]; }
+  feed.addEventListener('scroll',function(){ if(nearEnd()) pill.hidden=true; },{passive:true});
+  $('say').addEventListener('submit',function(e){ e.preventDefault(); var box=$('text'), t=box.value.trim(); if(!t) return;
+    if(ON) return onlineSend(box,t);
+    if(live) return liveSend(box,t);
+    if(mine){ mine.st.className='st'; mine.st.textContent='Replaced by your newer idea'; pool=pool.filter(function(p){ return p!==mine; }); }
+    var d=add('me','<span class="n">'+esc(me)+'</span> '+esc(t)+'<span class="st">In the draw. One idea each per round</span>');
+    mine={who:me,text:t,st:d.querySelector('.st')}; pool.push(mine); box.value=''; feed.scrollTop=feed.scrollHeight; pill.hidden=true; });
+
+  /* ---------- live mode: served by Tools/web_test.py (Test Websites.cmd), ideas go to the real game ----------
+     /api/status answers only there; the hosted mockup keeps its pretend room. Ideas go to chat.py like any chat line
+     (/api/send -> its phone chat port), so they're read, picked and built exactly as Twitch chat is. */
+  var live=false, liveTimer=null, liveShown=null;
+  if(!ON) try{ fetch('/api/status',{cache:'no-store'}).then(function(r){ return r.ok?r.json():null; }).then(function(j){ if(j&&typeof j.game==='boolean') live=true; }).catch(function(){}); }catch(e){}
+  function nameColor(n){ var C=['#ff6b6b','#5ad1ff','#7ee081','#ffb84d','#c792ff','#ff8ad8','#64e3c8','#ffd84d']; var h=0; for(var i=0;i<n.length;i++) h=(h*31+n.charCodeAt(i))>>>0; return C[h%C.length]; }
+  function liveStatus(){
+    fetch('/api/status',{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+      var txt=j.game?'connected':(j.chat?'waiting for the game page':'chat tool starting');
+      $('clock').textContent=j.game?'Live':'Offline'; $('fuse').style.transform='scaleX('+(j.game?1:0)+')';
+      if(txt!==liveShown){ liveShown=txt; sys(j.game?'The game is connected. Your ideas go straight to it.':(j.chat?'Waiting for the game. Open the game page and click to play.':'The chat tool is starting...')); }
+    }).catch(function(){ $('clock').textContent='Offline'; });
+  }
+  function liveStart(){ pool=[]; mine=null; liveShown=null;
+    $('drawlabel').textContent='Local game';
+    sys('Test mode on this PC: what you type goes to the game running in the other tab, the same way Twitch chat does.');
+    liveStatus(); liveTimer=setInterval(liveStatus,2000); timers.push(liveTimer); }
+  function liveSend(box,t){
+    var d=add('me','<span class="n">'+esc(me)+'</span> '+esc(t)+'<span class="st">Sending...</span>'), st=d.querySelector('.st');
+    box.value=''; feed.scrollTop=feed.scrollHeight;
+    fetch('/api/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:me,text:t,color:nameColor(me)})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){ if(j.ok){ st.className='st win'; st.textContent='Sent to the dungeon. Watch the game tab'; } else { st.className='st lose'; st.textContent=j.message||'Not sent'; } })
+      .catch(function(){ st.className='st lose'; st.textContent='Could not reach the test server. Is Test Websites.cmd still open?'; });
+  }
+
+  /* ---------- online mode: the published page. Chat goes through the online database (send_chat), never to Mott's PC
+     directly: chat.py on the PC takes it from there (Tools/chat.py online_requests) and says what became of each line.
+     The room is open only while Mott's game runs. ---------- */
+  var seen={}, lastId=0, roomOpen=null;
+  function rpc(name,args){
+    var h={'Content-Type':'application/json','apikey':ON.key}; if(ON.key.indexOf('eyJ')===0) h.Authorization='Bearer '+ON.key;
+    return fetch(ON.url+'/rest/v1/rpc/'+name,{method:'POST',headers:h,body:JSON.stringify(args)}).then(function(r){
+      return r.text().then(function(t){ var j=null; try{ j=t?JSON.parse(t):null; }catch(e){}
+        if(!r.ok) throw new Error((j&&j.message)||('error '+r.status)); return j; }); });
+  }
+  function onlineRoom(){
+    if(document.hidden) return;
+    rpc('room_info',{q_code:code}).then(function(rows){
+      var r=rows&&rows[0], open=!!(r&&r.open);
+      if(r&&r.twitch&&!channel){ channel=r.twitch; if(!$('stream').hidden) showStream(true,true); showChat(); }
+      $('clock').textContent=open?'Live':'Offline'; $('fuse').style.transform='scaleX('+(open?1:0)+')'; $('livetag').classList.toggle('on',open); $('tblive').classList.toggle('on',open);
+      if(open!==roomOpen){ roomOpen=open;
+        if(!r) sys('There is no room with that code.'); else if(open) sys('Mott\'s game is live. What you send goes straight into it.'); }
+    }).catch(function(){ $('clock').textContent='Offline'; });
+  }
+  /* ---- status chips: the little icon right of each line ---- */
+  var ICONS={
+    enemy:['.######.','########','#..##..#','#..##..#','########','.##..##.','.######.','.#.##.#.'],
+    weapon:['......##','.....###','....###.','#..###..','.####...','..##....','.#.#....','#.......'],
+    armor:['########','#......#','#......#','#......#','.#....#.','.#....#.','..#..#..','...##...'],
+    powerup:['..####..','...##...','...##...','.######.','########','########','########','.######.'],
+    throwable:['.....#..','....#.#.','..####..','.######.','########','########','.######.','..####..'],
+    ally:['.##..##.','########','########','########','.######.','..####..','...##...','........'],
+    curse:['....###.','...###..','..###...','.######.','...###..','..###...','.##.....','#.......'],
+    talk:['########','#......#','#.#.#..#','#......#','########','.#......','#.......','........'],
+    ok:['.......#','......##','#....##.','##..##..','.####...','..##....','........','........'],
+    x:['##....##','###..###','.######.','..####..','..####..','.######.','###..###','##....##']};
+  var KIND={enemy:'enemy',thing:'enemy',spawn:'enemy',ritual:'enemy',boss_add:'enemy',rescue:'enemy',boss:'enemy',weapon:'weapon',armor:'armor',gear:'armor',
+    powerup:'powerup',ammo:'powerup',throwable:'throwable',grenade:'throwable',bomb:'throwable',nuke:'throwable',ally:'ally',curse:'curse',wish:'curse',happening:'curse',event:'curse'};
+  var NAMES={enemy:'an enemy',weapon:'a weapon',armor:'armor',powerup:'a powerup',throwable:'something to throw',ally:'an ally',curse:'an event'};
+  function icon(k){ var g=ICONS[k]||ICONS.curse, r=''; for(var y=0;y<8;y++) for(var x=0;x<8;x++) if(g[y][x]==='#') r+='<rect x="'+x+'" y="'+y+'" width="1" height="1"/>';
+    return '<svg viewBox="0 0 8 8" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true">'+r+'</svg>'; }
+  function chipState(r){
+    var st=r.status||'', k=KIND[r.kind]||'';
+    if(!st&&r.answered_ok===false) st='failed';
+    if(st==='pledge') return r.pledge_open?{s:'queued',i:'enemy',t:'An enemy idea: power it with your energy'}:{s:'passed',i:'enemy',t:'Time ran out before it was powered'};
+    if(st==='funded') return {s:'funded',i:'enemy',t:'Powered! It\'s up next'};
+    if(st==='spawned'||st==='chosen'||st==='building'||st==='queued') return {s:st,i:k||'curse',t:
+      st==='spawned'?'In the game'+(r.thing?': '+r.thing:'')+'!':st==='building'?'The dungeon is building it':st==='chosen'?'Picked! The dungeon is about to build it':'Read as '+(NAMES[k]||'a request')};
+    if(st==='passed') return {s:'passed',i:'talk',t:r.answer&&r.answer!=='sent'?r.answer:'Just chat, or not picked this time'};
+    if(st==='failed') return {s:'failed',i:'x',t:r.answer||'The game didn\'t take that'};
+    if(r.answered_ok===true) return {s:'queued',i:'ok',t:'The game has it. Watch the stream'};
+    return {s:'wait',i:'',t:r.taken?'The dungeon is reading it':'On its way to the game'};
+  }
+  function setChip(line,r){
+    var c=chipState(r), key=c.s+'|'+c.i+'|'+c.t; if(line.key===key) return; line.key=key;
+    var chip=line.chip; chip.className='chip s-'+c.s; chip.title=c.t; chip.setAttribute('aria-label',c.t);
+    chip.innerHTML=c.s==='wait'?'<span class="dots"><i></i><i></i><i></i></span>':icon(c.i);
+    line.el.classList.toggle('won',c.s==='spawned');
+    line.el.classList.toggle('funded',c.s==='funded'||((c.s==='chosen'||c.s==='building')&&r.goal>0));
+  }
+  function chatLine(cls,who,color,text){
+    var d=add('ch '+cls,'<span class="tx"><span class="n"'+(color?' style="color:'+color+'"':'')+'>'+esc(who)+'</span> '+esc(text)+'<span class="st" hidden></span></span><span class="chip s-wait"><span class="dots"><i></i><i></i><i></i></span></span>');
+    return {el:d,chip:d.querySelector('.chip'),st:d.querySelector('.st'),key:''};
+  }
+  /* ---- energy pips and pledges ----
+     Each viewer has up to 5 pips (the database keeps them, by IP address) that refill one every 90 seconds. An enemy idea
+     gets a pledge button: one tap puts one of your pips in; at 3 (a boss 5) it's powered and the game builds it next.
+     No refunds. Every pledge moves the idea to the bottom of chat, for everyone. "+2 watch ad" opens ?recharge in a tab. */
+  var BOLT='<svg viewBox="0 0 7 11" shape-rendering="crispEdges" aria-hidden="true"><path d="M3 0h4v1H6v1H5v1H4v1h3v1H6v1H5v1H4v1H3v1H2v1H1v1H0V9h1V8h1V7h1V6H1V5h1V4h1V3h1V2H3z"/></svg>';
+  /* ONE SETTING: false = the energy button tops you up at once (no ads yet, Mott 2026-11-20); true = it opens the recharge
+     page (?recharge) with a rewarded ad, once an ad network is set up. The database caps it either way (ad_reward). */
+  var REWARDED_ADS=false;
+  var oldDb=false, en={e:5,max:5,refill:90,ads:3,at:Date.now(),known:false};
+  function energyNow(){ return Math.min(en.max,en.e+(Date.now()-en.at)/1000/en.refill); }
+  function myEnergy(){ if(document.hidden) return; rpc('my_energy',{}).then(function(rows){ var r=rows&&rows[0]; if(!r) return;
+      en={e:+r.energy,max:r.most|0||5,refill:r.refill_seconds|0||90,ads:r.ads_left|0,at:Date.now(),known:true}; $('energy').hidden=false; drawEnergy(); }).catch(function(){}); }
+  var pipsBuilt=0;
+  function drawEnergy(){
+    var box=$('pips'), now=energyNow(), full=Math.floor(now+1e-6), frac=now-full, i;
+    if(pipsBuilt!==en.max){ box.innerHTML=''; for(i=0;i<en.max;i++){ var p=document.createElement('div'); p.className='pip'; p.innerHTML=BOLT+'<div class="fill">'+BOLT+'</div>'; box.appendChild(p); } pipsBuilt=en.max; }
+    for(i=0;i<en.max;i++){ var pp=box.children[i]; pp.classList.toggle('full',i<full); pp.classList.toggle('part',i===full&&frac>0.001);
+      pp.querySelector('.fill').style.setProperty('--cut',(i<full?0:i===full?Math.round((1-frac)*100):100)+'%'); }
+    box.setAttribute('aria-label','Energy: '+full+' of '+en.max);
+    var wait=full<en.max?Math.ceil((1-frac)*en.refill):0, mm=Math.floor(wait/60), ss=wait%60, t=mm+':'+(ss<10?'0':'')+ss;
+    var bolt=BOLT.replace('<svg','<svg style="width:7px;height:11px;fill:#c99bff;vertical-align:-1px"');
+    $('ehint').innerHTML=full<1?'Out of energy.<br>Next '+bolt+' in <b>'+t+'</b>':'Tap '+bolt+' on an enemy idea. <b>3</b> brings it to life<span class="long"> (boss <b>5</b>)</span>.'+(full<en.max?'<br>Next '+bolt+' in <b>'+t+'</b>':'');
+    var ad=$('adbtn'); ad.hidden=!(en.known&&full<en.max&&en.ads>0);
+    if(!ad.classList.contains('charging')) ad.innerHTML=BOLT+'+2'+(REWARDED_ADS?' <small>watch ad</small>':'');
+    ad.title=REWARDED_ADS?'Watch a short ad for 2 more pips':'Get 2 more pips ('+en.ads+' left this hour)';
+  }
+  function plState(line,r){
+    if(!(r.goal>0)){ if(line.pl){ line.pl.remove(); line.pl=null; } return; }
+    var b=line.pl;
+    if(!b){ b=line.pl=document.createElement('button'); b.type='button'; b.className='pl'; line.el.insertBefore(b,line.chip);
+      b.addEventListener('click',function(){ pledgeOn(line); }); }
+    var bars=''; for(var i=0;i<r.goal;i++) bars+='<i'+(i<r.pledged?' class="on"':'')+'></i>';
+    var funded=r.status!=='pledge'&&r.pledged>=r.goal, open=!!r.pledge_open;
+    b.className='pl'+(funded?' done':!open?' shut':'')+(r.mine>0?' mine':'');
+    b.disabled=!open; b.innerHTML=BOLT+'<span class="bars">'+bars+'</span>'+(funded?(r.backers>1?r.backers+' backers':'Powered'):r.pledged+'/'+r.goal);
+    b.title=funded?'Powered by '+r.backers+(r.backers===1?' viewer':' viewers'):open?'Put one of your energy pips in ('+r.pledged+' of '+r.goal+(r.mine?', '+r.mine+' yours':'')+')':'Time ran out ('+r.pledged+' of '+r.goal+')';
+    b.setAttribute('aria-label',b.title);
+  }
+  function zap(from,to){ if(still||!from||!to) return; var a=from.getBoundingClientRect(), c=to.getBoundingClientRect(), z=document.createElement('div');
+    z.className='zap'; z.innerHTML=BOLT; z.style.left=(a.left+a.width/2-6)+'px'; z.style.top=(a.top+a.height/2-9)+'px'; document.body.appendChild(z);
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ z.style.transform='translate('+(c.left+c.width/2-a.left-a.width/2)+'px,'+(c.top+c.height/2-a.top-a.height/2)+'px) scale(.8)'; z.style.opacity='.2'; }); });
+    setTimeout(function(){ z.remove(); },560); }
+  function pledgeOn(line){
+    if(!line.row||!line.row.pledge_open||line.busy) return;
+    var now=energyNow(), pips=$('pips');
+    if(now<1){ pips.classList.remove('shake'); void pips.offsetWidth; pips.classList.add('shake'); return; }
+    var from=pips.children[Math.max(0,Math.floor(now)-1)]; line.busy=true;
+    rpc('pledge',withTok({q_code:code,q_name:me,q_id:line.id})).then(function(rows){ var r=rows&&rows[0]; line.busy=false; if(!r) return;
+      zap(from,line.pl); if(from){ from.classList.remove('gone'); void from.offsetWidth; from.classList.add('gone'); }
+      en.e=+r.energy; en.at=Date.now(); drawEnergy();
+      var row=line.row; row.pledged=r.pledged; row.goal=r.goal; row.mine=(row.mine|0)+1; if(r.funded){ row.status='funded'; row.pledge_open=false; }
+      row.sort_at=Date.now()/1000; setTimeout(function(){ line.pl&&line.pl.classList.add('hit'); setTimeout(function(){ line.pl&&line.pl.classList.remove('hit'); },500); },420);
+      plState(line,row); setChip(line,row); bump(line,true);
+    }).catch(function(e){ line.busy=false; var m=String(e&&e.message||'');
+      if(m==='no energy'){ en.e=0; en.at=Date.now(); drawEnergy(); pips.classList.remove('shake'); void pips.offsetWidth; pips.classList.add('shake'); }
+      else if(m==='not open'){ line.row.pledge_open=false; plState(line,line.row); }
+      else if(m==='room closed'){ sys('Mott\'s game isn\'t running right now.'); }
+      else if(m==='name taken'){ sys('Someone locked this name with a password. Leave and log in, or pick another name.'); } });
+  }
+  /* A pledge moves its idea to the bottom of chat for everyone, with a slide and a glow */
+  function bump(line,mine){
+    var el=line.el; if(!el||!el.parentNode) return;
+    var last=pill.previousElementSibling; if(last===el){ el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); return; }
+    var near=nearEnd()||mine, top=el.getBoundingClientRect().top;
+    place(el,near);
+    if(!still){ var dy=top-el.getBoundingClientRect().top; el.style.transition='none'; el.style.transform='translateY('+dy+'px)';
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.style.transition='transform .45s cubic-bezier(.3,1.2,.5,1)'; el.style.transform=''; }); }); }
+    el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  }
+  function onlineFeed(){
+    if(document.hidden) return;
+    var first=!lastId;
+    rpc('room_chats',{q_code:code,after_id:oldDb?0:lastId}).then(function(rows){
+      rows=rows||[]; if(rows.length&&!('sort_at' in rows[0])) oldDb=true;  /* (a database without pledges: every line, every time) */ if(first) rows.sort(function(a,b){ return (a.sort_at||0)-(b.sort_at||0)||a.id-b.id; });
+      rows.forEach(function(r){
+        var line=seen[r.id], moved=false;
+        if(!line){ line=seen[r.id]=chatLine('',r.chatter,nameColor(r.chatter),r.text); }
+        else if(line.row&&r.sort_at>(line.row.sort_at||0)+0.5) moved=true;
+        line.id=r.id; line.row=r;
+        if(line.el){ setChip(line,r); plState(line,r); if(moved) bump(line,false); }
+        if(r.id>lastId) lastId=r.id;
+      });
+      var now=Date.now(); for(var k in seen){ var l=seen[k]; if(l.at&&now-l.at>120000&&l.key.indexOf('wait')===0){ l.st.hidden=false; l.st.className='st lose'; l.st.textContent='The game never picked it up. Send it again?'; l.at=0; } }
+    }).catch(function(){});
+  }
+  function onlineStart(){ seen={}; lastId=0; roomOpen=null;
+    $('room').classList.add('online'); app.classList.add('inroom'); sideTab('chat'); layout(); document.querySelector('.head .legal').hidden=false; oldDb=false;
+    $('points').hidden=false; spends=[]; showChat(); drawPoints(); myPoints();
+    if($('stream').hidden){ showStream(true,true); layout(); }
+    timers.push(setInterval(myPoints,15000)); timers.push(setInterval(followSpends,2500)); timers.push(setInterval(rubyWatch,60000));
+    onlineRoom(); timers.push(setInterval(onlineRoom,10000)); }
+
+  /* ---------- the stream's real Twitch chat (Twitch's own chat embed: logged in to Twitch, you chat as yourself) ---------- */
+  function parentsQ(){ var host=location.hostname||'localhost', parents=[host], bare=host.replace(/^www\./,'');
+    if(bare!==host) parents.push(bare); else if(host.indexOf('.')>0&&!/^[\d.]+$/.test(host)) parents.push('www.'+host);
+    return parents.map(function(h){ return '&parent='+encodeURIComponent(h); }).join(''); }
+  var chatFor='';
+  function showChat(){
+    var box=$('tchat'); if(chatFor===channel&&box.firstChild) return; chatFor=channel; box.textContent='';
+    if(!channel){ box.innerHTML='<div class="off">The stream\'s Twitch chat shows here once the host is set up.</div>'; $('popchat').hidden=true; return; }
+    var f=document.createElement('iframe');
+    f.src='https://www.twitch.tv/embed/'+encodeURIComponent(channel)+'/chat?darkpopout'+parentsQ();
+    f.title=channel+'\'s Twitch chat'; box.appendChild(f);
+    $('poplink').href='https://www.twitch.tv/popout/'+encodeURIComponent(channel)+'/chat?popout='; $('popchat').hidden=false;
+  }
+
+  /* ---------- Dungeon Points: a bar and six small things to buy under the stream ----------
+     An account (a locked name) gets daily free points (the database: my_points, spend_points). A paid request is built
+     before any free chat idea; if nothing comes of it, the points come back. Nothing here ever opens over the stream:
+     the shop, the avatar and the account live in the side panel's tabs. */
+  var pts={n:0,account:false,prices:{},packs:{},rubies:0,ads:0,adAmt:20,known:false,genie:'',genieMine:false,wishes:0,dready:false,dday:1,ladder:[10,15,20,30,50],dknown:false}, asking=null, spends=[];
+  var ASK={custom_enemy:['Type your enemy, e.g. a goose with a gun','Create']};
+  var RUBY_SVG=pix('ruby',24), SUN_SVG=pix('suns',24), DP_FULL=200;
+  var NAMES={random_enemy:'Random Enemy',random_item:'Random Item',random_gun:'Random Gun',custom_enemy:'Custom Enemy',random_event:'Random Event',genie:'Become a Genie'};
+  [].forEach.call(document.querySelectorAll('[data-px]'),function(e){ var a=e.getAttribute('data-px').split(':'); e.innerHTML=pix(a[0],+a[1]); });
+  /* the line under the buttons: what you're pointing at, else the last thing that happened, else a hint */
+  var pCur=null, pCurT=0, pHover='', pIdle='';
+  function pline(){ var m=$('pmsg'); if(pHover) m.innerHTML='<span class="dim">'+esc(pHover)+'</span>';
+    else if(pCur) m.innerHTML='<span class="'+pCur[1]+'">'+esc(pCur[0])+'</span>'; else m.innerHTML=pIdle?'<span class="dim">'+esc(pIdle)+'</span>':''; }
+  function pmsg(t,cls){ clearTimeout(pCurT); pCur=t?[t,cls||'']:null; if(t) pCurT=setTimeout(function(){ pCur=null; pline(); },10000); pline(); }
+  /* the keeper's speech bubble in the shop, typed out */
+  var sayT=0;
+  function smsg(t,cls){ var m=$('shopmsg'), i=0; clearInterval(sayT); m.className='bubble'+(cls==='bad'?' bad':''); t=t||'Rubies buy Dungeon Points.';
+    if(still){ m.textContent=t; return; } m.textContent=''; sayT=setInterval(function(){ i+=2; m.textContent=t.slice(0,i); if(i>=t.length) clearInterval(sayT); },22);
+    if(cls){ var k=$('keeper'); k.classList.remove('nod'); void k.offsetWidth; k.classList.add('nod'); } }
+  function once(el,cls,ms){ if(!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(function(){ el.classList.remove(cls); },ms||600); }
+  /* numbers count up and down instead of jumping */
+  function tween(el,to){ var from=el._v==null?to:el._v; el._v=to; if(still||from===to||el._first==null){ el._first=1; el.textContent=to; return; }
+    var t0=performance.now(), d=500; cancelAnimationFrame(el._raf);
+    (function step(now){ var k=Math.min(1,(now-t0)/d); el.textContent=Math.round(from+(to-from)*k); if(k<1) el._raf=requestAnimationFrame(step); })(t0); }
+  /* little icons that fly from one thing to another (suns into a button, rubies into the shelf) */
+  function fly(svg,from,to,n,done){ if(still||!from||!to||!from.offsetParent||!to.offsetParent){ if(done) done(); return; }
+    var a=from.getBoundingClientRect(), c=to.getBoundingClientRect(), ax=a.left+a.width/2-12, ay=a.top+a.height/2-12, cx=c.left+c.width/2-12, cy=c.top+c.height/2-12;
+    for(var i=0;i<n;i++) (function(i){ var z=document.createElement('div'); z.className='fly'; z.innerHTML=svg;
+      var jx=(Math.random()-.5)*26, jy=(Math.random()-.5)*26; z.style.transform='translate('+(ax+jx)+'px,'+(ay+jy)+'px)'; document.body.appendChild(z);
+      setTimeout(function(){ z.style.transform='translate('+cx+'px,'+cy+'px) scale(.7)'; },30+i*70);
+      setTimeout(function(){ z.remove(); if(i===n-1&&done) done(); },620+i*70); })(i); }
+  function burst(svg,at,n){ if(still||!at||!at.offsetParent) return; var a=at.getBoundingClientRect(), x=a.left+a.width/2-12, y=a.top+a.height/2-12;
+    for(var i=0;i<n;i++) (function(i){ var z=document.createElement('div'); z.className='fly out'; z.innerHTML=svg; z.style.transform='translate('+x+'px,'+y+'px) scale(.6)'; document.body.appendChild(z);
+      var ang=-Math.PI*(.15+.7*(i+.5)/n), d=34+Math.random()*22;
+      setTimeout(function(){ z.style.transform='translate('+(x+Math.cos(ang)*d)+'px,'+(y+Math.sin(ang)*d)+'px) scale(1)'; },20);
+      setTimeout(function(){ z.style.opacity='0'; },380); setTimeout(function(){ z.remove(); },1000); })(i); }
+  function floatUp(box,t){ if(!box) return; var m=document.createElement('span'); m.className='minus'; m.textContent=t; box.appendChild(m); setTimeout(function(){ m.remove(); },1000); }
+  var wantDaily=false, lastFind=0; try{ lastFind=+(localStorage.getItem('cdFind')||0); }catch(e){}
+  function myPoints(){ if(document.hidden||!ON) return; rpc('my_points',withTok({q_name:me,q_code:code})).then(function(rows){ var r=rows&&rows[0]; if(!r) return;
+      var was=pts.rubies, knew=pts.known;
+      pts={n:r.points|0,account:!!r.account,prices:r.prices||{},packs:r.packs||{},rubies:r.rubies|0,ads:r.ads_left|0,adAmt:(r.ad_points|0)||20,daily:r.daily|0,known:true,
+           dknown:r.daily_ready!=null,dready:!!r.daily_ready,dday:(r.daily_day|0)||1,ladder:(r.daily_ladder&&r.daily_ladder.length?r.daily_ladder:[10,15,20,30,50]),
+           genie:r.genie||'',genieMine:!!r.genie_mine,wishes:r.wishes_left|0};
+      if(r.find_id&&r.find_id>lastFind&&(r.find_age|0)<90){ lastFind=r.find_id; try{ localStorage.setItem('cdFind',String(lastFind)); }catch(e){} showFind(r.find_amount|0); }
+      else if(pts.account&&knew&&pts.rubies>was) plus(pts.rubies-was);
+      drawPoints();
+      if(wantDaily){ wantDaily=false; if(pts.dknown&&pts.dready) openDaily(); else if(!pts.dknown) rubyDaily(); }
+      else if(!pts.dknown&&pts.account&&!knew) rubyDaily();  /* (a database from before the reward popup: claimed on arrival, as it was) */
+      }).catch(function(){}); }
+  function price(a){ var p=pts.prices[a]; return p==null?0:p|0; }
+  function drawPoints(){
+    tween($('pnum'),pts.n);
+    var m=$('dpmeter'); $('dpfill').style.width=Math.min(100,pts.n/DP_FULL*100)+'%'; m.classList.toggle('over',pts.n>DP_FULL);
+    m.setAttribute('aria-label',pts.n+' Dungeon Points');
+    [].forEach.call(document.querySelectorAll('[data-price]'),function(i){ var p=pts.prices[i.getAttribute('data-price')]; if(p!=null) i.textContent=p; });
+    /* a notch on the bar at every price, so the bar shows what you can afford */
+    var tk=$('dpticks'), key=JSON.stringify(pts.prices); if(tk.getAttribute('data-k')!==key){ tk.setAttribute('data-k',key); tk.textContent=''; var seen2={};
+      [].forEach.call(document.querySelectorAll('.act [data-price]'),function(i){ var p=+i.textContent; if(p>0&&p<DP_FULL&&!seen2[p]){ seen2[p]=1; var n=document.createElement('i'); n.style.left=(p/DP_FULL*100)+'%'; tk.appendChild(n); } }); }
+    [].forEach.call(document.querySelectorAll('.act[data-act]'),function(b){ b.classList.toggle('poor',pts.account&&pts.n<price(b.getAttribute('data-act'))); });
+    pIdle=!pts.known?'':pts.account?'':'Make an account to get rubies and Dungeon Points.';
+    $('pbuy').textContent=pts.account||!pts.known?'Get DP':'Make account';
+    var g=$('geniebtn'), busyGenie=pts.genie&&!pts.genieMine;
+    g.classList.toggle('busy',!!busyGenie);
+    var gd=busyGenie?pts.genie+' is the genie right now':pts.genieMine?'You\'re the genie!':'Spawn into the game as a genie and grant 3 wishes instantly';
+    g.setAttribute('data-desc',gd); $('geniesub').textContent=gd;
+    $('gbox').hidden=!(pts.genieMine&&pts.wishes>0); $('room').classList.toggle('genie',!$('gbox').hidden);
+    if(!$('gbox').hidden){ $('pask').hidden=true; }
+    $('pmsg').hidden=!$('gbox').hidden||!$('pask').hidden;
+    $('gtext').textContent='You\'re the genie! '+pts.wishes+' wish'+(pts.wishes===1?'':'es')+' left.';
+    drawTop(); pline();
+  }
+  var PACK_ART=['coins','sack','hoard'];
+  function drawTop(){
+    var acc=pts.account||locked;
+    $('tbroom').textContent=channel||code; $('acctname').textContent=me; $('avname').textContent=me||'Guest'; $('acctbtn').hidden=!acc;
+    $('rbtn').hidden=!acc; $('tbmake').hidden=acc||!pts.known; $('tblogin').hidden=acc||!pts.known;
+    $('dbtn').hidden=!pts.dknown; $('ddot').hidden=!pts.dready; $('dbtn').classList.toggle('ready',pts.dready); $('adamt').textContent=pts.adAmt; if(!$('dpop').hidden) drawDaily();
+    tween($('rnum'),pts.rubies);
+    $('setacct').textContent=acc?me:'Guest'; $('setmake').hidden=$('setlogin').hidden=acc||!pts.known||!$('lockwrap').hidden; $('setleave').hidden=!acc;
+    var dp=$('dppacks'); if(!dp.firstChild||dp.getAttribute('data-k')!==JSON.stringify(pts.packs)){ dp.setAttribute('data-k',JSON.stringify(pts.packs)); dp.textContent='';
+      Object.keys(pts.packs).sort(function(a,b){ return a-b; }).forEach(function(k,i){ var b=document.createElement('button'); b.type='button'; b.className='item'; b.setAttribute('data-pack',k);
+        b.innerHTML='<span class="ii">'+pix(PACK_ART[Math.min(i,2)],60)+'</span><span class="il">+'+esc(k)+SUN_SVG+'</span><span class="tag">'+RUBY_SVG+esc(pts.packs[k])+'</span>';
+        for(var q=0;q<=i;q++){ var sp=document.createElement('i'); sp.className='sp'; sp.style.left=(20+((q*37+i*23)%50))+'%'; sp.style.top=(14+((q*29+i*17)%36))+'px'; sp.style.animationDelay=(q*.9+i*.5)+'s'; b.querySelector('.ii').appendChild(sp); }
+        b.addEventListener('click',function(){ buyPack(+k,b); });
+        b.addEventListener('mouseenter',function(){ if(!b.classList.contains('poor')) smsg(k+' DP for '+pts.packs[k]+' rubies.'); });
+        dp.appendChild(b); }); }
+    [].forEach.call(dp.children,function(b){ b.classList.toggle('poor',pts.rubies<(pts.packs[b.getAttribute('data-pack')]|0)); });
+  }
+  function plus(n){ if(!n) return; var b=$('rbtn'), e=document.createElement('span'); e.className='plus'; e.textContent='+'+n; b.appendChild(e); once(b,'bump',450); setTimeout(function(){ e.remove(); },1700); }
+  function showFind(n){ var f=$('rfind'); if(!n) return;
+    $('rfindt').innerHTML='Everyone in chat gains +'+n+' '+RUBY_SVG+'!';
+    $('rfinds').textContent=pts.account||locked?'Added to your rubies':'Make an account to collect them';
+    f.hidden=true; void f.offsetWidth; f.hidden=false; clearTimeout(showFind.t); showFind.t=setTimeout(function(){ f.hidden=true; },6200);
+    if(pts.account) setTimeout(function(){ fly(RUBY_SVG,f,$('rbtn'),Math.min(6,Math.max(2,Math.round(n/5)))); plus(n); },500); }
+  /* ---- the daily reward: a gift button by the ruby count opens a small box under the top bar (over the side panel, never
+     the stream; on a phone it's a row of the top bar). Five days in a row, each bigger; claimed with a click. ---- */
+  var DAY_ART=['ruby','ruby','ruby2','ruby2','ruby3'];
+  function drawDaily(){ var L=pts.ladder, d=Math.min(pts.dday,L.length), box=$('ddays'), acc=pts.account||locked; box.textContent='';
+    L.forEach(function(n,i){ var day=i+1, st=day<d||(day===d&&!pts.dready)?'got':day===d?'now':'later', c=document.createElement('div'); c.className='dday '+st;
+      c.innerHTML='<small>Day '+day+'</small>'+pix(DAY_ART[Math.min(i,4)],36)+'<b>+'+(n|0)+'</b>'+(st==='got'?pix('tick',24,'tick'):''); box.appendChild(c); });
+    var b=$('dclaim'), next=L[d%L.length]|0;
+    b.disabled=acc&&!pts.dready; b.textContent=!acc?'Make account to claim':pts.dready?'Claim +'+(L[d-1]|0):'Claimed';
+    $('dnext').textContent=!acc||pts.dready?(d<L.length?'Tomorrow is worth +'+next+'. Miss a day and it starts over.':'The biggest one! Tomorrow starts again at day 1.')
+      :(d<L.length?'Come back tomorrow for +'+next+'.':'Come back tomorrow for a new round.'); }
+  function openDaily(){ closeMenu(); drawDaily(); $('dpop').hidden=false; $('dbtn').setAttribute('aria-expanded','true'); }
+  function closeDaily(){ $('dpop').hidden=true; $('dbtn').setAttribute('aria-expanded','false'); }
+  $('dbtn').addEventListener('click',function(e){ e.stopPropagation(); if($('dpop').hidden) openDaily(); else closeDaily(); });
+  $('dclaim').addEventListener('click',function(){ var b=this;
+    if(!(pts.account||locked)){ closeDaily(); wantDaily=true; openAccount(); return; }
+    if(!pts.dready||b.disabled) return; b.disabled=true;
+    rpc('ruby_daily',withTok({q_name:me})).then(function(rows){ var r=rows&&rows[0]; if(!r) return; var g=r.gained|0, cell=document.querySelector('.dday.now');
+      pts.dready=false; if(r.streak) pts.dday=((r.streak-1)%pts.ladder.length)+1;
+      if(g>0&&cell){ fly(RUBY_SVG,cell,$('rbtn'),Math.min(8,Math.max(3,Math.round(g/5))),function(){ pts.rubies=r.rubies|0; drawTop(); plus(g); }); once(cell,'pop',600); }
+      else { pts.rubies=r.rubies|0; }
+      drawTop(); drawDaily();
+    }).catch(function(e){ b.disabled=false; $('dnext').textContent=srvErr(e); }); });
+  /* (a database from before the reward popup pays the daily rubies on arrival) */
+  function rubyDaily(){ if(!ON||!tokenFor(me)) return; rpc('ruby_daily',withTok({q_name:me})).then(function(rows){ var r=rows&&rows[0]; if(!r) return;
+      pts.rubies=r.rubies|0; drawTop(); if(r.gained>0){ plus(r.gained); pmsg('+'+r.gained+' rubies for visiting today!','ok'); } }).catch(function(){}); }
+  /* every minute the page says it's watching this room: that's who gets the rubies the streamer finds (watching itself pays nothing) */
+  function rubyWatch(){ if(document.hidden||!ON||!me||!tokenFor(me)||$('stream').hidden||!roomOpen) return;
+    rpc('ruby_watch',withTok({q_code:code,q_name:me})).catch(function(){}); }
+  function actBtn(a){ return document.querySelector('.act[data-act="'+a+'"]'); }
+  function closeAsk(){ asking=null; $('pask').hidden=true; $('pmsg').hidden=!$('gbox').hidden; [].forEach.call(document.querySelectorAll('.act.on'),function(b){ b.classList.remove('on'); }); }
+  [].forEach.call(document.querySelectorAll('.act[data-act]'),function(b){
+    b.addEventListener('mouseenter',function(){ pHover=b.getAttribute('data-desc')||''; pline(); });
+    b.addEventListener('mouseleave',function(){ pHover=''; pline(); });
+    b.addEventListener('click',function(){
+      var a=b.getAttribute('data-act'); pHover='';
+      if(!pts.account){ pmsg('Dungeon Points need an account. Make one and you get free DP every day.'); openAccount(); return; }
+      if(a==='genie'&&pts.genie){ once(b,'no',450); pmsg(pts.genieMine?'You\'re the genie already: type your wishes below.':pts.genie+' is the genie right now. Try again when they\'re done.',pts.genieMine?'ok':'bad'); return; }
+      if(pts.n<price(a)){ closeAsk(); once(b,'no',450); once($('dpmeter'),'shake',450); pmsg('Not enough DP. You need '+(price(a)-pts.n)+' more.','bad'); sideTab('shop'); smsg('You need '+(price(a)-pts.n)+' more DP for that.','bad'); return; }
+      if(!ASK[a]){ closeAsk(); spend(a,''); return; }
+      closeAsk(); asking=a; b.classList.add('on'); $('pask').hidden=false; $('pmsg').hidden=true; $('ptext').value=''; $('ptext').placeholder=ASK[a][0];
+      $('pgo').textContent=ASK[a][1]+' · '+price(a); $('ptext').focus(); pmsg('');
+    }); });
+  $('pcancel').addEventListener('click',closeAsk);
+  $('pask').addEventListener('submit',function(e){ e.preventDefault(); var t=$('ptext').value.trim(); if(!t){ $('ptext').focus(); return; } spend(asking,t); });
+  $('pbuy').addEventListener('click',function(){ if(pts.known&&!pts.account){ openAccount(); return; } sideTab('shop',true); });
+  var SPEND_ERR={'not enough points':'Not enough DP for that.','room closed':'The streamer\'s game isn\'t running right now. Try again when it\'s live.',
+    'slow down':'One at a time: wait a few seconds.','too busy':'Lots of people are using the buttons. Try again in a moment.','too long':'Keep it under 100 characters.',
+    'empty':'Type something first.','no account':'Dungeon Points need an account. Make one first.','name taken':'This name is locked. Log in with its password.',
+    'bad name':'Your name needs letters or numbers. Pick another.','genie busy':'Someone else is the genie right now. Try again soon.',
+    'not the genie':'You\'re not the genie any more.','no wishes left':'That was your last wish!','not enough rubies':'Not enough rubies for that.'};
+  function spend(a,t){
+    if(!a) return; var busy=$('pgo'), b=actBtn(a), cost=price(a); busy.disabled=true; if(b) b.classList.add('wait');
+    rpc('spend_points',withTok({q_code:code,q_name:me,q_action:a,q_text:t})).then(function(rows){ busy.disabled=false; if(b) b.classList.remove('wait'); var r=rows&&rows[0]; if(!r) return;
+      pts.n=r.points|0; drawPoints(); closeAsk();
+      if(b){ fly(SUN_SVG,$('dpico'),b.querySelector('.ai'),Math.min(6,Math.max(2,Math.round(cost/30)))); once($('dpico'),'bump',450);
+        setTimeout(function(){ once(b,'bought',600); var m=document.createElement('span'); m.className='minus'; m.textContent='-'+cost; b.appendChild(m); setTimeout(function(){ m.remove(); },1000); },still?0:420); }
+      spends.push({id:r.id,text:a==='custom_enemy'||a==='random_enemy'?r.text:NAMES[a],act:a,last:''}); spends=spends.slice(-5);
+      pmsg(a==='genie'?'Summoning you as the genie...':a==='random_enemy'?'Random Enemy: "'+r.text+'" is on its way. Watch the stream!':'"'+(a==='custom_enemy'?r.text:NAMES[a])+'" is on its way. Watch the stream!','ok');
+      if(a==='genie') myPoints();
+      if(sideNow==='rewards') setTimeout(function(){ if(sideNow==='rewards') sideTab('chat'); },1100);  /* (back to chat to watch it arrive) */
+    }).catch(function(e){ busy.disabled=false; if(b){ b.classList.remove('wait'); once(b,'no',450); } var m=String(e&&e.message||'');
+      pmsg(SPEND_ERR[m]||srvErr(e),'bad'); if(m==='no account') openAccount(); if(m==='not enough points'||m==='genie busy') myPoints(); });
+  }
+  $('gform').addEventListener('submit',function(e){ e.preventDefault(); var t=$('gwish').value.trim(); if(!t){ $('gwish').focus(); return; } var b=$('ggo'); b.disabled=true;
+    rpc('send_wish',withTok({q_code:code,q_name:me,q_text:t})).then(function(rows){ b.disabled=false; var r=rows&&rows[0]; if(!r) return;
+      $('gwish').value=''; pts.wishes=r.wishes_left|0; drawPoints(); pmsg('Your wish "'+t+'" is on its way!'+(pts.wishes?' '+pts.wishes+' left.':' That was your last one.'),'ok');
+    }).catch(function(err){ b.disabled=false; var m=String(err&&err.message||''); pmsg(SPEND_ERR[m]||srvErr(err),'bad'); myPoints(); }); });
+  var SPEND_SAY={'':'is on its way to the game',heard:'reached the game',queued:'is up next',chosen:'is up next',building:'is being built',
+    spawned:'is in the dungeon!',passed:'couldn\'t be made, so your DP is back',failed:'couldn\'t be made, so your DP is back'};
+  function followSpends(){
+    var open=spends.filter(function(s){ return !s.done; }); if(!open.length||document.hidden) return;
+    rpc('my_spends',{q_ids:open.map(function(s){ return s.id; })}).then(function(rows){ (rows||[]).forEach(function(r){
+      var s=open.filter(function(x){ return x.id===r.id; })[0]; if(!s) return;
+      var st=r.refunded||r.answered_ok===false?'failed':(r.status||'');
+      if(st===s.last) return; s.last=st; if(st==='spawned'||st==='failed'||st==='passed') s.done=true;
+      if(s.act==='genie') pmsg(st==='spawned'?'You\'re the genie! Type your 3 wishes below.':st==='failed'||st==='passed'?'The genie couldn\'t appear, so your DP is back.':'Summoning you as the genie...',st==='failed'||st==='passed'?'bad':'ok');
+      else if(st==='spawned'&&r.thing&&(s.act==='random_item'||s.act==='random_gun'||s.act==='random_event')) pmsg(s.text+': "'+r.thing+'" is in the game!','ok');
+      else pmsg('"'+(r.thing||s.text)+'" '+(SPEND_SAY[st]||SPEND_SAY['']),st==='failed'||st==='passed'?'bad':'ok');
+      if(st==='spawned') once(actBtn(s.act),'bought',600);
+      if(s.done) myPoints();
+    }); }).catch(function(){});
+  }
+  /* ---- the side panel's tabs: Chat, Shop, Avatar, Account. The Twitch chat stays loaded behind the other tabs. ---- */
+  var sideNow='chat';
+  /* on a phone the reward buttons sit in their own tab, so the stream and the chat fit on one screen; anywhere else they're under the stream */
+  var phoneMq=window.matchMedia('(max-width:640px) and (min-height:560px)');
+  function placeStore(){ var ph=phoneMq.matches&&app.classList.contains('inroom'), home=$('points'), tab=$('rewv'), pa=$('pacts');
+    if(ph&&pa.parentNode!==tab) tab.appendChild(pa);
+    else if(!ph&&pa.parentNode!==home){ home.insertBefore(pa,home.querySelector('.pline')); if(sideNow==='rewards') sideTab('chat'); } }
+  if(phoneMq.addEventListener) phoneMq.addEventListener('change',placeStore); else if(phoneMq.addListener) phoneMq.addListener(placeStore);
+  function sideTab(t,scroll){ sideNow=t; placeStore();
+    [].forEach.call(document.querySelectorAll('.stabs [data-side]'),function(b){ b.setAttribute('aria-selected',b.getAttribute('data-side')===t?'true':'false'); });
+    [].forEach.call(document.querySelectorAll('.sview'),function(p){ p.hidden=p.getAttribute('data-view')!==t; });
+    if(t==='shop'){ smsg(''); myPoints(); }
+    if(t==='account'){ $('setstream').checked=!$('stream').hidden; drawTop(); }
+    if(scroll&&window.innerWidth<1000) $('side').scrollIntoView({behavior:still?'auto':'smooth',block:'start'});
+  }
+  [].forEach.call(document.querySelectorAll('.stabs [data-side]'),function(b){ b.addEventListener('click',function(){ sideTab(b.getAttribute('data-side')); }); });
+  /* ---- the top bar: rubies, the account menu ---- */
+  function closeMenu(){ $('acctmenu').hidden=true; $('acctbtn').setAttribute('aria-expanded','false'); }
+  $('acctbtn').addEventListener('click',function(e){ e.stopPropagation();
+    if(window.innerWidth<1000){ sideTab('account',true); return; }  /* (on a phone the menu would drop over the stream) */
+    closeDaily(); var m=$('acctmenu'); m.hidden=!m.hidden; this.setAttribute('aria-expanded',m.hidden?'false':'true'); });
+  document.addEventListener('click',function(e){ if(!$('acctmenu').hidden&&!$('acctmenu').contains(e.target)) closeMenu(); if(!$('dpop').hidden&&!$('dpop').contains(e.target)) closeDaily(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeMenu(); closeDaily(); } });
+  $('rbtn').addEventListener('click',function(){ sideTab('shop',true); });
+  function buyPack(k,b){
+    if(!(pts.account||locked)){ smsg('Make an account first.','bad'); openAccount(); return; }
+    var cost=pts.packs[k]|0; if(pts.rubies<cost){ once(b,'no',450); smsg('You need '+(cost-pts.rubies)+' more rubies.','bad'); return; }
+    if(b.classList.contains('wait')) return; b.classList.add('wait');
+    rpc('buy_points',withTok({q_name:me,q_pack:k})).then(function(rows){ b.classList.remove('wait'); var r=rows&&rows[0]; if(!r) return;
+      var n=r.points|0; pts.rubies=r.rubies|0; drawTop(); smsg('+'+k+' Dungeon Points.','ok'); once(b,'bought',600);
+      fly(RUBY_SVG,$('rbtn'),b.querySelector('.tag'),3);
+      burst(SUN_SVG,b.querySelector('.ii'),Math.min(8,Math.max(4,Math.round(k/40))));  /* (nothing flies across the stream) */
+      pts.n=n; drawPoints(); once($('dpico'),'bump',450); floatUp($('dpico').parentNode,'+'+k);
+    }).catch(function(e){ b.classList.remove('wait'); var m=String(e&&e.message||''); smsg(SPEND_ERR[m]||srvErr(e),'bad'); once(b,'no',450); drawTop(); }); }
+  $('chestbtn').addEventListener('click',function(){ once(this,'no',450); smsg('Locked. Coming soon.'); });
+  $('mcustom').addEventListener('click',function(){ closeMenu(); sideTab('avatar',true); });
+  $('msettings').addEventListener('click',function(){ closeMenu(); sideTab('account',true); });
+  $('setstream').addEventListener('change',function(){ showStream(this.checked); layout(); });
+  function logOut(){ closeMenu(); closeDaily(); var t=tokenFor(me); if(t) rpc('logout_name',{q_token:t}).catch(function(){}); store('cdTok',null); store('cdTokName',null); store('cdName',null);
+    locked=false; me=''; pts.account=false; pts.rubies=0; pts.n=0; pts.genieMine=false; spends=[]; closeAsk(); drawPoints(); myPoints(); sideTab('chat'); pmsg('Logged out.'); }
+  $('mleave').addEventListener('click',logOut); $('setleave').addEventListener('click',logOut);
+  $('setmake').addEventListener('click',openAccount);
+  $('tbmake').addEventListener('click',openAccount);
+  $('tblogin').addEventListener('click',function(){ openAccount('login'); }); $('setlogin').addEventListener('click',function(){ openAccount('login'); });
+  /* ---- ruby packs: Watch Ad first, then the packs for money (no payments yet: the buttons say so) ---- */
+  $('shopad').addEventListener('click',function(e){
+    if(!(pts.account||locked)){ e.preventDefault(); smsg('Make an account first.','bad'); openAccount(); return; }
+    if(pts.known&&pts.ads<=0){ e.preventDefault(); once(this,'no',450); smsg('That\'s all the ads for today. More tomorrow.','bad'); return; }
+    smsg('The ad opens in a new tab.','ok'); });
+  $('shopad').addEventListener('mouseenter',function(){ smsg('Watch a short ad for '+pts.adAmt+' rubies.'+(pts.account&&pts.known?' '+pts.ads+' left today.':'')); });
+  [].forEach.call(document.querySelectorAll('#rubypacks button.rp'),function(b,i){
+    for(var q=0;q<=i+1;q++){ var sp=document.createElement('i'); sp.className='sp'; sp.style.left=(18+((q*37+i*23)%60))+'%'; sp.style.top=(10+((q*29+i*17)%40))+'px'; sp.style.animationDelay=(q*.7+i*.4)+'s'; b.querySelector('.ii').appendChild(sp); }
+    b.addEventListener('mouseenter',function(){ smsg(b.getAttribute('data-n')+' rubies for $'+b.getAttribute('data-usd')+'.'); });
+    b.addEventListener('click',function(){ once(b,'no',450); smsg('Ruby packs open soon.'); }); });
+  /* the energy button: straight top-up (REWARDED_ADS false), or the recharge page in a new tab */
+  $('adbtn').addEventListener('click',function(e){
+    if(REWARDED_ADS) return;
+    e.preventDefault(); var b=this; if(b.classList.contains('charging')) return;
+    b.classList.add('charging'); b.innerHTML=BOLT+'<span class="chg"><i></i></span>';
+    var t0=Date.now();
+    rpc('ad_reward',{}).then(function(rows){ var r=rows&&rows[0]||{};
+      setTimeout(function(){ b.classList.remove('charging'); en.e=+r.energy; en.at=Date.now(); en.ads=r.ads_left|0; drawEnergy();
+        var pips=$('pips'); [].forEach.call(pips.children,function(p){ if(p.classList.contains('full')){ p.classList.remove('gone'); void p.offsetWidth; p.classList.add('gone'); } }); },
+        Math.max(0,700-(Date.now()-t0)));
+    }).catch(function(err){ b.classList.remove('charging'); if(String(err&&err.message)==='ad limit') en.ads=0; drawEnergy(); });
+  });
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden&&ON&&!$('room').hidden) myPoints(); });
+  /* ---- the recharge page (?recharge): opened in its own tab, never over the stream ---- */
+  var wantRecharge=false; try{ wantRecharge=ON&&new URLSearchParams(location.search).has('recharge'); }catch(e){}
+  if(wantRecharge){
+    $('join').hidden=true; $('room').hidden=true; $('recharge').hidden=false; layout();
+    var n=15, cl=$('adclaim'), cnt=$('adcount');
+    var adName=load('cdName'), adTok=tokenFor(adName);
+    if(!adTok){ $('admsg').textContent='Ads earn rubies for accounts. Go back, make an account, then come here again.'; cl.hidden=true; clearInterval(0); }
+    var iv=setInterval(function(){ n--; cnt.textContent=Math.max(n,0); if(n<=0){ clearInterval(iv); cl.disabled=!adTok; cl.textContent='Claim your rubies'; } },1000);
+    cl.addEventListener('click',function(){ cl.disabled=true;
+      rpc('ruby_ad_reward',{q_name:adName,q_token:adTok}).then(function(rows){ var r=rows&&rows[0]||{};
+        $('admsg').textContent='Done: you have '+(r.rubies|0)+' rubies now'+(r.ads_left>0?' ('+r.ads_left+' more ad'+(r.ads_left===1?'':'s')+' today)':'')+'. Close this tab to get back to the stream.';
+        cl.textContent='Claimed'; })
+      .catch(function(e){ var m=String(e&&e.message||'');
+        $('admsg').textContent=m==='ad limit'?'That\'s all the ads for today. More tomorrow.':m==='no account'?'Ads earn rubies for accounts. Make one first.':'Couldn\'t reach the server. Try again in a moment.';
+        if(m!=='ad limit'&&m!=='no account') cl.disabled=false; });
+    });
+  }
+  function onlineSend(box,t){
+    var line=chatLine('me',me,'',t), st=line.st; line.at=Date.now();
+    box.value=''; feed.scrollTop=feed.scrollHeight; pill.hidden=true;
+    rpc('send_chat',withTok({q_code:code,q_name:me,q_text:t})).then(function(id){
+      if(seen[id]&&seen[id].el&&seen[id]!==line){ seen[id].el.remove(); }  /* (the feed got to it first) */
+      seen[id]=line; line.id=id;
+    }).catch(function(e){
+      line.chip.remove(); st.hidden=false; line.at=0;
+      var m=String(e&&e.message||''), say={'room closed':'Mott\'s game isn\'t running right now, so chat is closed.','slow down':'Slow down a little, then send again.',
+        'too busy':'Chat is very busy. Try again in a moment.','too long':'Keep it under 100 characters.','empty':'Type something first.','bad name':'Your name needs letters or numbers. Leave and pick another.',
+        'name taken':'Someone locked this name with a password. Leave and log in, or pick another name.',
+        'too many names':'You\'ve chatted under too many names this hour. Leave and use a name you already used.'}[m];
+      st.className='st lose'; st.textContent=say||'Couldn\'t send. Check your connection and try again.';
+      if(m==='slow down'||m==='too busy'||m==='room closed'){ if(!box.value) box.value=t; }
+    });
+  }
+  if(ON&&!wantRecharge) siteIn(); else if(false) tryJoin(true);  /* (a remembered name rejoins after a reload or in a new tab) */
+})();
+</script>
+</body>
+</html>
