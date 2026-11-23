@@ -842,6 +842,10 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .author{margin:2px 0;text-align:center;font-size:13px;color:var(--parch-dim)}
 /* the Chat tab joins the chat under it (Twitch's dark chat color) */
 .stabs button[data-side=chat][aria-selected="true"]{background:#18181b;border-bottom-color:#18181b}
+/* phones, while typing: the tabs tuck up behind the stream so the chat gets their room */
+.room.online .stabs{transition:margin-top .22s cubic-bezier(.2,.8,.3,1)}
+.room.online.kbd .lcol{position:relative;z-index:3}
+.room.online.kbd .side{position:relative;z-index:1}
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
@@ -1920,11 +1924,20 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     ocLog=$('olog');
     ocLog.addEventListener('scroll',function(){ if(ocLog&&ocLog.scrollHeight-ocLog.scrollTop-ocLog.clientHeight<48) $('onew').hidden=true; });
     $('onew').addEventListener('click',function(){ ocLog.scrollTop=ocLog.scrollHeight; this.hidden=true; });
-    $('osend').addEventListener('submit',function(e){ e.preventDefault(); var inp=$('otext'); if(!inp) return; var t=inp.value.replace(/[\r\n]+/g,' ').trim(); if(!t) return;
+    /* the Chat button sends and puts the keyboard away; the keyboard's own send key sends and keeps it up; and Safari's
+       Done (the tick above the keyboard) sends too: that's the box losing focus with nothing on the page having been touched */
+    var btnAt=0, touchAt=0;
+    $('osend').addEventListener('pointerdown',function(e){ if(e.target&&e.target.className==='ogo') btnAt=Date.now(); },true);
+    $('osend').addEventListener('mousedown',function(e){ if(e.target&&e.target.className==='ogo') e.preventDefault(); });   /* (the button never takes the focus from the box) */
+    document.addEventListener('touchstart',function(){ touchAt=Date.now(); },{capture:true,passive:true});
+    $('osend').addEventListener('focusout',function(e){ var inp=$('otext'); if(e.target!==inp||!inp.value.trim()) return;
+      setTimeout(function(){ if(document.activeElement===inp||Date.now()-touchAt<700||document.hidden||!document.hasFocus()||!ocLog) return; ocSubmit(); },80); });
+    $('osend').addEventListener('submit',function(e){ e.preventDefault(); var byBtn=Date.now()-btnAt<800; btnAt=0; ocSubmit(); if(byBtn&&$('otext')) $('otext').blur(); });
+    function ocSubmit(){ var inp=$('otext'); if(!inp) return; var t=inp.value.replace(/[\r\n]+/g,' ').trim(); if(!t) return;
       if(!ocS||ocS.readyState!==1||!tw.ok){ ocSys('Chat is still connecting. Try again in a moment.'); return; }
       var now=Date.now(); if(now-ocLast<1200) return; ocLast=now;
       ocS.send('PRIVMSG #'+channel.toLowerCase()+' :'+t); inp.value='';
-      ocMsg({'display-name':tw.name||tw.login,color:tw.color,badges:tw.badges},tw.login,t,true); ocLog.scrollTop=ocLog.scrollHeight; });
+      ocMsg({'display-name':tw.name||tw.login,color:tw.color,badges:tw.badges},tw.login,t,true); ocLog.scrollTop=ocLog.scrollHeight; }
     drawSend(); ocSys('Welcome to '+channel+'\'s chat.');
     if(tw.tok&&!tw.login) twCheck(ocConnect); else { ocConnect(); if(tw.tok) twCheck(); }
   }
@@ -1976,11 +1989,11 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     function isBox(a){ return !!a&&/^(INPUT|TEXTAREA)$/.test(a.tagName)&&!/^(checkbox|radio|button|submit)$/.test(a.type); }
     function typing(){ return isBox(document.activeElement); }
     function phone(){ return phoneMq.matches&&app.classList.contains('inroom'); }
-    function pin(h,y){ var st=$('room').style; st.position='fixed'; st.left='0'; st.right='0'; st.top='0'; st.zIndex='5'; st.flex='0 0 auto'; st.minHeight='0'; st.height=Math.round(h)+'px';
+    function pin(h,y){ var st=$('room').style, tb=document.querySelector('#side .stabs'); if(!on&&tb){ $('room').classList.add('kbd'); tb.style.marginTop=-tb.offsetHeight+'px'; } st.position='fixed'; st.left='0'; st.right='0'; st.top='0'; st.zIndex='5'; st.flex='0 0 auto'; st.minHeight='0'; st.height=Math.round(h)+'px';
       st.transform=y?'translateY('+Math.round(y)+'px)':'';
       if(!on&&ocLog){ var L=ocLog; setTimeout(function(){ L.scrollTop=L.scrollHeight; },30); } on=true; }
     function follow(){ var L=ocLog, t0=Date.now(); if(!L) return; (function f(){ if(ocLog!==L) return; L.scrollTop=L.scrollHeight; if(Date.now()-t0<320) requestAnimationFrame(f); })(); }
-    function unpin(){ var st=$('room').style; on=false; st.transition=''; st.position=st.left=st.right=st.top=st.zIndex=st.flex=st.minHeight=st.height=st.transform=''; app.scrollTop=0; window.scrollTo(0,0); }
+    function unpin(){ var st=$('room').style, tb=document.querySelector('#side .stabs'); on=false; $('room').classList.remove('kbd'); if(tb) tb.style.marginTop=''; st.transition=''; st.position=st.left=st.right=st.top=st.zIndex=st.flex=st.minHeight=st.height=st.transform=''; app.scrollTop=0; window.scrollTo(0,0); }
     function fit(){ if(vv.width!==baseW){ baseW=vv.width; base=0; } if(vv.height>base) base=vv.height;
       var kb=phone()&&typing()&&(base-vv.height>120||window.innerHeight-vv.height>120);
       if(kb){ preUntil=0; store('cdKb',String(Math.round(base-vv.height))+'/'+Math.round(vv.width)); pin(vv.height,Math.max(0,vv.offsetTop)); }
