@@ -1831,7 +1831,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
      cookies inside another site): it reads the channel's chat live, and "Connect Twitch" logs you in on Twitch's own page
      and brings you straight back, so you chat as yourself from here. Needs the site's Twitch app Client ID (public, not a
      secret; dev.twitch.tv, redirect https://chatdungeon.io). While it's empty, everyone gets the embed. */
-  var TWITCH_CLIENT='';
+  var TWITCH_CLIENT='limhjxofyw8odv6vm0dgqg2ucowusl';
   function parentsQ(){ var host=location.hostname||'localhost', parents=[host], bare=host.replace(/^www\./,'');
     if(bare!==host) parents.push(bare); else if(host.indexOf('.')>0&&!/^[\d.]+$/.test(host)) parents.push('www.'+host);
     return parents.map(function(h){ return '&parent='+encodeURIComponent(h); }).join(''); }
