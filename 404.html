@@ -987,7 +987,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
             <div class="plank" aria-hidden="true"></div>
             <h3><span data-px="ruby:24"></span>Rubies</h3>
             <div class="shelf rb" id="rubypacks">
-              <a class="item rp ad" id="shopad" href="?recharge" target="_blank" rel="noopener"><span class="ii" data-px="tv:60"></span><span class="il">+<b id="adamt">20</b><span data-px="ruby:24"></span></span><span class="tag">Watch Ad</span></a>
+              <button type="button" class="item rp ad" id="shopad"><span class="ii" data-px="tv:60"></span><span class="il">+<b id="adamt">20</b><span data-px="ruby:24"></span></span><span class="tag">Watch Ad</span></button>
               <button type="button" class="item rp" data-usd="1.99" data-n="200"><span class="ii" data-px="ruby:60"></span><span class="il">+200<span data-px="ruby:24"></span></span><span class="tag">$1.99</span></button>
               <button type="button" class="item rp" data-usd="4.99" data-n="550"><span class="ii" data-px="ruby2:60"></span><span class="il">+550<span data-px="ruby:24"></span></span><span class="tag">$4.99</span></button>
               <button type="button" class="item rp" data-usd="9.99" data-n="1,200"><span class="ii" data-px="ruby3:60"></span><span class="il">+1,200<span data-px="ruby:24"></span></span><span class="tag">$9.99</span></button>
@@ -2234,10 +2234,28 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   $('tbmake').addEventListener('click',openAccount);
   $('tblogin').addEventListener('click',function(){ openAccount('login'); }); $('setlogin').addEventListener('click',function(){ openAccount('login'); });
   /* ---- ruby packs: Watch Ad first, then the packs for money (no payments yet: the buttons say so) ---- */
+  /* Watch Ad plays on this same page (a rewarded ad wants the whole screen), never in a new tab: a phone unloads the
+     stream page while you're away and all of it has to load again. And never over the stream: while the ad is up the
+     room is put away and the Twitch player is taken out, so nothing covers a playing stream; when the ad is done the
+     player comes back fresh, which is always live. The chat stays connected the whole time. */
+  var adIv=0, adUp=false;
+  function adOpen(){ var n=15, g=$('adclaim'); adUp=true; clearInterval(adIv); closeDaily(); closeAsk();
+    $('signr').textContent='Watch Ad'; $('adcount').textContent=n; g.hidden=false; g.disabled=true; g.textContent='Wait for it…'; $('admsg').textContent='Watch a short ad and get '+pts.adAmt+' rubies.';
+    $('room').hidden=true; app.classList.remove('inroom'); showStream(false,true); $('recharge').hidden=false; layout(); window.scrollTo(0,0);
+    adIv=setInterval(function(){ n--; $('adcount').textContent=Math.max(n,0); if(n<=0){ clearInterval(adIv); adIv=0; g.disabled=false; g.textContent='Claim your rubies'; } },1000); }
+  function adClose(){ if(!adUp) return; adUp=false; clearInterval(adIv); adIv=0; $('recharge').hidden=true; $('room').hidden=false; app.classList.add('inroom');
+    showStream(wantStream(),true); sideTab('shop'); layout(); myPoints(); }
+  $('adclaim').addEventListener('click',function(){ if(!adUp) return; var g=this; g.disabled=true;
+    rpc('ruby_ad_reward',{q_name:me,q_token:tokenFor(me)}).then(function(rows){ var r=rows&&rows[0]||{}; adClose();
+      smsg('You have '+(r.rubies|0)+' rubies now.'+(r.ads_left>0?' '+r.ads_left+' more ad'+(r.ads_left===1?'':'s')+' today.':''),'ok'); })
+    .catch(function(e){ var m=String(e&&e.message||'');
+      $('admsg').textContent=m==='ad limit'?'That\'s all the ads for today. More tomorrow.':m==='no account'?'Make an account first.':'Couldn\'t reach the server. Try again in a moment.';
+      if(m!=='ad limit'&&m!=='no account') g.disabled=false; else g.hidden=true; }); });
+  document.querySelector('#recharge a.plaque').addEventListener('click',function(e){ if(adUp){ e.preventDefault(); adClose(); } });
   $('shopad').addEventListener('click',function(e){
-    if(!(pts.account||locked)){ e.preventDefault(); smsg('Make an account first.','bad'); openAccount(); return; }
-    if(pts.known&&pts.ads<=0){ e.preventDefault(); once(this,'no',450); smsg('That\'s all the ads for today. More tomorrow.','bad'); return; }
-    smsg('The ad opens in a new tab.','ok'); });
+    if(!(pts.account||locked)){ smsg('Make an account first.','bad'); openAccount(); return; }
+    if(pts.known&&pts.ads<=0){ once(this,'no',450); smsg('That\'s all the ads for today. More tomorrow.','bad'); return; }
+    adOpen(); });
   $('shopad').addEventListener('mouseenter',function(){ smsg('Watch a short ad for '+pts.adAmt+' rubies.'+(pts.account&&pts.known?' '+pts.ads+' left today.':'')); });
   [].forEach.call(document.querySelectorAll('#rubypacks button.rp'),function(b,i){
     for(var q=0;q<=i+1;q++){ var sp=document.createElement('i'); sp.className='sp'; sp.style.left=(18+((q*37+i*23)%60))+'%'; sp.style.top=(10+((q*29+i*17)%40))+'px'; sp.style.animationDelay=(q*.7+i*.4)+'s'; b.querySelector('.ii').appendChild(sp); }
