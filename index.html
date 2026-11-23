@@ -12,7 +12,7 @@
   history.replaceState(null,'',back); }catch(e){} })();
 if(location.pathname.indexOf("/live/")===0) document.write("<base href=\"/\">");
 </script>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <title>Chat Dungeon</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
@@ -1965,18 +1965,18 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   }
   if(TWITCH_CLIENT){ $('authtw').hidden=false; $('author').hidden=false; $('authtw').addEventListener('click',twConnect); }
 
-  /* phones: when the keyboard opens, the browser slides the whole page up to show the box you tapped. Instead the room is
-     held to the part of the screen still on show: the stream stays put and the chat shrinks above the keyboard. */
-  (function(){ var vv=window.visualViewport; if(!vv) return; var on=false, ty=0, base=0, baseW=0;
+  /* phones: when the keyboard opens, some browsers shrink the page (the room is one screen tall, so it just fits: the
+     viewport tag asks for that), others cover the bottom of it and slide the page up to show the box you tapped. For those
+     the room is made as tall as what's still on show and the page is put back at its top. Nothing is ever moved by hand. */
+  (function(){ var vv=window.visualViewport; if(!vv) return; var on=false;
     function typing(){ var a=document.activeElement; return !!a&&/^(INPUT|TEXTAREA)$/.test(a.tagName)&&!/^(checkbox|radio|button|submit)$/.test(a.type); }
-    function fit(){ var r=$('room'); if(vv.width!==baseW){ baseW=vv.width; base=0; } if(!typing()&&vv.height>base) base=vv.height; if(vv.height>base) base=vv.height;
-      var kb=phoneMq.matches&&app.classList.contains('inroom')&&typing()&&(base-vv.height>120||window.innerHeight-vv.height>120);
-      if(kb){ r.style.flex='0 0 auto'; r.style.height=Math.round(vv.height)+'px';
-        ty=Math.round(ty+vv.offsetTop-r.getBoundingClientRect().top); r.style.transform=ty?'translateY('+ty+'px)':'';   /* wherever the browser slid the page, the room goes back to the top of what's on show */
+    function top0(){ if(window.scrollY||document.documentElement.scrollTop||vv.offsetTop) window.scrollTo(0,0); }
+    function fit(){ var r=$('room'), kb=phoneMq.matches&&app.classList.contains('inroom')&&typing()&&window.innerHeight-vv.height>120;
+      if(kb){ r.style.flex='0 0 auto'; r.style.height=Math.round(vv.height)+'px'; top0();
         if(!on&&ocLog){ var L=ocLog; setTimeout(function(){ L.scrollTop=L.scrollHeight; },60); } on=true; }
-      else if(on){ on=false; ty=0; r.style.flex=''; r.style.height=''; r.style.transform=''; window.scrollTo(0,0); } }
+      else if(on){ on=false; r.style.flex=''; r.style.height=''; top0(); } }
     function soon(){ fit(); [60,200,400,800].forEach(function(t){ setTimeout(fit,t); }); }
-    vv.addEventListener('resize',fit); vv.addEventListener('scroll',fit); window.addEventListener('scroll',fit,{passive:true});
+    vv.addEventListener('resize',fit); vv.addEventListener('scroll',fit); window.addEventListener('scroll',function(){ if(on) top0(); },{passive:true});
     document.addEventListener('focusin',soon); document.addEventListener('focusout',soon); })();
 
   /* ---------- Power: a bar and six small things to buy under the stream ----------
