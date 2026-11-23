@@ -1932,7 +1932,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     document.addEventListener('touchstart',function(){ touchAt=Date.now(); },{capture:true,passive:true});
     $('osend').addEventListener('focusout',function(e){ var inp=$('otext'); if(e.target!==inp||!inp.value.trim()) return;
       setTimeout(function(){ if(document.activeElement===inp||Date.now()-touchAt<700||document.hidden||!document.hasFocus()||!ocLog) return; ocSubmit(); },80); });
-    $('osend').addEventListener('submit',function(e){ e.preventDefault(); var byBtn=Date.now()-btnAt<800; btnAt=0; ocSubmit(); if(byBtn&&$('otext')) $('otext').blur(); });
+    $('osend').addEventListener('submit',function(e){ e.preventDefault(); ocSubmit(); });   /* (the keyboard stays up after sending: Mott 2026-11-23) */
     function ocSubmit(){ var inp=$('otext'); if(!inp) return; var t=inp.value.replace(/[\r\n]+/g,' ').trim(); if(!t) return;
       if(!ocS||ocS.readyState!==1||!tw.ok){ ocSys('Chat is still connecting. Try again in a moment.'); return; }
       var now=Date.now(); if(now-ocLast<1200) return; ocLast=now;
