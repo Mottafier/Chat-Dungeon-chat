@@ -1965,20 +1965,34 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   }
   if(TWITCH_CLIENT){ $('authtw').hidden=false; $('author').hidden=false; $('authtw').addEventListener('click',twConnect); }
 
-  /* phones: when the keyboard opens, iPhone Safari keeps the page its full height, covers the bottom of it, and slides
-     what you see up to the box you tapped (the stream goes off the top). So while you type, the room is pinned to the
-     screen (position:fixed) and kept exactly over the part still on show: as tall as it, and moved down by however far
-     Safari slid the view (visualViewport.offsetTop, which is measured from the same place a pinned box is). Browsers that
-     shrink the page instead (the viewport tag asks for that) get the same answer with an offset of 0. */
-  (function(){ var vv=window.visualViewport; if(!vv) return; var on=false, base=0, baseW=0;
-    function typing(){ var a=document.activeElement; return !!a&&/^(INPUT|TEXTAREA)$/.test(a.tagName)&&!/^(checkbox|radio|button|submit)$/.test(a.type); }
-    function fit(){ var r=$('room'), st=r.style, ty=typing(); if(vv.width!==baseW){ baseW=vv.width; base=0; } if(vv.height>base) base=vv.height;
-      var kb=phoneMq.matches&&app.classList.contains('inroom')&&ty&&(base-vv.height>120||window.innerHeight-vv.height>120);
-      if(kb){ st.position='fixed'; st.left='0'; st.right='0'; st.top='0'; st.zIndex='5'; st.flex='0 0 auto'; st.minHeight='0'; st.height=Math.round(vv.height)+'px';
-        st.transform='translateY('+Math.max(0,Math.round(vv.offsetTop))+'px)';
-        if(!on&&ocLog){ var L=ocLog; setTimeout(function(){ L.scrollTop=L.scrollHeight; },60); } on=true; }
-      else if(on){ on=false; st.position=st.left=st.right=st.top=st.zIndex=st.flex=st.minHeight=st.height=st.transform=''; app.scrollTop=0; window.scrollTo(0,0); } }
-    function soon(){ fit(); [60,200,400,800].forEach(function(t){ setTimeout(fit,t); }); }
+  /* phones: when the keyboard opens, iPhone Safari keeps the page its full height, covers the bottom of it, and (only if
+     the box you tapped would end up under the keyboard) slides what you see up to it, taking the stream off the top.
+     So the stream never moves: the moment a text box is touched, before the keyboard starts, the room is pinned to the
+     screen and made as short as what will be left above the keyboard (the keyboard's height is remembered from last
+     time; a generous guess the first time). The box is then already clear of the keyboard and Safari slides nothing: the
+     chat just gets shorter under the stream. Once the keyboard is up the room is set to exactly what's on show; if
+     Safari did slide a little, the room follows it (visualViewport.offsetTop). */
+  (function(){ var vv=window.visualViewport; if(!vv) return; var on=false, base=0, baseW=0, preUntil=0;
+    function isBox(a){ return !!a&&/^(INPUT|TEXTAREA)$/.test(a.tagName)&&!/^(checkbox|radio|button|submit)$/.test(a.type); }
+    function typing(){ return isBox(document.activeElement); }
+    function phone(){ return phoneMq.matches&&app.classList.contains('inroom'); }
+    function pin(h,y){ var st=$('room').style; st.position='fixed'; st.left='0'; st.right='0'; st.top='0'; st.zIndex='5'; st.flex='0 0 auto'; st.minHeight='0'; st.height=Math.round(h)+'px';
+      st.transform=y?'translateY('+Math.round(y)+'px)':'';
+      if(!on&&ocLog){ var L=ocLog; setTimeout(function(){ L.scrollTop=L.scrollHeight; },30); } on=true; }
+    function unpin(){ var st=$('room').style; on=false; st.position=st.left=st.right=st.top=st.zIndex=st.flex=st.minHeight=st.height=st.transform=''; app.scrollTop=0; window.scrollTo(0,0); }
+    function fit(){ if(vv.width!==baseW){ baseW=vv.width; base=0; } if(vv.height>base) base=vv.height;
+      var kb=phone()&&typing()&&(base-vv.height>120||window.innerHeight-vv.height>120);
+      if(kb){ preUntil=0; store('cdKb',String(Math.round(base-vv.height))+'/'+Math.round(vv.width)); pin(vv.height,Math.max(0,vv.offsetTop)); }
+      else if(on&&Date.now()>preUntil) unpin(); }
+    function soon(){ fit(); [60,200,400,800,1300].forEach(function(t){ setTimeout(fit,t); }); }
+    function pre(e){ if(on||!phone()||!isBox(e.target)||!$('room').contains(e.target)) return; if(vv.width!==baseW){ baseW=vv.width; base=0; } if(vv.height>base) base=vv.height;
+      var m=/^(\d+)\/(\d+)$/.exec(load('cdKb')), k=m&&+m[2]===Math.round(vv.width)?+m[1]:0; if(k<150||k>base*.7) k=Math.round(base*.5);
+      preUntil=Date.now()+1200; pin(base-k,0); setTimeout(fit,1250); }
+    /* (done as the finger lifts, and the box is focused by hand: shrinking the room moves the box out from under the finger) */
+    var tsY=0, tsT=null;
+    document.addEventListener('touchstart',function(e){ tsT=e.target; tsY=e.touches&&e.touches[0]?e.touches[0].clientY:0; },{capture:true,passive:true});
+    document.addEventListener('touchend',function(e){ var t=e.target, c=e.changedTouches&&e.changedTouches[0]; if(t!==tsT||!c||Math.abs(c.clientY-tsY)>10||document.activeElement===t) return;
+      var was=on; pre(e); if(on&&!was){ if(e.cancelable) e.preventDefault(); void $('room').offsetHeight; try{ t.focus({preventScroll:true}); }catch(x){ t.focus(); } } },{capture:true,passive:false});
     vv.addEventListener('resize',fit); vv.addEventListener('scroll',fit); window.addEventListener('scroll',function(){ if(on) fit(); },{passive:true});
     document.addEventListener('focusin',soon); document.addEventListener('focusout',soon); })();
 
