@@ -779,6 +779,25 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 @media (max-width:379px){ .sview.rewv .act .an{font-size:12px} }
 @media (max-width:640px) and (min-height:560px){ .stabs [data-side=rewards]{flex:1.4 1 0} .stabs [data-side=avatar],.stabs [data-side=account]{flex:0 0 36px} }
 @media (max-width:640px) and (min-height:560px){ .stabs [data-side=rewards]{display:flex} }
+/* phones, second pass (Mott: the Twitch chat was far too small): everything that isn't the stream or the chat is slimmed.
+   The Power count moves into the top bar, the bar under the stream goes, the wall margins and gaps go. */
+.tbb.powc{display:none}
+@media (max-width:640px) and (min-height:560px){
+  .room.online .topbar{min-height:38px;padding:0 5px;gap:5px;box-shadow:none}
+  .room.online .topbar .tbb{height:30px;padding:0 6px}
+  .tbb.powc{display:inline-flex;background:#2a1a05;box-shadow:inset 0 0 0 2px #8a5a2b,inset 0 -5px 0 rgba(0,0,0,.3);padding-left:4px}
+  .tbb.powc b{font-size:22px;line-height:1;font-weight:500;color:#ffe7b5}
+  .room.online .stage{padding:0;gap:0}
+  .room.online .lcol{gap:0}
+  .room.online .stream{margin:0;border-left:0;border-right:0;border-top:0;box-shadow:none}
+  .room.online .points{padding:0;margin:0;border:0;box-shadow:none;background:#120d09;gap:0}
+  .room.online.genie .points{box-shadow:none}
+  .dpbar{display:none}
+  .pline{padding:3px 8px 4px;border-bottom:3px solid var(--line)}
+  .room.online .side{margin:0;border-left:0;border-right:0;border-bottom:0;border-top:0;box-shadow:none}
+  .stabs{padding:3px 3px 0;gap:3px}
+  .stabs button{height:32px}
+}
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
@@ -829,6 +848,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
         <button type="button" class="tbb go" id="tbmake" hidden>Make account</button>
         <button type="button" class="tbb daily" id="dbtn" hidden title="Daily reward" aria-label="Daily reward" aria-haspopup="true" aria-expanded="false" aria-controls="dpop"><span data-px="gift:24"></span><i class="dot" id="ddot" hidden></i></button>
         <button type="button" class="tbb rubyc" id="rbtn" hidden title="Your rubies"><span data-px="ruby:24"></span><b id="rnum">0</b></button>
+        <button type="button" class="tbb powc" id="pchip" hidden title="Your Power"><span data-px="suns:24"></span><b id="pnum2">0</b></button>
         <button type="button" class="tbb acct" id="acctbtn" hidden aria-haspopup="true" aria-expanded="false" aria-controls="acctmenu" title="Account"><span data-px="user:24"></span><span class="nm" id="acctname"></span><svg class="caret" viewBox="0 0 9 9" aria-hidden="true" shape-rendering="crispEdges"><path d="M0 2h9v2H8v1H7v1H6v1H5v1H4V7H3V6H2V5H1V4H0z" fill="currentColor"/></svg></button>
         <div class="menu" id="acctmenu" hidden role="menu">
           <button type="button" role="menuitem" id="mcustom">Customize</button>
@@ -1831,7 +1851,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       }).catch(function(){}); }
   function price(a){ var p=pts.prices[a]; return p==null?0:p|0; }
   function drawPoints(){
-    tween($('pnum'),pts.n);
+    tween($('pnum'),pts.n); tween($('pnum2'),pts.n); $('pchip').hidden=!pts.account;
     var m=$('dpmeter'); $('dpfill').style.width=Math.min(100,pts.n/DP_FULL*100)+'%'; m.classList.toggle('over',pts.n>DP_FULL);
     m.setAttribute('aria-label',pts.n+' Power');
     [].forEach.call(document.querySelectorAll('[data-price]'),function(i){ var p=pts.prices[i.getAttribute('data-price')]; if(p!=null) i.textContent=p; });
@@ -1980,6 +2000,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   document.addEventListener('click',function(e){ if(!$('acctmenu').hidden&&!$('acctmenu').contains(e.target)) closeMenu(); if(!$('dpop').hidden&&!$('dpop').contains(e.target)) closeDaily(); });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeMenu(); closeDaily(); } });
   $('rbtn').addEventListener('click',function(){ sideTab('shop',true); });
+  $('pchip').addEventListener('click',function(){ sideTab(phoneMq.matches?'rewards':'shop',true); });
   function buyPack(k,b){
     if(!(pts.account||locked)){ smsg('Make an account first.','bad'); openAccount(); return; }
     var cost=pts.packs[k]|0; if(pts.rubies<cost){ once(b,'no',450); smsg('You need '+(cost-pts.rubies)+' more rubies.','bad'); return; }
