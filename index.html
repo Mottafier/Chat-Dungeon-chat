@@ -1930,7 +1930,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   }
   function drawSend(){ var f=$('osend'), sb=$('settw'); if(sb){ sb.hidden=!tw.tok||(locked&&String(me).toLowerCase()===tw.login); sb.textContent='Disconnect Twitch'+(tw.login?': '+tw.login:''); } if(!f) return;
     if(!tw.tok){ if(!$('otw')){ f.innerHTML='<button type="button" class="otw" id="otw">Connect Twitch to chat</button>'; $('otw').addEventListener('click',twConnect); } }
-    else if(!$('otext')) f.innerHTML='<input id="otext" type="text" maxlength="500" enterkeyhint="send" autocapitalize="sentences" placeholder="Send a message" aria-label="Send a message"><button type="submit" class="ogo">Chat</button>'; }
+    else if(!$('otext')) f.innerHTML='<input id="otext" type="text" maxlength="500" enterkeyhint="send" autocapitalize="sentences" autocorrect="off" autocomplete="off" spellcheck="false" placeholder="Send a message" aria-label="Send a message"><button type="submit" class="ogo">Chat</button>'; }
   /* Twitch login: off to Twitch's own page in this same tab, and Twitch sends you back here with a chat token (the little
      script at the top of the page catches it). The token only lets this page read and send chat as you; it stays on this device. */
   function twConnect(){ var st=''; try{ var a=new Uint8Array(16); crypto.getRandomValues(a); st=[].map.call(a,function(b){ return ('0'+b.toString(16)).slice(-2); }).join(''); }catch(e){ st=String(Math.random()).slice(2)+Date.now(); }
@@ -1979,7 +1979,8 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     function pin(h,y){ var st=$('room').style; st.position='fixed'; st.left='0'; st.right='0'; st.top='0'; st.zIndex='5'; st.flex='0 0 auto'; st.minHeight='0'; st.height=Math.round(h)+'px';
       st.transform=y?'translateY('+Math.round(y)+'px)':'';
       if(!on&&ocLog){ var L=ocLog; setTimeout(function(){ L.scrollTop=L.scrollHeight; },30); } on=true; }
-    function unpin(){ var st=$('room').style; on=false; st.position=st.left=st.right=st.top=st.zIndex=st.flex=st.minHeight=st.height=st.transform=''; app.scrollTop=0; window.scrollTo(0,0); }
+    function follow(){ var L=ocLog, t0=Date.now(); if(!L) return; (function f(){ if(ocLog!==L) return; L.scrollTop=L.scrollHeight; if(Date.now()-t0<320) requestAnimationFrame(f); })(); }
+    function unpin(){ var st=$('room').style; on=false; st.transition=''; st.position=st.left=st.right=st.top=st.zIndex=st.flex=st.minHeight=st.height=st.transform=''; app.scrollTop=0; window.scrollTo(0,0); }
     function fit(){ if(vv.width!==baseW){ baseW=vv.width; base=0; } if(vv.height>base) base=vv.height;
       var kb=phone()&&typing()&&(base-vv.height>120||window.innerHeight-vv.height>120);
       if(kb){ preUntil=0; store('cdKb',String(Math.round(base-vv.height))+'/'+Math.round(vv.width)); pin(vv.height,Math.max(0,vv.offsetTop)); }
@@ -1992,7 +1993,9 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     var tsY=0, tsT=null;
     document.addEventListener('touchstart',function(e){ tsT=e.target; tsY=e.touches&&e.touches[0]?e.touches[0].clientY:0; },{capture:true,passive:true});
     document.addEventListener('touchend',function(e){ var t=e.target, c=e.changedTouches&&e.changedTouches[0]; if(t!==tsT||!c||Math.abs(c.clientY-tsY)>10||document.activeElement===t) return;
-      var was=on; pre(e); if(on&&!was){ if(e.cancelable) e.preventDefault(); void $('room').offsetHeight; try{ t.focus({preventScroll:true}); }catch(x){ t.focus(); } } },{capture:true,passive:false});
+      var was=on, r=$('room'), st=r.style; st.transition='none'; pre(e); if(on&&!was){ if(e.cancelable) e.preventDefault(); void r.offsetHeight; try{ t.focus({preventScroll:true}); }catch(x){ t.focus(); }
+        /* Safari has now seen the box in its final place. Before anything is painted, put the room back to full height and let it glide to the short one. */
+        var fin=st.height; st.height=Math.round(base)+'px'; void r.offsetHeight; st.transition='height .22s cubic-bezier(.2,.8,.3,1)'; st.height=fin; follow(); } },{capture:true,passive:false});
     vv.addEventListener('resize',fit); vv.addEventListener('scroll',fit); window.addEventListener('scroll',function(){ if(on) fit(); },{passive:true});
     document.addEventListener('focusin',soon); document.addEventListener('focusout',soon); })();
 
