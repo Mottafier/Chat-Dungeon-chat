@@ -1099,6 +1099,8 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .trk .tq{font-family:var(--display);font-weight:500;font-size:20px;line-height:1;color:#4a3a22}
 .trk .ts.on .ti{animation:stopin .45s cubic-bezier(.3,1.7,.5,1)}
 @keyframes stopin{0%{transform:scale(.5)}100%{transform:translateY(-3px)}}
+.dq p.tip{min-height:36px;margin-top:3px}
+.dq p.tip.swap{animation:rvin .4s ease-out}
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
@@ -1228,8 +1230,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
                     <div class="mzs" id="mzwip" hidden>
                       <div class="st" id="mzwhat"></div>
                       <div class="trk" id="mztrk"></div>
-                      <p class="fl" id="mzline" aria-live="polite"></p>
-                      <p class="tip">The more powerful it is, the more Power it costs to spawn.</p>
+                      <p class="tip" id="mzline" aria-live="polite"></p>
                     </div>
                     <div class="mzs" id="mzdone" hidden>
                       <h4>Your enemy is ready!</h4>
@@ -2636,11 +2637,8 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   function deckList(){ return cards.list.filter(function(c){ return c.deck; }); }
   /* where Make is: the three buttons, the prompt, the tracker, or the mystery card waiting to be revealed */
   var STOPS=[['custom','Reading your idea'],['enemy','Building its body'],['gun','Teaching it to fight'],['suns','Sizing up the danger'],['cards','Painting the card']];
-  var JOKES=[['Squinting at your handwriting...','Taking notes...','Asking the dungeon if this is allowed...'],
-    ['Gluing on the limbs...','Picking a head...','Counting the legs. Counting again...'],
-    ['Showing it where the player is...','Practicing its mean face...','Handing it something dangerous...'],
-    ['Arguing about how much Power this should cost...','Poking it with a stick...','Running away from it, for science...'],
-    ['Holding still for the portrait...','Mixing the paint...','Letting the paint dry...']];
+  function mkTips(){ return ['The more powerful it is, the more Power it costs to spawn.','Your first spawn of a new card is free.','You get to name it when it\'s done.',
+    'After a spawn, a card recharges for '+cards.recharge+' seconds.','Your Deck holds '+cards.max+' cards. The rest wait in All cards.','You can leave this page. It keeps making.']; }
   function mkStage(now){ var mk=cards.making; if(!mk) return mz.pick?'ask':'tiles'; if(!mk.ready) return 'wip';
     if(mk.sprite===null&&now-mz.readyAt<20000) return 'wip';       /* (made, its card not painted yet) */
     if(mz.seen===mk.id&&now-mz.readyAt<1800) return 'wip';          /* (watched all the way: the last stop gets its moment) */
@@ -2655,7 +2653,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       STOPS.forEach(function(s,i){ t+=i>step?'<div class="ts"><span class="ti"><b class="tq">?</b></span><span class="tl">???</span></div>'
         :'<div class="ts '+(i<step?'did':'on')+'"><span class="ti">'+pix(s[0],24)+'<em>&#10003;</em></span><span class="tl">'+s[1]+'</span></div>'; });
       var tr=$('mztrk'); if(tr._h!==t){ tr._h=t; tr.innerHTML=t; }
-      $('mzwhat').textContent='\u201c'+mk.text+'\u201d'; var line=JOKES[step][Math.floor(el/4)%3]; if($('mzline').textContent!==line) $('mzline').textContent=line; }
+      $('mzwhat').textContent='\u201c'+mk.text+'\u201d'; var tips=mkTips(), line=tips[Math.floor(Math.max(0,el)/6)%tips.length], tl=$('mzline'); if(tl.textContent!==line){ tl.textContent=line; once(tl,'swap',400); } }
     else if(st==='done') h='<button type="button" class="mc myst ready" id="mzmyst" aria-label="Reveal your enemy"><span class="nin">? ? ?</span><span class="q">?</span></button>';
     var box=$('mzcard'); if(st!=='tiles'&&box._h!==h){ box._h=h; box.innerHTML=h; }
     if(mz.rv&&(st!=='done'||!mk||mz.rv._id!==mk.id)) rvClose(); }
