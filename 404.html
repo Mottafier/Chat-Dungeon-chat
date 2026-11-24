@@ -2801,6 +2801,14 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   (function(){ if(location.pathname.indexOf('/live/')!==0) return; var here=location.pathname;
     [].forEach.call(document.querySelectorAll('a[href="?recharge"]'),function(x){ x.setAttribute('href',here+'?recharge'); });
     var bk=document.querySelector('#recharge a.plaque'); if(bk) bk.setAttribute('href',here); })();
+  /* ?tab=shop|deck|make|rewards|account|avatar (links from the homepage) opens that panel once the room is up, then leaves the address */
+  (function(){ var want=''; try{ var q=new URLSearchParams(location.search); want=String(q.get('tab')||'').toLowerCase(); if(want){ q.delete('tab'); var rest=q.toString(); history.replaceState(null,'',location.pathname+(rest?'?'+rest:'')+location.hash); } }catch(e){}
+    if(!/^(shop|deck|make|rewards|account|avatar|instants)$/.test(want)) return; var n=0;
+    var iv=setInterval(function(){ if(++n>50){ clearInterval(iv); return; } if(!app.classList.contains('inroom')) return;
+      var store=want==='deck'||want==='make'||want==='instants'||want==='rewards';
+      if(store){ if((want==='deck'||want==='make')&&!cards.ok) return; if(phoneMq.matches) sideTab('rewards',true); if(want==='deck'||want==='make') pTab(want); else if(want==='instants') pTab('spawn'); }
+      else if(document.querySelector('.stabs [data-side="'+want+'"]')) sideTab(want,true);
+      clearInterval(iv); },300); })();
   setTimeout(meterPoll,1500);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden) meterPoll(); });
   var cards={ok:false,tried:false,acct:null,price:30,max:6,recharge:100,titleMax:20,making:null,list:[],t:0,from:'chat'}, ptNow='spawn', cardNew=0;
