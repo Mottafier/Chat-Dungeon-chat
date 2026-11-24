@@ -468,6 +468,37 @@ label{font-size:13px;color:var(--parch-dim)}
 @keyframes minus{0%{opacity:0;transform:translateY(8px)}20%{opacity:1}100%{opacity:0;transform:translateY(-26px)}}
 .fly{position:fixed;z-index:80;left:0;top:0;pointer-events:none;will-change:transform;transition:transform .55s cubic-bezier(.5,-.3,.6,1),opacity .55s}
 .fly.out{transition:transform .6s cubic-bezier(.1,.7,.3,1),opacity .6s ease-in}
+/* ---- gaining rubies: a big crystal pops up in the middle of the screen with "+N Rubies", then rubies fly out of it
+   into the ruby count in the top bar. Every ruby gain goes through it (rubyGain in the script). ---- */
+.rgain{position:fixed;left:50%;top:50%;z-index:95;width:0;height:0;pointer-events:none}
+.rgain>*{position:absolute;left:0;top:0}
+.rg-glow{width:520px;height:520px;margin:-260px 0 0 -260px;background:radial-gradient(closest-side,rgba(10,2,4,.82),rgba(60,6,18,.5) 45%,rgba(0,0,0,0) 72%);animation:rgfade .25s ease-out both}
+.rg-rays{width:440px;height:440px;margin:-250px 0 0 -220px;background:repeating-conic-gradient(rgba(255,120,140,.55) 0 9deg,rgba(255,120,140,0) 9deg 30deg);
+  -webkit-mask:radial-gradient(closest-side,#000 30%,transparent 100%);mask:radial-gradient(closest-side,#000 30%,transparent 100%);animation:rgspin 2.4s steps(24) infinite,rgfade .4s .15s ease-out both}
+.rg-gem{margin:-128px 0 0 -88px;width:176px;height:176px;transform-origin:50% 80%;animation:rgpop .5s steps(9) both;filter:drop-shadow(0 0 14px rgba(255,60,90,.8))}
+.rg-gem svg{display:block;width:100%;height:100%}
+.rgain.give .rg-gem{animation:rgshake .16s steps(2) infinite}
+.rg-n{left:-200px;width:400px;top:54px;text-align:center;white-space:nowrap;font-family:var(--display);font-weight:700;font-size:76px;line-height:1;color:#fff;
+  text-shadow:4px 0 #000,-4px 0 #000,0 4px #000,0 -4px #000,4px 4px #000,-4px 4px #000,4px -4px #000,-4px -4px #000,0 9px 0 #b3122d,0 12px 0 #000;animation:rgtext .45s .18s steps(7) both}
+.rg-n small{font-size:.58em;font-weight:500;color:#ffb8c4;margin-left:.22em;letter-spacing:.03em;text-shadow:3px 0 #000,-3px 0 #000,0 3px #000,0 -3px #000,3px 3px #000,-3px 3px #000,3px -3px #000,-3px -3px #000,0 6px 0 #000}
+.rg-w{left:-200px;width:400px;top:138px;text-align:center;white-space:nowrap;font-family:var(--display);font-size:21px;line-height:1;color:#ffe9a6;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000;animation:rgtext .4s .4s steps(6) both}
+.rg-sp{width:8px;height:8px;margin:-4px;background:#fff;box-shadow:0 -8px 0 -2px #fff,0 8px 0 -2px #fff,-8px 0 0 -2px #fff,8px 0 0 -2px #fff;opacity:0;animation:rgtwink .7s steps(4) infinite}
+.rgain.bye .rg-gem{animation:rgbye .28s steps(5) both}
+.rgain.bye .rg-glow,.rgain.bye .rg-rays,.rgain.bye .rg-n,.rgain.bye .rg-w{animation:rgout .28s ease-in both}
+.rgain.bye .rg-sp{display:none}
+.rg-fly{position:fixed;left:0;top:0;z-index:96;width:24px;height:24px;margin:-12px 0 0 -12px;pointer-events:none;will-change:transform;filter:drop-shadow(0 0 5px rgba(255,70,100,.9))}
+.tbb.rubyc.got{animation:rggot .22s steps(3)}
+.tbb.rubyc.got b{color:#fff}
+@keyframes rgfade{from{opacity:0}to{opacity:1}}
+@keyframes rgspin{to{transform:rotate(360deg)}}
+@keyframes rgpop{0%{transform:scale(0) rotate(-14deg)}55%{transform:scale(1.28) rotate(5deg)}75%{transform:scale(.92) rotate(-2deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes rgshake{0%{transform:translate(-2px,1px) scale(1.04)}100%{transform:translate(2px,-1px) scale(.98)}}
+@keyframes rgtext{0%{opacity:0;transform:translateY(22px) scale(.4)}60%{opacity:1;transform:translateY(-6px) scale(1.15)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes rgtwink{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:1;transform:scale(1)}}
+@keyframes rgbye{to{transform:scale(0) translateY(-20px)}}
+@keyframes rgout{to{opacity:0}}
+@keyframes rggot{0%{transform:scale(1)}50%{transform:scale(1.16);box-shadow:inset 0 0 0 2px #ffd6dc,0 0 14px rgba(255,80,110,.9)}100%{transform:scale(1)}}
+@media (max-width:560px){ .rg-gem{width:136px;height:136px;margin:-104px 0 0 -68px} .rg-n{font-size:58px;top:42px} .rg-w{top:108px;font-size:18px} .rg-glow{width:400px;height:400px;margin:-200px 0 0 -200px} .rg-rays{width:340px;height:340px;margin:-200px 0 0 -170px} }
 .pline{flex:0 0 auto;min-height:40px;display:flex;align-items:center}
 .pline>*{flex:1 1 auto;min-width:0}
 .pmsg{font-size:13.5px;line-height:1.3;min-height:0}
@@ -859,7 +890,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .plus.bon{color:#ffe08a}
 @keyframes bonuspop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
 @keyframes bonusshake{0%,55%,100%{transform:rotate(0) scale(1)}60%{transform:rotate(-9deg) scale(1.1)}68%{transform:rotate(9deg) scale(1.1)}76%{transform:rotate(-6deg) scale(1.06)}84%{transform:rotate(6deg) scale(1.06)}92%{transform:rotate(-3deg)}}
-@media (prefers-reduced-motion:reduce){ .pbonus{animation:none} }
+@media (prefers-reduced-motion:reduce){ .pbonus{animation:none} .rgain,.rg-fly{display:none} }
 @media (max-width:640px) and (min-height:560px), (max-width:640px) and (pointer:coarse){
   .pbonus.tb{display:inline-flex;height:26px;margin:0 2px 0 0;padding:0 5px 0 6px;font-size:19px}
   .pbonus.tb[hidden]{display:none}
@@ -1617,6 +1648,40 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     '..GggggggggggggggG',
     '..GGGGGGGGGGGGGGGG',
     '....GG........GG'];
+  /* the big crystal cluster that pops up when you gain rubies */
+  ART.rubybig=[32,
+    '',
+    '',
+    '...............Pp',
+    '...............Pp',
+    '..............PPpr',
+    '..............PPpr',
+    '.............PPPprr',
+    '.........p...PPPprr',
+    '.........pp.pprrrRRd',
+    '.........Pp.pprrrRRd',
+    '........PPpdpprrrRRd..P',
+    '........PPpdPPrrrRRd.Ppp',
+    '...p....prrdPPrrrRRd.Ppr',
+    '...Ppr..prrdPPrrrRRddPprr...p',
+    '...Pppr.PrrdPPrrrRRddrrRd..Pp',
+    '...PPrRdPrrdPPrrrRRddrrRddPpp',
+    '...prrRdPPrdPPrrrRRddrrRddrpr',
+    '...prrrdPPrdPPrrrRRddrrRdrrRR',
+    '....PrrdPPrdPPrrrRRddrrRdrrRd',
+    '....PrdpdPrdpprrrddddrRddrRR',
+    '....PPdprrddpprrrddddrdddpRd',
+    '.....PPrrdddppRRRddddrdPPpR',
+    '.....ddPrRddppRRRdddddPrrrd',
+    '......dPrrddppRRRdddddPrRd',
+    '......dPrrddppRRRddddprrRd',
+    '......pdzzgzzzzgzzzzgzzzdd',
+    '.....zgzzzzgzzzzgzzzzgzzzzg',
+    '....zzzzzzxzzzzzzxzzzzzzxzzz',
+    '....zzzxzzzzzzxzzzzzzxzzzzzz',
+    '....xxxxxxxxxxxxxxxxxxxxxxxx',
+    '.......xxxxxxxxxxxxxxxxxx',
+    '.............xxxxxx'];
   /* ruby piles for the ruby packs: the one crystal stamped a few times on a bigger grid (later stamps sit in front) */
   function pile(name,n,at,under){ var g=[], x, y, i; for(y=0;y<n;y++){ g.push([]); for(x=0;x<n;x++) g[y].push('.'); }
     function put(a,ox,oy){ for(var y=1;y<a.length;y++) for(var x=0;x<a[y].length;x++){ var c=a[y].charAt(x); if(c!=='.'&&g[y-1+oy]&&ox+x<n&&ox+x>=0) g[y-1+oy][ox+x]=c; } }
@@ -2254,13 +2319,13 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       setTimeout(function(){ z.style.opacity='0'; },380); setTimeout(function(){ z.remove(); },1000); })(i); }
   function floatUp(box,t){ if(!box) return; var m=document.createElement('span'); m.className='minus'; m.textContent=t; box.appendChild(m); setTimeout(function(){ m.remove(); },1000); }
   var wantDaily=false, lastFind=0; try{ lastFind=+(localStorage.getItem('cdFind')||0); }catch(e){}
-  function myPoints(){ if(document.hidden||!ON) return; rpc('my_points',withTok({q_name:me,q_code:code})).then(function(rows){ var r=rows&&rows[0]; if(!r) return;
+  function myPoints(){ if(document.hidden||!ON) return; var asked=me, askedAt=Date.now(); rpc('my_points',withTok({q_name:me,q_code:code})).then(function(rows){ var r=rows&&rows[0]; if(!r) return;
+      if(askedAt<gain.stamp&&asked===me) r.rubies=pts.rubies; gain.name=asked;
       var was=pts.rubies, knew=pts.known;
       pts={n:r.points|0,account:!!r.account,prices:r.prices||{},packs:r.packs||{},rubies:r.rubies|0,ads:r.ads_left|0,adAmt:(r.ad_points|0)||20,daily:r.daily|0,known:true,
            dknown:r.daily_ready!=null,dready:!!r.daily_ready,dday:(r.daily_day|0)||1,ladder:(r.daily_ladder&&r.daily_ladder.length?r.daily_ladder:[10,15,20,30,50]),
            genie:r.genie||'',genieMine:!!r.genie_mine,wishes:r.wishes_left|0};
-      if(r.find_id&&r.find_id>lastFind&&(r.find_age|0)<90){ lastFind=r.find_id; try{ localStorage.setItem('cdFind',String(lastFind)); }catch(e){} showFind(r.find_amount|0); }
-      else if(pts.account&&knew&&pts.rubies>was) plus(pts.rubies-was);
+      if(r.find_id&&r.find_id>lastFind&&(r.find_age|0)<90){ lastFind=r.find_id; try{ localStorage.setItem('cdFind',String(lastFind)); }catch(e){} showFind(r.find_amount|0); if(pts.rubies>was) gain.why='The streamer found rubies!'; }
       drawPoints(); if(!cards.tried||cards.acct!==pts.account){ cards.tried=true; cards.acct=pts.account; myCards(); }
       if(wantDaily){ wantDaily=false; if(pts.dknown&&pts.dready) openDaily(); else if(!pts.dknown) rubyDaily(); }
       else if(!pts.dknown&&pts.account&&!knew) rubyDaily();  /* (a database from before the reward popup: claimed on arrival, as it was) */
@@ -2314,7 +2379,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     $('tbroom').textContent=channel||code; $('acctname').textContent=me; $('avname').textContent=me||'Guest'; $('acctbtn').hidden=!acc;
     $('rbtn').hidden=!acc; $('tbmake').hidden=acc||!pts.known; $('tblogin').hidden=acc||!pts.known;
     $('dbtn').hidden=!pts.dknown; $('ddot').hidden=!pts.dready; $('dbtn').classList.toggle('ready',pts.dready); $('adamt').textContent=pts.adAmt; if(!$('dpop').hidden) drawDaily();
-    tween($('rnum'),pts.rubies);
+    rubyCheck(); if(gain.held>0){ var rn=$('rnum'); cancelAnimationFrame(rn._raf); rn._first=1; rn._v=Math.max(0,pts.rubies-gain.held); rn.textContent=rn._v; } else tween($('rnum'),pts.rubies);
     $('setacct').textContent=acc?me:'Guest'; $('setmake').hidden=$('setlogin').hidden=acc||!pts.known||!$('lockwrap').hidden; $('setleave').hidden=!acc;
     var dp=$('dppacks'); if(!dp.firstChild||dp.getAttribute('data-k')!==JSON.stringify(pts.packs)){ dp.setAttribute('data-k',JSON.stringify(pts.packs)); dp.textContent='';
       Object.keys(pts.packs).sort(function(a,b){ return a-b; }).forEach(function(k,i){ var b=document.createElement('button'); b.type='button'; b.className='item'; b.setAttribute('data-pack',k);
@@ -2325,12 +2390,60 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
         dp.appendChild(b); }); }
     [].forEach.call(dp.children,function(b){ b.classList.toggle('poor',pts.rubies<(pts.packs[b.getAttribute('data-pack')]|0)); });
   }
+  /* ---- gaining rubies. Rubies are rare, so every gain is a small show: a big crystal pops up in the middle of the
+     screen with "+N Rubies", then rubies fly out of it into the count in the top bar, which ticks up as they land.
+     Nothing calls this by hand: drawTop() compares the rubies it's about to show with the rubies it showed last
+     (rubyCheck), so ANY gain plays it (the daily reward, an ad, a refund, the streamer finding rubies, a pack bought,
+     and whatever comes later), and a spend never does. The last count seen is kept per name, so rubies that came in
+     while the page was closed play when you're back. setRubies() stamps the page's own changes so a slower, older
+     my_points answer can't undo one and then look like a gain. ---- */
+  var gain={shown:null,who:'',name:'',held:0,q:[],busy:false,why:'',stamp:0};
+  function setRubies(n){ pts.rubies=n|0; gain.stamp=Date.now(); }
+  function rubyCheck(){
+    if(!(pts.account&&pts.known&&me)){ gain.shown=null; gain.who=''; return; }
+    if(gain.name!==me) return;   /* the numbers on hand are still another name's */
+    if(gain.who!==me){ gain.who=me; gain.shown=null; try{ var s=localStorage.getItem('cdRub:'+me.toLowerCase()); if(s!=null&&s!==''&&isFinite(+s)) gain.shown=+s; }catch(e){} }
+    var was=gain.shown; gain.shown=pts.rubies;
+    if(was!==pts.rubies){ try{ localStorage.setItem('cdRub:'+me.toLowerCase(),String(pts.rubies)); }catch(e){} }
+    if(was!=null&&pts.rubies>was) rubyGain(pts.rubies-was); }
+  function rubyGain(n){ n=n|0; var why=gain.why; gain.why=''; if(n<=0) return;
+    if(still){ plus(n); return; }
+    gain.held+=n; gain.q.push([n,why]); if(!gain.busy) rubyShow(); }
+  function rubyLand(k){ var b=$('rbtn'), el=$('rnum'); gain.held=Math.max(0,gain.held-k); cancelAnimationFrame(el._raf); el._v=Math.max(0,pts.rubies-gain.held); el.textContent=el._v; once(b,'got',220); }
+  function rubyShow(){ var it=gain.q.shift(); if(!it){ gain.busy=false; return; } gain.busy=true;
+    var n=it[0], box=document.createElement('div'), i, h='<i class="rg-glow"></i><i class="rg-rays"></i>';
+    var SP=[[-96,-92,0],[92,-70,.2],[-70,10,.45],[104,-4,.1],[-18,-150,.3],[40,-128,.55]];
+    for(i=0;i<SP.length;i++) h+='<i class="rg-sp" style="left:'+SP[i][0]+'px;top:'+SP[i][1]+'px;animation-delay:'+SP[i][2]+'s"></i>';
+    box.className='rgain'; box.setAttribute('role','status'); box.setAttribute('aria-label','+'+n+' rubies');
+    box.innerHTML=h+'<span class="rg-gem">'+pix('rubybig',176)+'</span><b class="rg-n">+<span>0</span><small>'+(n===1?'Ruby':'Rubies')+'</small></b>'+(it[1]?'<small class="rg-w">'+esc(it[1])+'</small>':'');
+    document.body.appendChild(box);
+    var num=box.querySelector('.rg-n span'), t0=performance.now()+180;
+    (function up(now){ var k=Math.max(0,Math.min(1,(now-t0)/520)); num.textContent=Math.round(n*k); if(k<1&&box.parentNode) requestAnimationFrame(up); else num.textContent=n; })(performance.now());
+    setTimeout(function(){ num.textContent=n; },760);
+    /* the rubies: out of the crystal in a burst, a beat in the air, then a dive into the count */
+    var k=Math.min(n,Math.max(6,Math.min(24,Math.round(n/2.5)))), each=Math.floor(n/k), extra=n-each*k, landed=0;
+    setTimeout(function(){ box.classList.add('give');
+      var c=box.getBoundingClientRect(), cx=c.left, cy=c.top-40, to=$('rbtn'), tr=to&&to.offsetParent?to.getBoundingClientRect():null;
+      var tx=tr?tr.left+14:window.innerWidth-40, ty=tr?tr.top+tr.height/2:24;
+      for(var i=0;i<k;i++) (function(i){ var z=document.createElement('div'), ang=-Math.PI/2+(i/(k-1||1)-.5)*Math.PI*1.5+(Math.random()-.5)*.3, d=70+Math.random()*80,
+          mx=cx+Math.cos(ang)*d, my=cy+Math.sin(ang)*d*.8, dl=i*55, rot=(Math.random()-.5)*90;
+        z.className='rg-fly'; z.innerHTML=RUBY_SVG; z.style.transform='translate('+cx+'px,'+cy+'px) scale(.3)'; z.style.opacity='0'; document.body.appendChild(z);
+        var done=function(){ if(!z.parentNode) return; z.remove(); rubyLand(each+(i<extra?1:0)); if(++landed===k) rubyDone(box); };
+        if(z.animate){ z.animate([
+            {transform:'translate('+cx+'px,'+cy+'px) scale(.3) rotate(0deg)',opacity:1,offset:0,easing:'cubic-bezier(.1,.8,.3,1)'},
+            {transform:'translate('+mx+'px,'+my+'px) scale(1.25) rotate('+rot+'deg)',opacity:1,offset:.36,easing:'linear'},
+            {transform:'translate('+mx+'px,'+(my+6)+'px) scale(1.15) rotate('+rot+'deg)',opacity:1,offset:.5,easing:'cubic-bezier(.6,-.25,.75,.6)'},
+            {transform:'translate('+tx+'px,'+ty+'px) scale(.75) rotate(0deg)',opacity:1,offset:1}],{duration:820,delay:dl,fill:'both'}); }
+        setTimeout(done,dl+830); })(i);
+    },1150); }
+  function rubyDone(box){ box.classList.remove('give'); box.classList.add('bye'); gain.held=Math.max(0,gain.held);
+    setTimeout(function(){ box.remove(); if(!gain.q.length){ gain.held=0; gain.busy=false; drawTop(); } else rubyShow(); },300); }
   function plus(n){ if(!n) return; var b=$('rbtn'), e=document.createElement('span'); e.className='plus'; e.textContent='+'+n; b.appendChild(e); once(b,'bump',450); setTimeout(function(){ e.remove(); },1700); }
   function showFind(n){ var f=$('rfind'); if(!n) return;
     $('rfindt').innerHTML='Everyone in chat gains +'+n+' '+RUBY_SVG+'!';
     $('rfinds').textContent=pts.account||locked?'Added to your rubies':'Make an account to collect them';
     f.hidden=true; void f.offsetWidth; f.hidden=false; clearTimeout(showFind.t); showFind.t=setTimeout(function(){ f.hidden=true; },6200);
-    if(pts.account) setTimeout(function(){ fly(RUBY_SVG,f,$('rbtn'),Math.min(6,Math.max(2,Math.round(n/5)))); plus(n); },500); }
+ }
   /* ---- the daily reward: a gift button by the ruby count opens a small box under the top bar (over the side panel, never
      the stream; on a phone it's a row of the top bar). Five days in a row, each bigger; claimed with a click. ---- */
   var DAY_ART=['ruby','ruby','ruby2','ruby2','ruby3'];
@@ -2347,13 +2460,12 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     if(!pts.dready||b.disabled) return; b.disabled=true;
     rpc('ruby_daily',withTok({q_name:me})).then(function(rows){ var r=rows&&rows[0]; if(!r) return; var g=r.gained|0, cell=document.querySelector('.dday.now');
       pts.dready=false; if(r.streak) pts.dday=((r.streak-1)%pts.ladder.length)+1;
-      if(g>0&&cell){ fly(RUBY_SVG,cell,$('rbtn'),Math.min(8,Math.max(3,Math.round(g/5))),function(){ pts.rubies=r.rubies|0; drawTop(); plus(g); }); once(cell,'pop',600); }
-      else { pts.rubies=r.rubies|0; }
+      if(g>0){ gain.why='Daily reward'; once(cell,'pop',600); } setRubies(r.rubies);
       drawTop(); drawDaily();
     }).catch(function(e){ b.disabled=false; pmsg(srvErr(e),'bad'); }); });
   /* (a database from before the reward popup pays the daily rubies on arrival) */
   function rubyDaily(){ if(!ON||!tokenFor(me)) return; rpc('ruby_daily',withTok({q_name:me})).then(function(rows){ var r=rows&&rows[0]; if(!r) return;
-      pts.rubies=r.rubies|0; drawTop(); if(r.gained>0){ plus(r.gained); pmsg('+'+r.gained+' rubies for visiting today!','ok'); } }).catch(function(){}); }
+      if(r.gained>0) gain.why='Daily reward'; setRubies(r.rubies); drawTop(); if(r.gained>0){ pmsg('+'+r.gained+' rubies for visiting today!','ok'); } }).catch(function(){}); }
   /* every minute the page says it's watching this room: that's who gets the rubies the streamer finds (watching itself pays nothing) */
   function rubyWatch(){ if(document.hidden||!ON||!me||!tokenFor(me)||$('stream').hidden||!roomOpen) return;
     rpc('ruby_watch',withTok({q_code:code,q_name:me})).catch(function(){}); }
@@ -2431,7 +2543,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     if(!quiet) cards.ok=true; cards.price=(j.price|0)||cards.price; cards.max=(j.max|0)||cards.max; cards.recharge=(j.recharge|0)||cards.recharge;
     cards.making=j.making||null; if(cards.making) cards.making.since=now-(cards.making.age|0)*1000;
     cards.list=(j.cards||[]).map(function(c){ c.until=now+(c.wait|0)*1000; return c; });
-    if(j.note==='make failed'){ pmsg('That one couldn\'t be made, so your rubies are back.','bad'); myPoints(); }
+    if(j.note==='make failed'){ pmsg('That one couldn\'t be made, so your rubies are back.','bad'); gain.why='Refund'; myPoints(); }
     if(cards.making&&cards.making.ready&&!(was&&was.ready&&was.id===cards.making.id)){ once($('mkstrip'),'pop',700); if(!still) burst(pix('spark',24)||SUN_SVG,$('mkadd'),6); }
     clearTimeout(cards.t); if(cards.making&&!cards.making.ready) cards.t=setTimeout(myCards,3500);
     drawCards(); }
@@ -2468,7 +2580,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     if(pts.rubies<cards.price){ once(e,'no',450); pmsg('You need '+(cards.price-pts.rubies)+' more rubies to make that.','bad'); sideTab('shop'); smsg('You need '+(cards.price-pts.rubies)+' more rubies.','bad'); return; }
     if(e.classList.contains('wait')) return; e.classList.add('wait');
     rpc('make_card',withTok({q_code:code,q_name:me,q_text:t})).then(function(j){ e.classList.remove('wait'); if(!j) return;
-      $('mktext').value=''; mkClose(); fly(RUBY_SVG,$('rbtn'),e.querySelector('.ai'),3); pts.rubies=j.rubies|0; drawTop(); pmsg(''); cardsIn(j.cards);
+      $('mktext').value=''; mkClose(); fly(RUBY_SVG,$('rbtn'),e.querySelector('.ai'),3); setRubies(j.rubies); drawTop(); pmsg(''); cardsIn(j.cards);
     }).catch(function(err){ e.classList.remove('wait'); once(e,'no',450); var m=String(err&&err.message||'');
       pmsg(m==='room closed'?'New enemies are made while the streamer\'s game is running. Try again when it\'s live.':m==='not allowed'?'Those words aren\'t allowed. Try something else.':/^You've made /.test(m)?m.slice(0,140):SPEND_ERR[m]||srvErr(err),'bad'); if(m==='no account') openAccount(); if(m==='making'||m==='not enough rubies'){ myCards(); myPoints(); } }); }
   $('mkenemy').addEventListener('click',function(ev){ var e=this; pHover='';
@@ -2546,7 +2658,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     var cost=pts.packs[k]|0; if(pts.rubies<cost){ once(b,'no',450); smsg('You need '+(cost-pts.rubies)+' more rubies.','bad'); return; }
     if(b.classList.contains('wait')) return; b.classList.add('wait');
     rpc('buy_points',withTok({q_name:me,q_pack:k})).then(function(rows){ b.classList.remove('wait'); var r=rows&&rows[0]; if(!r) return;
-      var n=r.points|0; pts.rubies=r.rubies|0; drawTop(); smsg('+'+k+' Power.','ok'); once(b,'bought',600);
+      var n=r.points|0; setRubies(r.rubies); drawTop(); smsg('+'+k+' Power.','ok'); once(b,'bought',600);
       fly(RUBY_SVG,$('rbtn'),b.querySelector('.tag'),3);
       burst(SUN_SVG,b.querySelector('.ii'),Math.min(8,Math.max(4,Math.round(k/40))));  /* (nothing flies across the stream) */
       pts.n=n; drawPoints(); once($('dpico'),'bump',450); floatUp($('dpico').parentNode,'+'+k);
@@ -2574,7 +2686,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   function adClose(){ if(!adUp) return; adUp=false; clearInterval(adIv); adIv=0; $('recharge').hidden=true; $('room').hidden=false; app.classList.add('inroom');
     showStream(wantStream(),true); sideTab('shop'); layout(); myPoints(); }
   $('adclaim').addEventListener('click',function(){ if(!adUp) return; var g=this; g.disabled=true;
-    rpc('ruby_ad_reward',{q_name:me,q_token:tokenFor(me)}).then(function(rows){ var r=rows&&rows[0]||{}; adClose();
+    rpc('ruby_ad_reward',{q_name:me,q_token:tokenFor(me)}).then(function(rows){ var r=rows&&rows[0]||{}; adClose(); if(r.rubies!=null){ gain.why='Thanks for watching!'; setRubies(r.rubies); drawTop(); }
       smsg('You have '+(r.rubies|0)+' rubies now.'+(r.ads_left>0?' '+r.ads_left+' more ad'+(r.ads_left===1?'':'s')+' today.':''),'ok'); })
     .catch(function(e){ var m=String(e&&e.message||'');
       $('admsg').textContent=m==='ad limit'?'That\'s all the ads for today. More tomorrow.':m==='no account'?'Make an account first.':'Couldn\'t reach the server. Try again in a moment.';
