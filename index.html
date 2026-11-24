@@ -2797,6 +2797,10 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     if(!still){ if(phoneMq.matches) burst(SUN_SVG,b,3); else fly(SUN_SVG,$('dpico'),b,3); var d=document.createElement('em'); d.className='jdrop'; d.style.left=(20+Math.random()*60)+'%'; j.l.appendChild(d); setTimeout(function(){ d.remove(); },700); }
     rpc('meter_chip',withTok({q_code:code,q_name:me,q_action:a})).then(function(r){ meters.hold=0; meterIn(r,true); })
     .catch(function(err){ meters.hold=0; var e=String(err&&err.message||''); if(e!=='slow down'){ once(b,'no',450); pmsg(e==='not enough points'?'You\'re out of Power. More comes every minute you watch.':SPEND_ERR[e]||srvErr(err),'bad'); } if(e==='no account') openAccount(); meterPoll(); myPoints(); }); }
+  /* a streamer's page lives at /live/<name>: links that mean "this page" keep that path (the page has <base href="/">) */
+  (function(){ if(location.pathname.indexOf('/live/')!==0) return; var here=location.pathname;
+    [].forEach.call(document.querySelectorAll('a[href="?recharge"]'),function(x){ x.setAttribute('href',here+'?recharge'); });
+    var bk=document.querySelector('#recharge a.plaque'); if(bk) bk.setAttribute('href',here); })();
   setTimeout(meterPoll,1500);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden) meterPoll(); });
   var cards={ok:false,tried:false,acct:null,price:30,max:6,recharge:100,titleMax:20,making:null,list:[],t:0,from:'chat'}, ptNow='spawn', cardNew=0;
