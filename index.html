@@ -2020,13 +2020,13 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     $('pass2row').hidden=lg; $('newpass').autocomplete=lg?'current-password':'new-password'; $('newpass').placeholder=lg?'':'At least 6 characters';
     $('locksubmit').textContent=lg?'Log in':'Make account'; $('lockerr').textContent='';
     $('lockinfo').innerHTML=lg?'Welcome back.':'Free <b>Power</b> every day, and <b>rubies</b> to spend in the shop.'; }
-  function openAccount(mode){ if(locked) return; authMode=mode==='login'?'login':'make'; drawAuth(); $('newpass').value=''; $('newpass2').value='';
-    if(!$('authname').value) $('authname').value=load('cdName');
+  function openAccount(mode){ if(locked&&!isGuest()) return; authMode=mode==='login'?'login':'make'; drawAuth(); $('newpass').value=''; $('newpass2').value='';
+    if(!$('authname').value&&!isGuest()) $('authname').value=load('cdName');
     $('lockwrap').hidden=false; sideTab('account',true); ($('authname').value?$('newpass'):$('authname')).focus(); }
   $('authmake').addEventListener('click',function(){ authMode='make'; drawAuth(); }); $('authlog').addEventListener('click',function(){ authMode='login'; drawAuth(); });
   $('lockbtn').addEventListener('click',openAccount);
   $('lockcancel').addEventListener('click',function(){ $('lockwrap').hidden=true; wantDaily=false; drawTop(); });
-  function signedIn(name,tok,isNew){ store('cdTok',tok); store('cdTokName',name); store('cdName',name); me=name; locked=true; $('lockwrap').hidden=true; $('newpass').value=''; $('newpass2').value='';
+  function signedIn(name,tok,isNew){ store('cdGuest',null); store('cdTok',tok); store('cdTokName',name); store('cdName',name); me=name; locked=true; $('lockwrap').hidden=true; $('newpass').value=''; $('newpass2').value='';
     drawLock(); sideTab('chat'); pmsg(isNew?'Account made! You get free Power every day.':'Welcome back, '+name+'.','ok'); if(isNew) wantDaily=true; myPoints(); }
   $('lockform').addEventListener('submit',function(e){ e.preventDefault(); var n=$('authname').value.trim().replace(/[^A-Za-z0-9_]/g,'').slice(0,25), a=$('newpass').value, b=$('newpass2').value, er=$('lockerr'), sb=$('locksubmit');
     if(!n){ er.textContent='Pick a name (letters, numbers and _).'; $('authname').focus(); return; }
@@ -2437,7 +2437,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     twLinking=true;
     rpc('twitch_login',{q_twitch_token:tok,q_name:locked?me:'',q_token:locked?tokenFor(me):''}).then(function(rows){ twLinking=false; var r=rows&&rows[0]; if(!r||!r.token||tok!==tw.tok) return;
       var same=locked&&String(me).toLowerCase()===String(r.name).toLowerCase();
-      store('cdTwLinked',mark); store('cdTok',r.token); store('cdTokName',r.name); store('cdName',r.name); me=r.name; locked=true; $('lockwrap').hidden=true;
+      store('cdTwLinked',mark); store('cdGuest',null); store('cdTok',r.token); store('cdTokName',r.name); store('cdName',r.name); me=r.name; locked=true; $('lockwrap').hidden=true;
       if(sideNow==='account') sideTab('chat'); drawLock(); drawSend(); myPoints();
       if(r.did==='made'){ wantDaily=true; pmsg('Account made: '+r.name+'. You get free Power every day.','ok'); }
       else if(r.did==='linked') pmsg(same?'Twitch connected.':'Your account is now '+r.name+', your Twitch name.','ok');
@@ -2518,12 +2518,26 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       setTimeout(function(){ z.style.opacity='0'; },380); setTimeout(function(){ z.remove(); },1000); })(i); }
   function floatUp(box,t){ if(!box) return; var m=document.createElement('span'); m.className='minus'; m.textContent=t; box.appendChild(m); setTimeout(function(){ m.remove(); },1000); }
   var wantDaily=false, lastFind=0; try{ lastFind=+(localStorage.getItem('cdFind')||0); }catch(e){}
+  /* ---- guests: a visitor gets an account by itself (a made-up guest name, kept by its token on this device), so every
+     button works without signing up. Only chatting needs Twitch. needAccount(again) makes one when a button needs it,
+     then presses the button again; if the database can't (an older one, or too many from this address) the old
+     Make account / Connect Twitch page opens instead. ---- */
+  var guest={busy:null,off:false,auto:false};
+  function isGuest(){ return locked&&load('cdGuest')&&String(load('cdGuest')).toLowerCase()===String(me).toLowerCase(); }
+  function shownName(){ return isGuest()?'Guest':me; }
+  function guestMake(){ if(pts.account||locked) return Promise.resolve(true); if(guest.off||!ON) return Promise.resolve(false); if(guest.busy) return guest.busy;
+    return guest.busy=rpc('guest_account',{}).then(function(rows){ guest.busy=null; var r=rows&&rows[0]; if(!r||!r.token||!r.name){ guest.off=true; return false; } if(locked) return true;
+      store('cdTok',r.token); store('cdTokName',r.name); store('cdName',r.name); store('cdGuest',r.name); me=r.name; locked=true; pts.account=true; $('lockwrap').hidden=true;
+      drawLock(); if(typeof drawSend==='function') drawSend(); myPoints(); board.at=0; cards.tried=false; return true;
+    }).catch(function(){ guest.busy=null; guest.off=true; return false; }); }
+  function needAccount(again){ if(pts.account||locked){ return; } guestMake().then(function(ok){ if(ok){ if(again) setTimeout(again,350); } else openAccount(); }); }
   function myPoints(){ if(document.hidden||!ON) return; var asked=me, askedAt=Date.now(); rpc('my_points',withTok({q_name:me,q_code:code})).then(function(rows){ var r=rows&&rows[0]; if(!r) return;
       if(askedAt<gain.stamp&&asked===me) r.rubies=pts.rubies; gain.name=asked;
       var was=pts.rubies, knew=pts.known;
       pts={n:r.points|0,account:!!r.account,prices:r.prices||{},packs:r.packs||{},rubies:r.rubies|0,ads:r.ads_left|0,adAmt:(r.ad_points|0)||20,daily:r.daily|0,known:true,
            dknown:r.daily_ready!=null,dready:!!r.daily_ready,dday:(r.daily_day|0)||1,ladder:(r.daily_ladder&&r.daily_ladder.length?r.daily_ladder:[10,15,20,30,50]),
            genie:r.genie||'',genieMine:!!r.genie_mine,wishes:r.wishes_left|0};
+      if(!pts.account&&!locked&&!guest.auto&&code&&app.classList.contains('inroom')){ guest.auto=true; setTimeout(function(){ if(!pts.account&&!locked&&app.classList.contains('inroom')) guestMake(); },2500); }
       if(r.find_id&&r.find_id>lastFind&&(r.find_age|0)<90){ lastFind=r.find_id; try{ localStorage.setItem('cdFind',String(lastFind)); }catch(e){} showFind(r.find_amount|0); if(pts.rubies>was) gain.why='The streamer found rubies!'; }
       drawPoints(); if(!cards.tried||cards.acct!==pts.account){ cards.tried=true; cards.acct=pts.account; myCards(); }
       if(wantDaily){ wantDaily=false; if(pts.dknown&&pts.dready) openDaily(); else if(!pts.dknown) rubyDaily(); }
@@ -2547,7 +2561,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       if((r.gained|0)>0){ pts.n=r.points|0; drawPoints(); [$('pchip'),document.querySelector('.dpnum')].forEach(function(h){ if(!h||!h.offsetParent) return; var e=document.createElement('span'); e.className='plus bon'; e.textContent='+'+r.gained; h.appendChild(e); once(h,'bump',450); setTimeout(function(){ e.remove(); },1700); }); }
       bonusDraw();
     }).catch(function(){ bonus.busy=false; }); }   /* (a database from before the bonus: the button never shows) */
-  function bonusTake(){ if(!bonus.ready) return; if(!(pts.account||locked)){ openAccount(); return; } bonus.ready=false; bonusDraw(); bonusBeat(true); }
+  function bonusTake(){ if(!bonus.ready) return; if(!(pts.account||locked)){ needAccount(bonusTake); return; } bonus.ready=false; bonusDraw(); bonusBeat(true); }
   $('pbonus').addEventListener('click',bonusTake); $('pbonus2').addEventListener('click',bonusTake);
   setInterval(function(){ bonusBeat(); },60000); setTimeout(function(){ bonusBeat(); },4000);
   document.addEventListener('visibilitychange',function(){ if(document.hidden) bonusDraw(); else bonusBeat(); });
@@ -2575,11 +2589,11 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   var PACK_ART=['coins','sack','hoard'];
   function drawTop(){
     var acc=pts.account||locked;
-    $('tbroom').textContent=channel||code; $('acctname').textContent=me; $('avname').textContent=me||'Guest'; $('acctbtn').hidden=!acc;
+    $('tbroom').textContent=channel||code; $('acctname').textContent=shownName(); $('avname').textContent=shownName()||'Guest'; $('acctbtn').hidden=!acc;
     $('rbtn').hidden=!acc; $('tbmake').hidden=acc||!pts.known; $('tblogin').hidden=acc||!pts.known;
     $('dbtn').hidden=!pts.dknown; $('ddot').hidden=!pts.dready; $('dbtn').classList.toggle('ready',pts.dready); $('adamt').textContent=pts.adAmt; if(!$('dpop').hidden) drawDaily();
     rubyCheck(); if(gain.held>0){ var rn=$('rnum'); cancelAnimationFrame(rn._raf); rn._first=1; rn._v=Math.max(0,pts.rubies-gain.held); rn.textContent=rn._v; } else tween($('rnum'),pts.rubies);
-    $('setacct').textContent=acc?me:'Guest'; $('setmake').hidden=$('setlogin').hidden=acc||!pts.known||!$('lockwrap').hidden; $('setleave').hidden=!acc;
+    $('setacct').textContent=acc?shownName():'Guest'; $('setmake').hidden=$('setlogin').hidden=(acc&&!isGuest())||!pts.known||!$('lockwrap').hidden; $('setleave').hidden=!acc;
     var dp=$('dppacks'); if(!dp.firstChild||dp.getAttribute('data-k')!==JSON.stringify(pts.packs)){ dp.setAttribute('data-k',JSON.stringify(pts.packs)); dp.textContent='';
       Object.keys(pts.packs).sort(function(a,b){ return a-b; }).forEach(function(k,i){ var b=document.createElement('button'); b.type='button'; b.className='item'; b.setAttribute('data-pack',k);
         b.innerHTML='<span class="ii">'+pix(PACK_ART[Math.min(i,2)],60)+'</span><span class="il">+'+esc(k)+SUN_SVG+'</span><span class="tag">'+RUBY_SVG+esc(pts.packs[k])+'</span>';
@@ -2650,12 +2664,12 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     L.forEach(function(n,i){ var day=i+1, st=day<d||(day===d&&!pts.dready)?'got':day===d?'now':'later', c=document.createElement('div'); c.className='dday '+st;
       c.innerHTML='<small>Day '+day+'</small>'+pix(DAY_ART[Math.min(i,4)],36)+'<b>+'+(n|0)+'</b>'+(st==='got'?pix('tick',24,'tick'):''); box.appendChild(c); });
     var b=$('dclaim'), next=L[d%L.length]|0;
-    b.disabled=acc&&!pts.dready; b.textContent=!acc?'Make account to claim':pts.dready?'Claim +'+(L[d-1]|0):'Claimed'; }
+    b.disabled=acc&&!pts.dready; b.textContent=!acc&&guest.off?'Make account to claim':pts.dready||!acc?'Claim +'+(L[d-1]|0):'Claimed'; }
   function openDaily(){ closeMenu(); drawDaily(); $('dpop').hidden=false; $('dbtn').setAttribute('aria-expanded','true'); }
   function closeDaily(){ $('dpop').hidden=true; $('dbtn').setAttribute('aria-expanded','false'); }
   $('dbtn').addEventListener('click',function(e){ e.stopPropagation(); if($('dpop').hidden) openDaily(); else closeDaily(); });
   $('dclaim').addEventListener('click',function(){ var b=this;
-    if(!(pts.account||locked)){ closeDaily(); wantDaily=true; openAccount(); return; }
+    if(!(pts.account||locked)){ var dbtn=this; needAccount(function(){ if(dbtn&&dbtn.click) dbtn.click(); }); return; }
     if(!pts.dready||b.disabled) return; b.disabled=true;
     rpc('ruby_daily',withTok({q_name:me})).then(function(rows){ var r=rows&&rows[0]; if(!r) return; var g=r.gained|0, cell=document.querySelector('.dday.now');
       pts.dready=false; if(r.streak) pts.dday=((r.streak-1)%pts.ladder.length)+1;
@@ -2677,7 +2691,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     b.addEventListener('mouseleave',function(){ pHover=''; pline(); });
     b.addEventListener('click',function(){
       var a=b.getAttribute('data-act'); pHover='';
-      if(!pts.account){ pmsg('Power needs an account. Make one and you get free Power every day.'); openAccount(); return; }
+      if(!pts.account){ needAccount(function(){ b.click(); }); return; }
       if(isMeter(a)){ closeAsk(); meterChip(a,b); return; }
       if(a==='genie'&&pts.genie){ once(b,'no',450); pmsg(pts.genieMine?'You\'re the genie already: type your wishes below.':pts.genie+' is the genie right now. Try again when they\'re done.',pts.genieMine?'ok':'bad'); return; }
       if(pts.n<price(a)){ closeAsk(); once(b,'no',450); once($('dpmeter'),'shake',450); pmsg('Not enough Power. You need '+(price(a)-pts.n)+' more.','bad'); sideTab('shop'); smsg('You need '+(price(a)-pts.n)+' more Power for that.','bad'); return; }
@@ -2687,7 +2701,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     }); });
   $('pcancel').addEventListener('click',closeAsk);
   $('pask').addEventListener('submit',function(e){ e.preventDefault(); var t=$('ptext').value.trim(); if(!t){ $('ptext').focus(); return; } spend(asking,t); });
-  $('pbuy').addEventListener('click',function(){ if(pts.known&&!pts.account){ openAccount(); return; } sideTab('shop',true); });
+  $('pbuy').addEventListener('click',function(){ if(pts.known&&!pts.account) needAccount(); sideTab('shop',true); });
   var SPEND_ERR={'not enough points':'Not enough Power for that.','room closed':'The streamer\'s game isn\'t running right now. Try again when it\'s live.',
     'slow down':'One at a time: wait a few seconds.','too busy':'Lots of people are using the buttons. Try again in a moment.','too long':'Keep it under 100 characters.','daily limit':'That\'s your makes for today. Come back tomorrow.',
     'empty':'Type something first.','no account':'Power needs an account. Make one first.','name taken':'This name is locked. Log in with its password.',
@@ -2883,7 +2897,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   setInterval(function(){ if(cards.ok&&!document.hidden&&(cards.making||cards.list.some(function(c){ return c.until>Date.now()-1500; }))) drawCards(); },1000);
   /* the Enemy button opens the designer page: only the prompt, then Make */
   function mkSend(t0,kind,from){ var typed=t0==null, t=String(typed?$('mktext').value:t0).replace(/\s+/g,' ').trim(), b=$('mkgo'), box=from||$('mzask');
-    if(!(pts.account||locked)){ pmsg('Making cards needs an account. Make one first.'); openAccount(); return; }
+    if(!(pts.account||locked)){ needAccount(function(){ mkSend(t0,kind,from); }); return; }
     if(!t){ once(box,'no',450); $('mktext').focus(); return; }
     /* (typed words go the old 4-argument way until the database can pick the type itself, so an older one still takes them) */
     var k=typed?'':kind==='weapon'?'weapon':'enemy', cost=mkPrice(k), a=withTok({q_code:code,q_name:me,q_text:t}); if(k==='weapon') a.q_kind='weapon'; else if(typed&&cards.anyPrice) a.q_kind='any';
@@ -2987,7 +3001,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   $('rbtn').addEventListener('click',function(){ sideTab('shop',true); });
   $('pchip').addEventListener('click',function(){ sideTab(phoneMq.matches?'rewards':'shop',true); });
   function buyPack(k,b){
-    if(!(pts.account||locked)){ smsg('Make an account first.','bad'); openAccount(); return; }
+    if(!(pts.account||locked)){ needAccount(function(){ buyPack(k,b); }); return; }
     var cost=pts.packs[k]|0; if(pts.rubies<cost){ once(b,'no',450); smsg('You need '+(cost-pts.rubies)+' more rubies.','bad'); return; }
     if(b.classList.contains('wait')) return; b.classList.add('wait');
     rpc('buy_points',withTok({q_name:me,q_pack:k})).then(function(rows){ b.classList.remove('wait'); var r=rows&&rows[0]; if(!r) return;
@@ -3000,7 +3014,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   $('mcustom').addEventListener('click',function(){ closeMenu(); sideTab('avatar',true); });
   $('msettings').addEventListener('click',function(){ closeMenu(); sideTab('account',true); });
   $('setstream').addEventListener('change',function(){ showStream(this.checked); layout(); });
-  function logOut(){ closeMenu(); closeDaily(); twOut(); bonus.ready=false; bonus.guestAt=0; bonusDraw(); var t=tokenFor(me); if(t) rpc('logout_name',{q_token:t}).catch(function(){}); store('cdTok',null); store('cdTokName',null); store('cdName',null);
+  function logOut(){ closeMenu(); closeDaily(); twOut(); bonus.ready=false; bonus.guestAt=0; bonusDraw(); var t=tokenFor(me); if(t) rpc('logout_name',{q_token:t}).catch(function(){}); store('cdTok',null); store('cdTokName',null); store('cdName',null); store('cdGuest',null);
     locked=false; me=''; pts.account=false; pts.rubies=0; pts.n=0; pts.genieMine=false; spends=[]; board.at=0; $('mktext').value=''; cardsIn({cards:[],making:null},true); pTab('spawn'); closeAsk(); drawPoints(); myPoints(); sideTab('chat'); pmsg('Logged out.'); }
   $('mleave').addEventListener('click',logOut); $('setleave').addEventListener('click',logOut);
   $('setmake').addEventListener('click',openAccount);
@@ -3026,7 +3040,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       if(m!=='ad limit'&&m!=='no account') g.disabled=false; else g.hidden=true; }); });
   document.querySelector('#recharge a.plaque').addEventListener('click',function(e){ if(adUp){ e.preventDefault(); adClose(); } });
   $('shopad').addEventListener('click',function(e){
-    if(!(pts.account||locked)){ smsg('Make an account first.','bad'); openAccount(); return; }
+    if(!(pts.account||locked)){ needAccount(function(){ $('shopad').click(); }); return; }
     if(pts.known&&pts.ads<=0){ once(this,'no',450); smsg('That\'s all the ads for today. More tomorrow.','bad'); return; }
     adOpen(); });
   $('shopad').addEventListener('mouseenter',function(){ smsg('Watch a short ad for '+pts.adAmt+' rubies.'+(pts.account&&pts.known?' '+pts.ads+' left today.':'')); });
