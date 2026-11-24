@@ -1073,7 +1073,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .sview.rewv .rv .rays,.sview.rewv .rv .glow{left:50%;top:26%}
 .sview.rewv .rv .rq{flex:0 0 auto;width:250px;max-width:calc(100% - 24px);align-items:center;text-align:center}
 .sview.rewv .rv .rq .row{width:100%}
-@media (max-width:359px){ .deck .mc,.dz .mc{--s:72px} .deck .mc .nin,.dz .mc .nin{font-size:10px} .deck .mc .cd{font-size:24px} .dz .mc .q{font-size:42px} }
+@media (max-width:359px){ .deck .mc,.dz .mc{--s:72px} .deck .mc .dg{width:12px;height:12px;padding:0;font-size:0;background:var(--dc);box-shadow:0 0 0 2px #130d07} .deck .mc .nin,.dz .mc .nin{font-size:10px} .deck .mc .cd{font-size:24px} .dz .mc .q{font-size:42px} }
 @media (min-width:1000px){
   .app.inroom .room.online.cardsok{--store:282px}
   .crow{display:flex;justify-content:center;align-items:flex-start;gap:8px;flex:0 0 auto;padding-bottom:3px}
@@ -1083,7 +1083,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
   .allc{flex:0 0 92px;width:92px;height:122px;flex-direction:column;gap:4px;margin-left:6px}
   @container store (max-width:800px){
     .deck{gap:5px}
-    .deck .mc,.dz .mc{--s:72px}
+    .deck .mc,.dz .mc{--s:72px} .deck .mc .dg{width:12px;height:12px;padding:0;font-size:0;background:var(--dc);box-shadow:0 0 0 2px #130d07}
     .deck .mc .nin,.dz .mc .nin{font-size:10px}
     .deck .mc .cd{font-size:24px}
     .dz .mc .q{font-size:42px}
@@ -1179,13 +1179,52 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .sview.rewv .jst{font-size:20px}
 @media (prefers-reduced-motion:reduce){ .jw,.jb,.jf,.act.slosh,.act.spawned,.jst,.jc.tick,.jcd{animation:none!important;transition:none!important} }
 
-/* weapon cards: a small gun badge in the corner of the picture */
-.mc .kb{position:absolute;left:5px;bottom:5px;z-index:2;display:flex;align-items:center;justify-content:center;width:20px;height:20px;background:#130d07;box-shadow:inset 0 0 0 2px #8fb4d9}
-.mc.big .kb{left:8px;bottom:8px;transform:scale(1.5);transform-origin:0 100%}
-.act.mk #mkwprice[hidden],.act.mk #mkwsoon[hidden]{display:none}
-
-/* Become a Genie is off the Instants for now (Mott 2026-11-24) */
-.act[data-act=genie]{display:none!important}
+/* cards are colored by what they are; an enemy's danger is a small tag in the corner of its picture */
+.mc.k-enemy{--tc:#ef4a4a;--tg:#6e0a1f}.mc.k-weapon{--tc:#ffc93a;--tg:#6b4a12}.mc.k-item{--tc:#5fcf4a;--tg:#235a1e}.mc.k-event{--tc:#4aa3ff;--tg:#1e3f7a}
+.mc.k-enemy.t-god{box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 4px #0b0706,0 3px 0 var(--line)}
+.mc .dg{--dc:#c9962e;position:absolute;left:4px;bottom:4px;z-index:2;height:20px;padding:0 5px;box-sizing:border-box;font-family:'CardName',var(--display);font-size:15px;line-height:19px;color:var(--dc);background:#130d07;box-shadow:inset 0 0 0 2px var(--dc)}
+.mc .dg.d-harmless{--dc:#b4bcb4}.mc .dg.d-weak{--dc:#8fd47a}.mc .dg.d-minor{--dc:#6ab4ff}.mc .dg.d-normal{--dc:#e0b04a}.mc .dg.d-tough{--dc:#ff9a2a}.mc .dg.d-deadly{--dc:#ff5a6e}.mc .dg.d-god{--dc:#d6bcff;box-shadow:inset 0 0 0 2px var(--dc),0 0 8px rgba(201,168,255,.7)}
+.mc.cool .dg,.mc.big .dg{display:none}
+/* ---- Make: one "Make anything" box, idea chips under it, the newest cards beside it ---- */
+.m1{display:flex;justify-content:center;align-items:flex-start;gap:26px;text-align:left;padding:0 4px 4px;min-width:0}
+.m1[hidden],.mideas[hidden],.mfeed[hidden]{display:none}
+.m1 h4{margin:0;font-family:var(--display);font-weight:500;font-size:20px;line-height:1.1;color:#ffe7b5}
+.m1 .lft{flex:0 1 400px;min-width:0;display:flex;flex-direction:column;gap:8px;padding-top:2px}
+.mkbox{display:flex;align-items:stretch;gap:0;width:100%;margin:0;box-sizing:border-box;background:#0d0906;box-shadow:inset 0 0 0 2px #000,inset 0 0 0 4px #c48a2a,0 3px 0 #000}
+.mkbox:focus-within{box-shadow:inset 0 0 0 2px #000,inset 0 0 0 4px #ffe08a,0 3px 0 #000,0 0 12px rgba(255,201,58,.3)}
+.mkbox .anv{flex:0 0 44px;display:flex;align-items:center;justify-content:center}.mkbox .anv .px{width:28px;height:28px}
+.mkbox input{flex:1 1 auto;min-width:0;height:46px;padding:0 6px 0 0;margin:0;border:0;outline:0;background:none;font:16px var(--body);color:#f3e6c8}
+.mkbox input::placeholder{color:#7a6a4c}
+.mkbox .go{flex:0 0 auto;align-self:center;margin-right:7px;display:flex;align-items:center;gap:2px;height:34px;padding:0 12px 3px;box-sizing:border-box;cursor:pointer;font-family:var(--display);font-weight:700;font-size:17px;line-height:1;color:#1a1205;background:linear-gradient(#ffe08a,#ffc93a 45%,#f0a020);border:3px solid #000;border-radius:0;box-shadow:inset 0 -4px 0 rgba(0,0,0,.22)}
+.mkbox .go:hover{filter:brightness(1.1)}.mkbox .go:active{transform:translateY(2px)}
+.mkbox .go .px{width:20px;height:20px}.mkbox .go i{font-style:normal}
+.mkbox .go.poor{background:linear-gradient(#b9b9b9,#8a8a8a);color:#2a2a2a}
+.mkbox .go.wait{opacity:.6;pointer-events:none}
+.mkbox.no,.idea.no{animation:shake .4s}
+.mkbox.pick{animation:bought .5s cubic-bezier(.3,1.6,.5,1)}
+.mlbl{display:flex;align-items:center;gap:6px;font-family:var(--display);font-size:14px;line-height:1.2;color:#cfb87a;margin-bottom:5px}
+.mlbl .live{width:8px;height:8px;background:#ff4b3e;box-shadow:0 0 0 2px #000}
+.chips{display:flex;flex-wrap:wrap;gap:6px;max-height:66px;overflow:hidden}
+.idea{display:flex;align-items:center;gap:5px;max-width:100%;height:30px;padding:0 10px 0 6px;margin:0;border:0;border-radius:0;cursor:pointer;font:500 13px var(--body);color:#e8dcc0;background:#1f170c;box-shadow:inset 0 0 0 2px #4a3618,0 2px 0 #000}
+.idea .px{flex:0 0 20px;width:20px;height:20px}.idea span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.idea:hover,.idea:focus-visible{background:#3a2a10;box-shadow:inset 0 0 0 2px #ffc93a,0 2px 0 #000;color:#fff3c4}
+.idea:active{transform:translateY(2px);box-shadow:inset 0 0 0 2px #ffc93a}
+.mfeed{flex:0 1 auto;min-width:0}
+.frow{display:flex;gap:8px;align-items:flex-start;overflow:hidden}
+.frow .mw{position:relative;flex:0 0 auto}
+.frow .mc .cost{display:none}
+.frow button.mc{cursor:pointer}
+.frow button.mc:hover{filter:brightness(1.15)}
+.frow .by{display:block;margin-top:4px;max-width:104px;font:11px var(--body);color:#a08a60;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.frow .tag{position:absolute;left:-5px;top:24px;z-index:3;padding:1px 6px 2px;background:#2f8f2f;box-shadow:0 0 0 2px #000;font-family:var(--display);font-size:13px;line-height:1.1;color:#fff;transform:rotate(-8deg);pointer-events:none}
+.sview.rewv .m1{flex-direction:column;gap:14px;padding:2px 0}
+.sview.rewv .m1 .lft{flex:0 0 auto;width:100%}
+.sview.rewv .mfeed{width:100%}
+.sview.rewv .frow{overflow-x:auto;padding:0 0 4px 4px;scrollbar-width:none}
+.sview.rewv .frow::-webkit-scrollbar{display:none}
+.sview.rewv .chips{max-height:none}
+.sview.rewv .mkbox .go{padding:0 8px 3px}
+.m1 h4 label{font:inherit;color:inherit;cursor:text}
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
@@ -1300,19 +1339,17 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
                 <button type="button" class="act" hidden data-act="genie" id="geniebtn" data-desc="Spawn into the game as a genie and grant 3 wishes instantly"><span class="ai" data-px="genie:40"></span><span class="an">Become a Genie</span><span class="ap"><span data-px="suns:24"></span><i data-price="genie">200</i></span><span class="ad" id="geniesub">Spawn into the game as a genie and grant 3 wishes instantly</span></button>
               </div>
               <div class="pmake" id="pmake" hidden>
-                <div class="crow" id="mkrow">
-                  <button type="button" class="act mk" id="mkenemy" data-desc="Make your own enemy. It becomes a card in your Deck."><span class="ai" data-px="custom:40"></span><span class="ap"><span data-px="ruby:24"></span><i id="mkep">30</i></span><span class="an">Enemy</span></button>
-                  <button type="button" class="act mk soon" id="mkweapon" disabled data-desc="Make your own weapon. It becomes a card in your Deck."><span class="ai" data-px="gun:40"></span><span class="ap" id="mkwsoon">Soon</span><span class="ap" id="mkwprice" hidden><span data-px="ruby:24"></span><i id="mkwp">10</i></span><span class="an">Weapon</span></button>
-                  <button type="button" class="act soon" disabled><span class="ai" data-px="event:40"></span><span class="ap">Soon</span><span class="an">Event</span></button>
+                <div class="m1" id="mkrow">
+                  <div class="lft">
+                    <h4><label for="mktext">Make anything</label></h4>
+                    <form class="mkbox" id="mzask"><span class="anv" data-px="anvil:28"></span><input id="mktext" maxlength="100" placeholder="a goose with a gun" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="send"><button type="submit" class="go" id="mkgo">Make<span data-px="ruby:24"></span><i class="mkp">30</i></button></form>
+                    <div class="mideas" id="mkideas" hidden><div class="mlbl">Or tap an idea</div><div class="chips" id="mkchips"></div></div>
+                  </div>
+                  <div class="mfeed" id="mkfeed" hidden><div class="mlbl"><i class="live"></i>Fresh from the forge</div><div class="frow" id="mkfrow"></div></div>
                 </div>
                 <div class="dz" id="mkdz" hidden>
                   <div class="mw" id="mzcard"></div>
                   <div class="dq">
-                    <form class="mzs" id="mzask">
-                      <h4><label for="mktext">What do you want to make?</label></h4>
-                      <div class="row"><span class="in"><input id="mktext" maxlength="100" placeholder="a goose with a gun" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="send"><small id="mkcount">0/100</small></span><button type="submit" class="go" id="mkgo">Make<span data-px="ruby:24"></span><i class="mkp">30</i></button></div>
-                      <div><button type="button" class="lnk" id="mkback">Back</button></div>
-                    </form>
                     <div class="mzs" id="mzwip" hidden>
                       <div class="st" id="mzwhat"></div>
                       <div class="trk" id="mztrk"></div>
@@ -2745,7 +2782,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   var MAKE_SECONDS=40;
   /* Make's own state: pick = the Enemy page is open (nothing being made yet); seen = the make this page watched being
      built (so its last stop, the painting, gets a moment); readyAt = when it was first seen ready; rv = the reveal is up */
-  var mz={kind:'enemy',pick:false,seen:0,readyId:0,readyAt:0,rv:null};
+  var mz={fake:null,seen:0,readyId:0,readyAt:0,rv:null};
   function hue(t){ var h=0; t=String(t||''); for(var i=0;i<t.length;i++) h=(h*31+t.charCodeAt(i))%360; return h; }
   /* a card's picture: the 48x48 pixel sprite the database drew for it (my_cards' sprite, a base64 PNG), else a tinted face */
   function cardArt(c,n){ var sp=c&&typeof c.sprite==='string'&&c.sprite.length<60000&&/^[A-Za-z0-9+\/]+=*$/.test(c.sprite)?c.sprite:'';
@@ -2761,49 +2798,66 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     if(!nameFont) return o; fitMemo[t]=o; return o; }
   var nameFont=false;   /* (names are measured in their own font: nothing is remembered until it's here) */
   if(document.fonts&&document.fonts.load) document.fonts.load("15px CardName").then(function(){ nameFont=true; fitMemo={}; $('deck')._h=''; drawCards(); },function(){ nameFont=true; }); else nameFont=true;
-  function kindBadge(c){ return c&&c.kind==='weapon'?'<span class="kb" title="Weapon">'+pix('gun',16)+'</span>':''; }
+  /* a card's color says what it is (enemy red, weapon yellow, item green, event blue); an enemy's danger is the small tag */
+  var TIERS={harmless:1,weak:1,minor:1,normal:1,tough:1,deadly:1,god:1};
+  function cardKind(c){ var k=c&&c.kind; return k==='weapon'||k==='item'||k==='event'?k:k==='wish'?'event':'enemy'; }
+  function kindBadge(c){ var d=String(c&&c.danger||''); return cardKind(c)==='enemy'&&TIERS[d]&&!c.noTier?'<span class="dg d-'+d+'">'+d.charAt(0).toUpperCase()+d.slice(1)+'</span>':''; }
   function cardHtml(c,cls,tag,extra){ tag=tag||'div';
-    return '<'+tag+(tag==='button'?' type="button"':'')+' class="mc t-'+esc(c.danger||'normal')+(c.kind==='weapon'?' wpn':'')+(cls?' '+cls:'')+'"'+(extra||'')+'><span class="nin">'+esc(fitName(c.name))+'</span>'+cardArt(c,96)+kindBadge(c)
+    return '<'+tag+(tag==='button'?' type="button"':'')+' class="mc t-'+esc(c.danger||'normal')+' k-'+cardKind(c)+(cls?' '+cls:'')+'"'+(extra||'')+'><span class="nin">'+esc(fitName(c.name))+'</span>'+cardArt(c,96)+kindBadge(c)
       +'<span class="cost">'+SUN_SVG+'<i>'+(c.cost|0)+'</i></span></'+tag+'>'; }
   function myCards(){ if(!ON) return; rpc('my_cards',withTok({q_name:me})).then(function(j){ cardsIn(j); }).catch(function(){ setTimeout(function(){ cards.tried=false; },60000); }); }
   function cardsIn(j,quiet){ if(!j||typeof j!=='object'||!j.cards) return; var now=Date.now(), mk;
-    if(!quiet) cards.ok=true; cards.price=(j.price|0)||cards.price; cards.wprice=j.weapon_price|0; cards.max=(j.max|0)||cards.max; cards.recharge=(j.recharge|0)||cards.recharge; cards.titleMax=(j.title_max|0)||cards.titleMax;
-    mk=cards.making=j.making||null; if(mk){ mk.kind=mk.kind==='weapon'?'weapon':'enemy'; mk.since=now-(mk.age|0)*1000; if(!mk.ready) mz.seen=mk.id; if(mk.ready&&mz.readyId!==mk.id){ mz.readyId=mk.id; mz.readyAt=now; } }
+    if(!quiet) cards.ok=true; cards.price=(j.price|0)||cards.price; cards.wprice=j.weapon_price|0; cards.anyPrice=j.any_price|0; cards.max=(j.max|0)||cards.max; cards.recharge=(j.recharge|0)||cards.recharge; cards.titleMax=(j.title_max|0)||cards.titleMax;
+    mk=cards.making=j.making||null; if(mk){ mk.kind=mk.kind==='weapon'?'weapon':mk.kind==='any'?'':'enemy'; mk.since=now-(mk.age|0)*1000; if(!mk.ready) mz.seen=mk.id; if(mk.ready&&mz.readyId!==mk.id){ mz.readyId=mk.id; mz.readyAt=now; } }
     cards.list=(j.cards||[]).map(function(c){ c.until=now+(c.wait|0)*1000; return c; });
     if(j.note==='make failed'){ pmsg('That one couldn\'t be made, so your rubies are back.','bad'); gain.why='Refund'; myPoints(); }
     clearTimeout(cards.t); if(mk&&(!mk.ready||(mk.sprite===null&&now-mz.readyAt<20000))) cards.t=setTimeout(myCards,3500);
     drawCards(); }
   function pTab(t){ if(!cards.ok) t='spawn'; ptNow=t;
     [].forEach.call(document.querySelectorAll('#ptabs [data-pt]'),function(b){ b.setAttribute('aria-selected',b.getAttribute('data-pt')===t?'true':'false'); });
-    $('pacts').hidden=t!=='spawn'; if(t==='spawn'&&meters.ok) meterPoll(); $('pmake').hidden=t!=='make'; $('pdeck').hidden=t!=='deck'; if(t!=='make'&&!$('mktext').value.trim()) mz.pick=false; pHover=''; drawCards(); }
+    $('pacts').hidden=t!=='spawn'; if(t==='spawn'&&meters.ok) meterPoll(); $('pmake').hidden=t!=='make'; $('pdeck').hidden=t!=='deck'; pHover=''; drawCards(); }
   [].forEach.call(document.querySelectorAll('#ptabs [data-pt]'),function(b){ b.addEventListener('click',function(){ pTab(b.getAttribute('data-pt')); }); });
   function deckList(){ return cards.list.filter(function(c){ return c.deck; }); }
   /* where Make is: the three buttons, the prompt, the tracker, or the mystery card waiting to be revealed */
   var STOPS=[['custom','Reading your idea'],['enemy','Building its body'],['gun','Teaching it to fight'],['suns','Sizing up the danger'],['cards','Painting the card']];
   var WSTOPS=[['custom','Reading your idea'],['anvil','Forging its shape'],['gun','Teaching it to fire'],['event','Testing it out'],['cards','Painting the card']];
-  function mkPrice(k){ return k==='weapon'?cards.wprice:cards.price; }
+  var NSTOPS=[['custom','Reading your idea'],['anvil','Working out what it is'],['enemy','Building it'],['event','Testing it out'],['cards','Painting the card']];
+  /* what a make costs: typed words go at the one price (the database picks what it becomes once it can: any_price),
+     an idea chip at the price of the saved thing it is */
+  function mkPrice(k){ return k==='weapon'?(cards.wprice||cards.price):k==='enemy'?cards.price:(cards.anyPrice||cards.price); }
+  /* words that were made before come back ready at once: the tracker still plays, as if it were being built */
+  var FAKE_MS=11000;
+  /* the Make tab's board: idea chips (saved prompts only: a tap costs no designing) and the newest cards viewers made */
+  var board={at:0,busy:false,ideas:[],fresh:[]};
+  function boardGet(force){ if(!ON||board.busy||(!force&&Date.now()-board.at<60000)) return; board.busy=true;
+    rpc('make_board',withTok({q_name:me||''})).then(function(j){ board.busy=false; board.at=Date.now(); if(!j||!j.ideas) return; board.ideas=j.ideas.slice(0,3); board.fresh=(j.fresh||[]).slice(0,8); drawBoard(); })
+    .catch(function(){ board.busy=false; board.at=Date.now()+240000; }); }
+  function drawBoard(){ var c='', f='';
+    board.ideas.forEach(function(i,n){ c+='<button type="button" class="idea" data-idea="'+n+'">'+pix(i.kind==='weapon'?'gun':'enemy',20)+'<span>'+esc(i.text)+'</span></button>'; });
+    board.fresh.forEach(function(x,n){ f+='<div class="mw">'+cardHtml({name:x.name,danger:x.danger||'normal',kind:x.kind,sprite:x.sprite,cost:0},'',x.text?'button':'div',' data-fresh="'+n+'"'+(x.text?' title="'+esc(x.text)+'"':''))+(n===0&&(x.ago|0)<3600?'<span class="tag">NEW</span>':'')+'<span class="by">'+(x.by?'by '+esc(x.by):'&nbsp;')+'</span></div>'; });
+    var cb=$('mkchips'), fb=$('mkfrow'); if(cb._h!==c){ cb._h=c; cb.innerHTML=c; } if(fb._h!==f){ fb._h=f; fb.innerHTML=f; }
+    $('mkideas').hidden=!board.ideas.length; $('mkfeed').hidden=!board.fresh.length; }
   function mkTips(k){ return [k==='weapon'?'It drops into the game as a present to open.':'The more powerful it is, the more Power it costs to spawn.','Your first spawn of a new card is free.','You get to name it when it\'s done.',
     'After a spawn, a card recharges for '+cards.recharge+' seconds.','Your Deck holds '+cards.max+' cards. The rest wait in All cards.','You can leave this page. It keeps making.']; }
-  function mkStage(now){ var mk=cards.making; if(!mk) return mz.pick?'ask':'tiles'; if(!mk.ready) return 'wip';
+  function mkStage(now){ var mk=cards.making; if(!mk) return 'home'; if(!mk.ready) return 'wip';
+    if(mz.fake&&mz.fake.id===mk.id&&now-mz.fake.t0<FAKE_MS) return 'wip';   /* (saved words: pretend to build) */
     if(mk.sprite===null&&now-mz.readyAt<20000) return 'wip';       /* (made, its card not painted yet) */
     if(mz.seen===mk.id&&now-mz.readyAt<1800) return 'wip';          /* (watched all the way: the last stop gets its moment) */
     return 'done'; }
-  function drawMake(now){ var mk=cards.making, st=mkStage(now), e=$('mkenemy'), w=$('mkweapon'), kind=mk?mk.kind:mz.kind, wk=kind==='weapon', what=wk?'weapon':'enemy', h;
-    $('mkep').textContent=cards.price; $('mkwp').textContent=cards.wprice; [].forEach.call(document.querySelectorAll('.mkp'),function(i){ i.textContent=mkPrice(mz.kind); });
-    w.disabled=!cards.wprice; w.classList.toggle('soon',!cards.wprice); $('mkwsoon').hidden=!!cards.wprice; $('mkwprice').hidden=!cards.wprice;
-    e.classList.toggle('poor',pts.account&&pts.rubies<cards.price); w.classList.toggle('poor',!!cards.wprice&&pts.account&&pts.rubies<cards.wprice); $('mkgo').classList.toggle('poor',pts.account&&pts.rubies<mkPrice(mz.kind));
-    $('mktext').placeholder=mz.kind==='weapon'?'a trumpet that shoots bees':'a goose with a gun'; $('mzready').textContent='Your '+what+' is ready!';
-    $('mkrow').hidden=st!=='tiles'; $('mkdz').hidden=st==='tiles'; $('mzask').hidden=st!=='ask'; $('mzwip').hidden=st!=='wip'; $('mzdone').hidden=st!=='done';
+  function drawMake(now){ var mk=cards.making, st=mkStage(now), kind=mk?mk.kind:'', wk=kind==='weapon', what=wk?'weapon':kind==='enemy'?'enemy':'card', h, price=mkPrice('');
+    [].forEach.call(document.querySelectorAll('.mkp'),function(i){ i.textContent=price; }); $('mkgo').classList.toggle('poor',pts.account&&pts.rubies<price);
+    $('mzready').textContent='Your '+what+' is ready!';
+    $('mkrow').hidden=st!=='home'; $('mkdz').hidden=st==='home'; $('mzwip').hidden=st!=='wip'; $('mzdone').hidden=st!=='done';
+    if(st==='home'&&ptNow==='make') boardGet();
     $('mkdot').hidden=st!=='done';
-    if(st==='ask') h='<div class="mc myst"><span class="nin">New '+what+'</span><span class="q">?</span></div>';
-    else if(st==='wip'){ var el=(now-mk.since)/1000, step=mk.ready?4:Math.min(3,Math.floor(el/(MAKE_SECONDS/4))), t='';
-      h='<div class="mc forge t-normal"><span class="nin">New '+what+'</span><span class="anv">'+pix('anvil',40)+'</span><span class="fb"><b style="width:'+(mk.ready?100:Math.round(Math.min(92,6+el/MAKE_SECONDS*80)))+'%"></b></span></div>';
-      (wk?WSTOPS:STOPS).forEach(function(s,i){ t+=i>step?'<div class="ts"><span class="ti"><b class="tq">?</b></span><span class="tl">???</span></div>'
+    if(st==='wip'){ var fk=mz.fake&&mz.fake.id===mk.id&&now-mz.fake.t0<FAKE_MS, el=fk?(now-mz.fake.t0)/1000:(now-mk.since)/1000, step=fk?Math.min(4,Math.floor(el/(FAKE_MS/5000))):mk.ready?4:Math.min(3,Math.floor(el/(MAKE_SECONDS/4))), t='';
+      h='<div class="mc forge t-normal"><span class="nin">New '+what+'</span><span class="anv">'+pix('anvil',40)+'</span><span class="fb"><b style="width:'+(fk?Math.round(Math.min(100,6+el/(FAKE_MS/1000)*94)):mk.ready?100:Math.round(Math.min(92,6+el/MAKE_SECONDS*80)))+'%"></b></span></div>';
+      (wk?WSTOPS:kind==='enemy'?STOPS:NSTOPS).forEach(function(s,i){ t+=i>step?'<div class="ts"><span class="ti"><b class="tq">?</b></span><span class="tl">???</span></div>'
         :'<div class="ts '+(i<step?'did':'on')+'"><span class="ti">'+pix(s[0],24)+'<em>&#10003;</em></span><span class="tl">'+s[1]+'</span></div>'; });
       var tr=$('mztrk'); if(tr._h!==t){ tr._h=t; tr.innerHTML=t; }
       $('mzwhat').textContent='\u201c'+mk.text+'\u201d'; var tips=mkTips(kind), line=tips[Math.floor(Math.max(0,el)/6)%tips.length], tl=$('mzline'); if(tl.textContent!==line){ tl.textContent=line; once(tl,'swap',400); } }
     else if(st==='done') h='<button type="button" class="mc myst ready" id="mzmyst" aria-label="Reveal your '+what+'"><span class="nin">? ? ?</span><span class="q">?</span></button>';
-    var box=$('mzcard'); if(st!=='tiles'&&box._h!==h){ box._h=h; box.innerHTML=h; }
+    var box=$('mzcard'); if(st!=='home'&&box._h!==h){ box._h=h; box.innerHTML=h; }
     if(mz.rv&&(st!=='done'||!mk||mz.rv._id!==mk.id)) rvClose(); }
   function drawCards(){ var pt=$('points'), now=Date.now();
     pt.classList.toggle('cardsok',cards.ok); $('pstore').classList.toggle('cardsok',cards.ok); if($('room').classList.contains('cardsok')!==cards.ok){ $('room').classList.toggle('cardsok',cards.ok); layout(); } if(!cards.ok){ if(ptNow!=='spawn') pTab('spawn'); return; }
@@ -2811,7 +2865,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     /* the deck */
     var box=$('deck'), d=deckList(), html='';
     d.forEach(function(c){ var wait=Math.max(0,Math.ceil((c.until-now)/1000)), poor=!c.free&&pts.n<c.cost;
-      html+='<button type="button" class="dcard mc t-'+esc(c.danger||'normal')+(c.kind==='weapon'?' wpn':'')+(wait?' cool':'')+(c.free&&!wait?' free':'')+(poor&&!wait?' poor':'')+(c.id===cardNew?' fresh':'')+'" data-card="'+c.id+'" title="'+esc(c.name+': '+c.text)+'">'
+      html+='<button type="button" class="dcard mc t-'+esc(c.danger||'normal')+' k-'+cardKind(c)+(wait?' cool':'')+(c.free&&!wait?' free':'')+(poor&&!wait?' poor':'')+(c.id===cardNew?' fresh':'')+'" data-card="'+c.id+'" title="'+esc(c.name+': '+c.text)+'">'
         +'<span class="nin">'+esc(fitName(c.name))+'</span>'+cardArt(c,96)+kindBadge(c)
         +(wait?'<span class="cd">'+wait+'s</span><span class="cbar"><b style="width:'+Math.round(100-wait/cards.recharge*100)+'%"></b></span>':'<span class="cost">'+(c.free?'<i>FREE</i>':SUN_SVG+'<i>'+c.cost+'</i>')+'</span>')+'</button>'; });
     for(var i=d.length;i<cards.max;i++) html+='<button type="button" class="dcard mc empty" data-empty="1" aria-label="Empty slot: make a card">+</button>';
@@ -2820,25 +2874,22 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     if(sideNow==='cards') drawAll(); }
   setInterval(function(){ if(cards.ok&&!document.hidden&&(cards.making||cards.list.some(function(c){ return c.until>Date.now()-1500; }))) drawCards(); },1000);
   /* the Enemy button opens the designer page: only the prompt, then Make */
-  function mkCount(){ $('mkcount').textContent=$('mktext').value.length+'/100'; }
-  function mkSend(){ var t=$('mktext').value.replace(/\s+/g,' ').trim(), b=$('mkgo'), box=$('mktext').parentNode; if(!t){ once(box,'no',450); $('mktext').focus(); return; }
-    var k=mz.kind, cost=mkPrice(k), a=withTok({q_code:code,q_name:me,q_text:t}); if(k==='weapon') a.q_kind='weapon';   /* (an enemy goes the old way, so a database from before weapons still takes it) */
+  function mkSend(t0,kind,from){ var typed=t0==null, t=String(typed?$('mktext').value:t0).replace(/\s+/g,' ').trim(), b=$('mkgo'), box=from||$('mzask');
+    if(!(pts.account||locked)){ pmsg('Making cards needs an account. Make one first.'); openAccount(); return; }
+    if(!t){ once(box,'no',450); $('mktext').focus(); return; }
+    /* (typed words go the old 4-argument way until the database can pick the type itself, so an older one still takes them) */
+    var k=typed?'':kind==='weapon'?'weapon':'enemy', cost=mkPrice(k), a=withTok({q_code:code,q_name:me,q_text:t}); if(k==='weapon') a.q_kind='weapon'; else if(typed&&cards.anyPrice) a.q_kind='any';
     if(pts.rubies<cost){ once(b,'no',450); pmsg('You need '+(cost-pts.rubies)+' more rubies to make that.','bad'); sideTab('shop'); smsg('You need '+(cost-pts.rubies)+' more rubies.','bad'); return; }
     if(b.classList.contains('wait')) return; b.classList.add('wait');
-    rpc('make_card',a).then(function(j){ b.classList.remove('wait'); if(!j) return;
-      $('mktext').value=''; mkCount(); mz.pick=false; $('mktext').blur(); fly(RUBY_SVG,$('rbtn'),$('mzcard'),3); setRubies(j.rubies); drawTop(); pmsg(''); cardsIn(j.cards);
+    rpc('make_card',a).then(function(j){ b.classList.remove('wait'); if(!j) return; var mk=j.cards&&j.cards.making;
+      if(mk&&mk.ready) mz.fake={id:mk.id,t0:Date.now()};
+      if(typed) $('mktext').value=''; $('mktext').blur(); setRubies(j.rubies); drawTop(); pmsg(''); cardsIn(j.cards); fly(RUBY_SVG,$('rbtn'),$('mzcard'),3); board.at=0;
     }).catch(function(err){ b.classList.remove('wait'); once(box,'no',450); var m=String(err&&err.message||'');
-      pmsg(m==='room closed'?'New enemies are made while the streamer\'s game is running. Try again when it\'s live.':m==='not allowed'?'Those words aren\'t allowed. Try something else.':m==='weapons are not open yet'?'Weapons aren\'t open yet. Try again soon.':m==='have it'?'You already have that card.':/^You've made /.test(m)?m.slice(0,140):SPEND_ERR[m]||srvErr(err),'bad'); if(m==='no account') openAccount(); if(m==='making'||m==='not enough rubies'){ myCards(); myPoints(); } }); }
-  [['mkenemy','enemy'],['mkweapon','weapon']].forEach(function(p){ var b=$(p[0]);
-    b.addEventListener('click',function(){ pHover=''; if(b.disabled) return;
-      if(!(pts.account||locked)){ pmsg('Making cards needs an account. Make one first.'); openAccount(); return; }
-      mz.kind=p[1]; mz.pick=true; pline(); drawCards(); $('mktext').focus(); });
-    b.addEventListener('mouseenter',function(){ if(!phoneMq.matches&&!noHover.matches&&!b.disabled){ pHover=b.getAttribute('data-desc'); pline(); } });
-    b.addEventListener('mouseleave',function(){ pHover=''; pline(); }); });
+      pmsg(m==='room closed'?'New cards are made while the streamer\'s game is running. Try again when it\'s live.':m==='not allowed'?'Those words aren\'t allowed. Try something else.':m==='weapons are not open yet'?'Weapons aren\'t open yet. Try again soon.':m==='have it'?'You already have that card.':/^You've made /.test(m)?m.slice(0,140):SPEND_ERR[m]||srvErr(err),'bad'); if(m==='no account') openAccount(); if(m==='making'||m==='not enough rubies'){ myCards(); myPoints(); } if(m==='have it') boardGet(true); }); }
   $('mzask').addEventListener('submit',function(ev){ ev.preventDefault(); mkSend(); });
-  $('mktext').addEventListener('input',mkCount);
-  $('mktext').addEventListener('keydown',function(ev){ if(ev.key==='Escape'&&!this.value){ mz.pick=false; drawCards(); } });
-  $('mkback').addEventListener('click',function(){ mz.pick=false; pmsg(''); drawCards(); });
+  $('mkchips').addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-idea]'), i=b&&board.ideas[b.getAttribute('data-idea')|0]; if(i) mkSend(i.text,i.kind,b); });
+  /* a fresh card: its words go in the box, ready to make the same one */
+  $('mkfrow').addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('button[data-fresh]'), x=b&&board.fresh[b.getAttribute('data-fresh')|0]; if(x&&x.text){ $('mktext').value=x.text; if(!phoneMq.matches) $('mktext').focus(); once($('mzask'),'pick',500); } });
   /* the reveal: the mystery card grows into the real one, in the store panel only (never over the stream). The viewer
      names it there, then Add to Deck flies it to the Deck tab. */
   function rvHost(){ return phoneMq.matches&&app.classList.contains('inroom')?$('pstore'):$('points'); }
@@ -2942,7 +2993,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   $('msettings').addEventListener('click',function(){ closeMenu(); sideTab('account',true); });
   $('setstream').addEventListener('change',function(){ showStream(this.checked); layout(); });
   function logOut(){ closeMenu(); closeDaily(); twOut(); bonus.ready=false; bonus.guestAt=0; bonusDraw(); var t=tokenFor(me); if(t) rpc('logout_name',{q_token:t}).catch(function(){}); store('cdTok',null); store('cdTokName',null); store('cdName',null);
-    locked=false; me=''; pts.account=false; pts.rubies=0; pts.n=0; pts.genieMine=false; spends=[]; mz.pick=false; $('mktext').value=''; cardsIn({cards:[],making:null},true); pTab('spawn'); closeAsk(); drawPoints(); myPoints(); sideTab('chat'); pmsg('Logged out.'); }
+    locked=false; me=''; pts.account=false; pts.rubies=0; pts.n=0; pts.genieMine=false; spends=[]; board.at=0; $('mktext').value=''; cardsIn({cards:[],making:null},true); pTab('spawn'); closeAsk(); drawPoints(); myPoints(); sideTab('chat'); pmsg('Logged out.'); }
   $('mleave').addEventListener('click',logOut); $('setleave').addEventListener('click',logOut);
   $('setmake').addEventListener('click',openAccount);
   $('tbmake').addEventListener('click',openAccount);
