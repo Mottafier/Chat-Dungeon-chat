@@ -1232,6 +1232,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .sview.rewv .chips{max-height:none}
 .sview.rewv .mkbox .go{padding:0 8px 3px}
 .m1 h4 label{font:inherit;color:inherit;cursor:text}
+.ptabs [hidden],.stabs [hidden],.pteam[hidden]{display:none!important}
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
@@ -1336,6 +1337,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
                 <button type="button" role="tab" data-pt="spawn" aria-selected="true"><span data-px="suns:24"></span>Instants</button>
                 <button type="button" role="tab" data-pt="make" aria-selected="false"><span data-px="anvil:24"></span>Make<i class="pdot" id="mkdot" hidden>1</i></button>
                 <button type="button" role="tab" data-pt="deck" aria-selected="false"><span data-px="cards:24"></span>Deck</button>
+                <button type="button" role="tab" data-pt="team" aria-selected="false" hidden><span data-px="cards:24"></span>Team</button>
               </div>
               <div class="pacts" id="pacts">
                 <button type="button" class="act" data-act="random_enemy" data-desc="Spawn a random enemy instantly"><span class="ai" data-px="enemy:40"></span><span class="an">Random Enemy</span><span class="ap"><span data-px="suns:24"></span><i data-price="random_enemy">20</i></span><span class="ad">Spawn a random enemy instantly</span></button>
@@ -1370,6 +1372,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
                 </div>
               </div>
               <div class="pdeck" id="pdeck" hidden><div class="deck" id="deck"></div></div>
+              <div class="pteam" id="pteam" hidden></div>
             </div>
             <div class="pline">
               <div class="pmsg" id="pmsg" role="status" aria-live="polite"></div>
@@ -1391,6 +1394,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
             <button type="button" role="tab" data-side="chat" aria-selected="true"><span data-px="chat:24"></span>Chat</button>
             <button type="button" role="tab" data-side="rewards" aria-selected="false"><span data-px="suns:24"></span>Rewards</button>
             <button type="button" role="tab" data-side="shop" aria-selected="false"><span data-px="bag:24"></span>Shop</button>
+            <button type="button" role="tab" data-side="collection" aria-selected="false" hidden><span data-px="cards:24"></span>Collection</button>
             <button type="button" role="tab" data-side="avatar" aria-selected="false"><span data-px="face:24"></span>Avatar</button>
             <button type="button" role="tab" data-side="account" aria-selected="false" class="ic" title="Account and settings" aria-label="Account and settings"><span data-px="gear:24"></span></button>
           </div>
@@ -1421,6 +1425,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
               <span></span>
             </div>
           </div>
+          <div class="sview collv" data-view="collection" hidden></div>
           <div class="sview cardv" data-view="cards" hidden>
             <div class="cvhead"><h3><span data-px="cards:24"></span>All cards</h3><button type="button" class="plaque" id="cvback">Back</button></div>
             <p class="dim" id="cvnote"></p>
@@ -2803,12 +2808,19 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     var bk=document.querySelector('#recharge a.plaque'); if(bk) bk.setAttribute('href',here); })();
   /* ?tab=shop|deck|make|rewards|account|avatar (links from the homepage) opens that panel once the room is up, then leaves the address */
   (function(){ var want=''; try{ var q=new URLSearchParams(location.search); want=String(q.get('tab')||'').toLowerCase(); if(want){ q.delete('tab'); var rest=q.toString(); history.replaceState(null,'',location.pathname+(rest?'?'+rest:'')+location.hash); } }catch(e){}
-    if(!/^(shop|deck|make|rewards|account|avatar|instants)$/.test(want)) return; var n=0;
+    if(!/^(shop|deck|make|team|collection|rewards|account|avatar|instants)$/.test(want)) return; var n=0;
     var iv=setInterval(function(){ if(++n>50){ clearInterval(iv); return; } if(!app.classList.contains('inroom')) return;
-      var store=want==='deck'||want==='make'||want==='instants'||want==='rewards';
-      if(store){ if((want==='deck'||want==='make')&&!cards.ok) return; if(phoneMq.matches) sideTab('rewards',true); if(want==='deck'||want==='make') pTab(want); else if(want==='instants') pTab('spawn'); }
-      else if(document.querySelector('.stabs [data-side="'+want+'"]')) sideTab(want,true);
+      var store=want==='deck'||want==='make'||want==='team'||want==='instants'||want==='rewards';
+      if(store){ if((want==='deck'||want==='make'||want==='team')&&!cards.ok) return; if(want==='team'&&document.querySelector('#ptabs [data-pt=team]').hidden) want='deck'; if(phoneMq.matches) sideTab('rewards',true); if(want==='deck'||want==='make'||want==='team') pTab(want); else if(want==='instants') pTab('spawn'); }
+      else { var sb=document.querySelector('.stabs [data-side="'+want+'"]'); if(sb&&!sb.hidden) sideTab(want,true); }
       clearInterval(iv); },300); })();
+  /* the bridge for team.js (the egg/team screens, another file): the page's own helpers, nothing more. onTab(t) is
+     called after every store tab change, onSide(t) after every side tab change, if team.js sets them. */
+  window.CDX={rpc:rpc,withTok:withTok,pix:pix,esc:esc,cardHtml:cardHtml,cardArt:cardArt,fitName:fitName,pTab:pTab,sideTab:sideTab,pmsg:pmsg,layout:layout,once:once,store:store,load:load,
+    needAccount:needAccount,myPoints:myPoints,drawPoints:drawPoints,phone:function(){ return phoneMq.matches; },
+    get me(){ return me; }, get pts(){ return pts; }, get room(){ return code; }, get channel(){ return channel; }, get account(){ return !!(pts.account||locked); }, get cards(){ return cards; },
+    onTab:null,onSide:null};
+  try{ document.dispatchEvent(new Event('cdx')); }catch(e){}
   setTimeout(meterPoll,1500);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden) meterPoll(); });
   var cards={ok:false,tried:false,acct:null,price:30,max:6,recharge:100,titleMax:20,making:null,list:[],t:0,from:'chat'}, ptNow='spawn', cardNew=0;
@@ -2848,7 +2860,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     drawCards(); }
   function pTab(t){ if(!cards.ok) t='spawn'; ptNow=t;
     [].forEach.call(document.querySelectorAll('#ptabs [data-pt]'),function(b){ b.setAttribute('aria-selected',b.getAttribute('data-pt')===t?'true':'false'); });
-    $('pacts').hidden=t!=='spawn'; if(t==='spawn'&&meters.ok) meterPoll(); $('pmake').hidden=t!=='make'; $('pdeck').hidden=t!=='deck'; pHover=''; drawCards(); }
+    $('pacts').hidden=t!=='spawn'; if(t==='spawn'&&meters.ok) meterPoll(); $('pmake').hidden=t!=='make'; $('pdeck').hidden=t!=='deck'; $('pteam').hidden=t!=='team'; pHover=''; drawCards(); if(window.CDX&&typeof window.CDX.onTab==='function'){ try{ window.CDX.onTab(t); }catch(e){} } }
   [].forEach.call(document.querySelectorAll('#ptabs [data-pt]'),function(b){ b.addEventListener('click',function(){ pTab(b.getAttribute('data-pt')); }); });
   function deckList(){ return cards.list.filter(function(c){ return c.deck; }); }
   /* where Make is: the three buttons, the prompt, the tracker, or the mystery card waiting to be revealed */
@@ -2993,7 +3005,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     if(ph&&pa.parentNode!==tab) tab.appendChild(pa);
     else if(!ph&&pa.parentNode!==home){ home.insertBefore(pa,home.querySelector('.pline')); if(sideNow==='rewards') sideTab('chat'); } }
   if(phoneMq.addEventListener) phoneMq.addEventListener('change',placeStore); else if(phoneMq.addListener) phoneMq.addListener(placeStore);
-  function sideTab(t,scroll){ sideNow=t; placeStore(); if(t==='rewards'&&meters.ok) setTimeout(meterPoll,0);
+  function sideTab(t,scroll){ sideNow=t; placeStore(); if(window.CDX&&typeof window.CDX.onSide==='function'){ try{ window.CDX.onSide(t); }catch(e){} } if(t==='rewards'&&meters.ok) setTimeout(meterPoll,0);
     [].forEach.call(document.querySelectorAll('.stabs [data-side]'),function(b){ b.setAttribute('aria-selected',b.getAttribute('data-side')===t?'true':'false'); });
     [].forEach.call(document.querySelectorAll('.sview'),function(p){ p.hidden=p.getAttribute('data-view')!==t; });
     if(t==='shop'){ smsg(''); myPoints(); }
