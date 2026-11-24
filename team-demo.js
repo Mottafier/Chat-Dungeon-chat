@@ -30,7 +30,7 @@ window.CDTEAM_DEMO=function(stateIn,X){
   function err(m){ return Promise.reject(new Error(m)); }
   setTimeout(push,50); setInterval(push,5000);
   return {
-    set:function(i,k){ var m=by(i); if(!m) return err('no card'); var o=L.filter(function(x){ return x.slot===k; })[0];
+    set:function(i,k){ var m=by(i); if(!m) return err('no card'); var o=k==null?null:L.filter(function(x){ return x.slot===k; })[0];
       if(m.status!=='home'||(o&&o.status!=='home')) return err('busy'); if(o&&o!==m) o.slot=null; m.slot=k; return ok(); },
     send:function(i){ var m=by(i); if(!m) return err('no card'); if(m.slot==null) return err('not on team'); if(m.status==='out') return err('out'); if(m.status==='resting') return err('resting');
       m.status='out'; m.out_where=(typeof X.channel==='function'?X.channel():X.channel)||'mottafierr';
