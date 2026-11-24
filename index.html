@@ -2697,7 +2697,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     if(pts.known&&pts.ads<=0){ once(this,'no',450); smsg('That\'s all the ads for today. More tomorrow.','bad'); return; }
     adOpen(); });
   $('shopad').addEventListener('mouseenter',function(){ smsg('Watch a short ad for '+pts.adAmt+' rubies.'+(pts.account&&pts.known?' '+pts.ads+' left today.':'')); });
-  [].forEach.call(document.querySelectorAll('#rubypacks button.rp'),function(b,i){
+  [].forEach.call(document.querySelectorAll('#rubypacks button.rp:not(.ad)'),function(b,i){
     for(var q=0;q<=i+1;q++){ var sp=document.createElement('i'); sp.className='sp'; sp.style.left=(18+((q*37+i*23)%60))+'%'; sp.style.top=(10+((q*29+i*17)%40))+'px'; sp.style.animationDelay=(q*.7+i*.4)+'s'; b.querySelector('.ii').appendChild(sp); }
     b.addEventListener('mouseenter',function(){ smsg(b.getAttribute('data-n')+' rubies for $'+b.getAttribute('data-usd')+'.'); });
     b.addEventListener('click',function(){ once(b,'no',450); smsg('Ruby packs open soon.'); }); });
