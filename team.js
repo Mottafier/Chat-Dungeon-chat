@@ -182,8 +182,8 @@
   /* ---------------------------------------------------------------- drawing the Team tab */
   function padPos(k,w,two){ var ah=(campEl&&campEl._ah)||216; if(!two) return {x:10+k*20,y:ah<196?ah-124:Math.max(24,ah-172)}; return [{x:18,y:40},{x:50,y:40},{x:82,y:40},{x:34,y:192},{x:66,y:192}][k]; }
   function stLine(m){ if(!m) return '<span class="tst none">Free pad</span>';
-    if(m.status==='out') return '<span class="tst out" data-out="'+m.id+'">'+(m.egg?'Hatching…':'Fighting '+ms((Date.now()-(S.outSince[m.id]||Date.now()))/1000))+'</span>';
-    if(m.status==='resting') return '<span class="tst rest" data-left="'+m.id+'">Resting '+hm(left(m))+'</span>';
+    if(m.status==='out') return m.egg?'<span class="tst out">Hatching…</span>':'<span class="tst out"><i class="tsw">Fighting </i><b data-out="'+m.id+'" data-pre="">'+ms((Date.now()-(S.outSince[m.id]||Date.now()))/1000)+'</b></span>';
+    if(m.status==='resting') return '<span class="tst rest"><i class="tsw">Resting </i><b data-left="'+m.id+'" data-pre="">'+hm(left(m))+'</b></span>';
     if(m.egg) return '<span class="tst egg">Send to hatch</span>';
     if(m.evolve_ready) return '<span class="tst evo">Send to evolve!</span>';
     return '<span class="tst ok">Ready</span>'; }
@@ -226,6 +226,7 @@
     if(m.status==='resting') return '<span class="tbtn gray" data-left="'+m.id+'" data-pre="Resting · back in ">Resting · back in '+hm(left(m))+'</span>';
     if(!open) return '<span class="tbtn gray">The stream is offline</span>';
     var what=m.egg?'Send to hatch':m.evolve_ready?'Send to evolve':'Send into '+esc(chanS())+' stream';
+    if(pane.classList.contains('slim')&&!m.egg&&!m.evolve_ready) what='Send it in';
     return '<button type="button" class="tbtn free'+(m.evolve_ready?' evo':'')+'" data-act="send" data-id="'+m.id+'"><span>'+what+'</span><small>FREE</small></button>'; }
   function xpPct(m){ var a=m.xp_from|0, b=m.xp_next; if(!b) return 100; return Math.max(0,Math.min(100,100*((m.xp|0)-a)/Math.max(1,b-a))); }
   function xpBlock(m){ if(m.egg) return '';
@@ -280,7 +281,7 @@
   /* ---------------------------------------------------------------- the 1 s tick: timers count down without redrawing everything */
   setInterval(function(){ if(!S.on||document.hidden) return; var now=Date.now();
     $$('[data-left]').forEach(function(el){ var m=M(+el.getAttribute('data-left')); if(!m) return; var pre=el.getAttribute('data-pre'); el.textContent=(pre==null?'Resting ':pre)+hm(left(m)); });
-    $$('[data-out]').forEach(function(el){ var m=M(+el.getAttribute('data-out')); if(!m||m.egg) return; el.textContent='Fighting '+ms((now-(S.outSince[m.id]||now))/1000); });
+    $$('[data-out]').forEach(function(el){ var m=M(+el.getAttribute('data-out')); if(!m||m.egg) return; var pre=el.getAttribute('data-pre'); el.textContent=(pre==null?'Fighting ':pre)+ms((now-(S.outSince[m.id]||now))/1000); });
     if(S.members.some(function(m){ return m.status==='resting'&&left(m)===0; })) soon(1500); },1000);
 
   /* ---------------------------------------------------------------- clicks */

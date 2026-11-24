@@ -258,3 +258,8 @@
 .pteam.fixed .trvbox .mc.tbig{--s:84px;width:92px;height:110px;align-self:center}
 .pteam.fixed .trvbox .mc.tbig .tspr{width:84px;height:84px}
 .pteam.fixed .trvh{font-size:22px}
+.tst b{font-weight:400}
+.pteam.slim .tst .tsw{display:none}
+.pteam.slim .tst.rest::before{content:"z ";color:#c9d6ff}
+.tbtn.free span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pteam.fixed .tdet .tbtn{min-height:40px;font-size:18px}
