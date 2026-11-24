@@ -1096,6 +1096,9 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .cvrow .ci{flex:0 0 auto;width:42px;height:42px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,var(--tg),#130d07 78%);box-shadow:inset 0 0 0 2px #0b0706;border-radius:4px}
 .dq p.tip{font:14px/1.3 var(--body);color:#f3e6c8;text-align:center}
 .dq p.fl{color:#a89a80}
+.trk .tq{font-family:var(--display);font-weight:500;font-size:20px;line-height:1;color:#4a3a22}
+.trk .ts.on .ti{animation:stopin .45s cubic-bezier(.3,1.7,.5,1)}
+@keyframes stopin{0%{transform:scale(.5)}100%{transform:translateY(-3px)}}
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
@@ -2649,7 +2652,8 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     if(st==='ask') h='<div class="mc myst"><span class="nin">New enemy</span><span class="q">?</span></div>';
     else if(st==='wip'){ var el=(now-mk.since)/1000, step=mk.ready?4:Math.min(3,Math.floor(el/(MAKE_SECONDS/4))), t='';
       h='<div class="mc forge t-normal"><span class="nin">New enemy</span><span class="anv">'+pix('anvil',40)+'</span><span class="fb"><b style="width:'+(mk.ready?100:Math.round(Math.min(92,6+el/MAKE_SECONDS*80)))+'%"></b></span></div>';
-      STOPS.forEach(function(s,i){ t+='<div class="ts '+(i<step?'did':i===step?'on':'')+'"><span class="ti">'+pix(s[0],24)+'<em>&#10003;</em></span><span class="tl">'+s[1]+'</span></div>'; });
+      STOPS.forEach(function(s,i){ t+=i>step?'<div class="ts"><span class="ti"><b class="tq">?</b></span><span class="tl">???</span></div>'
+        :'<div class="ts '+(i<step?'did':'on')+'"><span class="ti">'+pix(s[0],24)+'<em>&#10003;</em></span><span class="tl">'+s[1]+'</span></div>'; });
       var tr=$('mztrk'); if(tr._h!==t){ tr._h=t; tr.innerHTML=t; }
       $('mzwhat').textContent='Making: '+mk.text; var line=JOKES[step][Math.floor(el/4)%3]; if($('mzline').textContent!==line) $('mzline').textContent=line; }
     else if(st==='done') h='<button type="button" class="mc myst ready" id="mzmyst" aria-label="Reveal your enemy"><span class="nin">? ? ?</span><span class="q">?</span></button>';
