@@ -72,6 +72,9 @@ button{font:inherit}
 .tb .sp{flex:1}
 .pill{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 9px;background:var(--slab);border:2px solid var(--mortar);border-radius:3px;font-family:var(--display);font-size:15px;color:var(--parch);white-space:nowrap;text-decoration:none}
 .pill.ruby{border-color:#5a1420;background:#1d0b0e}
+a.pill{cursor:pointer;box-shadow:inset 0 2px 0 rgba(255,255,255,.05),0 2px 0 #000}
+a.pill:hover{border-color:var(--flame);color:var(--sign)}
+.pill .lbl{font-size:14px;max-width:140px;overflow:hidden;text-overflow:ellipsis}
 .num{font-variant-numeric:tabular-nums}
 
 /* ---------- shared bits ---------- */
@@ -93,7 +96,7 @@ button{font:inherit}
 .who .n{font-family:var(--display);font-weight:700;font-size:15px;color:var(--parch);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .who .s{font-size:12px;color:var(--parch-dim);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .big{font-size:13px;line-height:1.35;color:var(--parch);display:flex;gap:6px;align-items:baseline;min-width:0}
-.big .tx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.big .tx{min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .big .tx i{font-style:normal;color:var(--parch-dim)}
 .thumb{position:relative;aspect-ratio:16/9;background:#000 center/cover no-repeat;border-bottom:2px solid #000;overflow:hidden}
 .thumb .tl{position:absolute;left:7px;top:7px;display:flex;gap:5px}
@@ -109,11 +112,12 @@ button{font:inherit}
 @keyframes bob{50%{transform:translateY(4px)}}
 
 /* ---------- Enter the Dungeon: the first room (PC) ---------- */
-.hero{position:relative;height:calc(100vh - 52px);min-height:520px;max-height:860px;border-bottom:3px solid #000;box-shadow:0 2px 0 var(--mortar);overflow:hidden}
+.hero{position:relative;min-height:calc(100vh - 52px);display:flex;flex-direction:column;border-bottom:3px solid #000;box-shadow:0 2px 0 var(--mortar);overflow:hidden}
+.hero .stage{position:relative;z-index:3;flex:1;display:flex;align-items:center;padding:64px clamp(24px,5vw,72px) 24px}
 .hero .room{position:absolute;inset:0;background:#000 url(preview.jpg) center/cover no-repeat}
 .hero .room::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 55% 42%,transparent 38%,rgba(0,0,0,.62)),linear-gradient(90deg,rgba(0,0,0,.5),transparent 50%)}
 .hero .seal{position:absolute;left:50%;top:22px;transform:translateX(-50%);font-family:var(--display);font-size:14px;letter-spacing:.12em;color:#ffb0a0;background:rgba(0,0,0,.72);padding:4px 10px;border-radius:2px;white-space:nowrap;z-index:2}
-.board{position:absolute;z-index:3;left:clamp(24px,5vw,72px);top:46%;transform:translateY(-50%);width:min(420px,calc(100% - 48px));background:linear-gradient(#5a3a1c,#4a2f16);border:3px solid #24140a;border-radius:3px;box-shadow:inset 0 2px 0 rgba(255,255,255,.12),inset 0 -4px 0 rgba(0,0,0,.35),0 6px 0 #000,0 0 40px rgba(0,0,0,.6);color:#fbefd0;padding:16px 18px;display:flex;flex-direction:column;gap:11px}
+.board{position:relative;width:min(440px,100%);background:linear-gradient(#5a3a1c,#4a2f16);border:3px solid #24140a;border-radius:3px;box-shadow:inset 0 2px 0 rgba(255,255,255,.12),inset 0 -4px 0 rgba(0,0,0,.35),0 6px 0 #000,0 0 40px rgba(0,0,0,.6);color:#fbefd0;padding:16px 18px;display:flex;flex-direction:column;gap:11px}
 .board h1{margin:0;font-family:var(--display);font-weight:700;font-size:28px;line-height:1.1;color:#ffe9a6;text-shadow:0 2px 0 #000}
 .board p{margin:0;font-size:14px;line-height:1.5;color:#f1e2bd}
 .board .opt{display:flex;flex-direction:column;gap:7px;background:rgba(0,0,0,.25);border:2px solid #24140a;border-radius:3px;padding:10px 12px;position:relative}
@@ -123,15 +127,16 @@ button{font:inherit}
 .board .code{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:.22em;color:#6f6249;background:#000;border:2px solid var(--edge);border-radius:3px;padding:3px 10px 1px 14px;line-height:1.1;align-self:flex-start}
 .board .meanwhile{display:flex;align-items:center;gap:10px;font-size:13px;color:#f1e2bd}
 .hero .hud{position:absolute;right:20px;top:18px;z-index:2}
-.strip{text-decoration:none;position:absolute;z-index:2;left:0;right:0;bottom:0;display:flex;align-items:center;gap:16px;padding:40px max(22px,3vw) 14px;background:linear-gradient(transparent,rgba(0,0,0,.92) 45%)}
-.strip .lab{display:flex;flex-direction:column;gap:3px;flex:0 0 auto;text-decoration:none}
+.strip{text-decoration:none;position:relative;z-index:2;display:flex;align-items:center;gap:20px;padding:28px max(22px,3vw) 14px;background:linear-gradient(transparent,rgba(0,0,0,.9) 30%)}
+.strip .lab{display:flex;flex-direction:column;gap:3px;flex:0 0 auto;padding-right:20px;border-right:2px solid var(--mortar)}
 .strip .lab b{font-family:var(--display);font-size:18px;color:var(--sign);text-shadow:0 2px 0 #000;display:flex;gap:8px;align-items:center}
 .strip .lab span{font-size:12px;color:var(--parch-dim)}
-.strip .minis{display:flex;gap:10px;flex:1;min-width:0;overflow:hidden}
-.strip .mini{position:relative;width:128px;flex:0 0 auto;aspect-ratio:16/9;background:#14100c center/cover no-repeat;border:2px solid #000;border-radius:2px;box-shadow:0 0 0 2px var(--mortar);text-decoration:none;display:flex;align-items:center;justify-content:center}
-.strip .mini:hover{box-shadow:0 0 0 2px var(--flame)}
-.strip .mini .tag{position:absolute;left:3px;bottom:3px;font-size:10px;max-width:calc(100% - 6px);overflow:hidden;text-overflow:ellipsis}
-.strip .mini .sprite{width:48px;height:48px}
+.strip .minis{display:flex;flex-wrap:wrap;gap:12px;row-gap:40px;flex:1;min-width:0;height:126px;overflow:hidden;align-items:flex-start}  /* (only whole tiles: the ones that don't fit wrap out of sight) */
+.strip .mini{width:144px;flex:0 0 auto;display:flex;flex-direction:column;gap:5px}
+.strip .mini .pic{width:100%;aspect-ratio:16/9;background:#14100c center/cover no-repeat;border:2px solid #000;border-radius:2px;box-shadow:0 0 0 2px var(--mortar);display:flex;align-items:center;justify-content:center}
+.strip:hover .mini .pic{box-shadow:0 0 0 2px var(--edge)}
+.strip .mini .sprite{width:56px;height:56px}
+.strip .mini .nm{font-size:12px;line-height:1.3;color:var(--parch);text-shadow:0 1px 0 #000;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .strip .down{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;font-family:var(--display);font-size:13px;color:var(--flame);text-decoration:none}
 .strip .down i{font-style:normal;font-size:20px;line-height:1;animation:bob 1.2s ease-in-out infinite}
 
@@ -169,7 +174,7 @@ button{font:inherit}
 .F .feat .info{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
 .F .feat .last{align-self:flex-start;max-width:100%;display:flex;align-items:center;gap:8px;font-size:14px;color:#fff;background:rgba(0,0,0,.7);border:2px solid var(--mortar);border-radius:3px;padding:5px 9px}
 .F .feat .last i{font-style:normal;color:var(--parch-dim)}
-.F .feat .last span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.F .feat .last span{min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .F .feat .ava{width:56px;height:56px;font-size:26px}
 .F .feat .who{gap:13px}
 .F .feat .who .n{font-size:32px;line-height:1.05;color:#fff;text-shadow:0 3px 0 #000}
@@ -190,7 +195,7 @@ button{font:inherit}
 .F .ev .ic{width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:#0c0907;border:2px solid;border-radius:3px;overflow:hidden}
 .F .ev .ic .sprite{width:36px;height:36px}
 .F .ev .t{min-width:0;display:flex;flex-direction:column;gap:2px}
-.F .ev .t b{font-size:14px;font-weight:600;color:var(--parch);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.F .ev .t b{font-size:14px;font-weight:600;color:var(--parch);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .F .ev .t span{font-size:12px;color:var(--parch-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .F .ev .t span u{text-decoration:none;font-family:var(--display);letter-spacing:.05em;font-size:11px}
 .F .ev .ago{font-size:12px;color:var(--parch-dim)}
@@ -215,13 +220,13 @@ button{font:inherit}
 .F .bc{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;padding:14px 8px 12px;background:rgba(20,16,12,.96);border:2px solid var(--mortar);border-radius:4px;box-shadow:0 4px 0 #000;min-width:0}
 .F .bc .ic{width:104px;height:104px;display:flex;align-items:center;justify-content:center;background:#0c0907;border:2px solid;border-radius:3px;margin-bottom:4px}
 .F .bc .ic .sprite{width:96px;height:96px}
-.F .bc b{font-size:14px;font-weight:600;color:var(--parch);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.F .bc b{font-size:14px;font-weight:600;color:var(--parch);max-width:100%;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .F .bc span{font-size:12px;color:var(--parch-dim);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .foot2{display:flex;justify-content:center;gap:18px;padding:18px 16px 30px;font-size:13px;color:var(--parch-dim)}
 .foot2 a{color:var(--parch-dim)}
 
 @media (max-width:1180px){ .F .grid{grid-template-columns:repeat(3,minmax(0,1fr))} .F .spot{grid-template-columns:minmax(0,1fr) 300px} }
-@media (max-width:960px){ .F .grid,.F .best{grid-template-columns:repeat(2,minmax(0,1fr))} .F .spot{grid-template-columns:1fr} .tb nav a{font-size:14px;padding:6px 9px} .strip .minis .mini:nth-child(n+4){display:none} }
+@media (max-width:960px){ .F .grid,.F .best{grid-template-columns:repeat(2,minmax(0,1fr))} .F .spot{grid-template-columns:1fr} .tb nav a{font-size:14px;padding:6px 9px}  }
 /* phones (and anything that can't run the game): join box first, then the hub in one column */
 @media (max-width:760px),(pointer:coarse) and (max-width:1024px){
   .hero{display:none}
@@ -234,6 +239,9 @@ button{font:inherit}
   .tb nav a .short{display:inline}
   .pcnote{display:flex}
   .pill{height:28px;font-size:13px;padding:0 6px}
+  .tb{gap:6px}
+  .pill.deck .lbl,.pill.acct .lbl{display:none}
+  .tb nav a{padding:6px 7px}
   .F .wrap{padding:18px 12px 26px;gap:18px}
   .F .glow{display:none}
   .F .head{gap:12px}
@@ -256,6 +264,8 @@ button{font:inherit}
   .F .best{grid-template-columns:repeat(2,minmax(0,1fr))}
   .F .bc .ic{width:80px;height:80px}.F .bc .ic .sprite{width:72px;height:72px}
 }
+@media (max-width:1100px){ .tb nav a .long{display:none} .tb nav a .short{display:inline} .pill.deck .lbl,.pill.acct .lbl{display:none} }
+@media (max-width:480px){ #ppill{display:none!important} .tb .logo{display:none} .tb{padding:0 10px} }
 @media (prefers-reduced-motion:reduce){ .flame,.strip .down i,.F .feed .fh i{animation:none} .F .card{transition:none} }
 </style>
 </head>
@@ -267,8 +277,10 @@ button{font:inherit}
     <a href="#fill" id="tabFill"><span class="long">Fill the Dungeon</span><span class="short">Fill</span><span class="navbadge" id="livebadge" hidden></span></a>
   </nav>
   <span class="sp"></span>
-  <span class="pill" id="ppill" hidden title="Your Power"><span data-px="sun:18"></span><span class="num" id="pnum">0</span></span>
-  <span class="pill ruby" id="rpill" hidden title="Your rubies"><span data-px="ruby:18"></span><span class="num" id="rnum">0</span></span>
+  <a class="pill" id="ppill" hidden title="Your Power: spend it in the shop" href="/live/mottafierr?tab=shop"><span data-px="sun:18"></span><span class="num" id="pnum">0</span></a>
+  <a class="pill ruby" id="rpill" hidden title="Your rubies: open the shop" href="/live/mottafierr?tab=shop"><span data-px="ruby:18"></span><span class="num" id="rnum">0</span></a>
+  <a class="pill deck" id="dpill" hidden title="Your Deck" href="/live/mottafierr?tab=deck"><span data-px="cards:18"></span><span class="lbl">Deck</span></a>
+  <a class="pill acct" id="apill" title="Your account" href="/live/mottafierr?tab=account"><span data-px="user:18"></span><span class="lbl" id="aname">Log in</span></a>
 </header>
 
 <main>
@@ -276,14 +288,14 @@ button{font:inherit}
   <section class="hero" id="enter" aria-label="Enter the Dungeon">
     <div class="room" role="img" aria-label="The first room of the dungeon, its door sealed"></div>
     <span class="seal">THE DOOR IS SEALED</span>
-    <div class="board">
+    <div class="stage"><div class="board">
       <h1>Enter the Dungeon</h1>
       <p>You start here, in the first room. The door opens as soon as someone joins you, and everything they type can become a monster.</p>
       <div class="opt"><span class="soon">OPENING SOON</span><button class="btn tw lg" type="button" disabled>Connect Twitch</button><span class="hint">Your chat joins. Every message can become a monster.</span></div>
       <div class="or">OR PLAY WITH PEOPLE IN THE ROOM</div>
       <div class="opt"><span class="soon">OPENING SOON</span><div class="code" aria-hidden="true">····</div><span class="hint">Friends type the room code at chatdungeon.io on their phones.</span></div>
       <div class="meanwhile"><span>Until the door opens, fill someone else's.</span><a class="btn go" href="#fill">Fill the Dungeon</a></div>
-    </div>
+    </div></div>
     <a class="strip" href="#fill" id="strip" aria-label="Fill the Dungeon: live dungeons">
       <span class="lab"><b id="stripTitle">Fill the Dungeon</b><span id="stripSub">Live dungeons</span></span>
       <span class="minis" id="minis"></span>
@@ -808,14 +820,14 @@ button{font:inherit}
     var n=rooms.length;
     $('livebadge').hidden=!n; $('livebadge').textContent=n+' LIVE';
     $('liveline').innerHTML=n?'<span class="livedot">LIVE</span><span><b>'+n+(n===1?' dungeon':' dungeons')+'</b> open right now</span>':'<span>No dungeons are open right now. Here are the best monsters chat made lately.</span>';
-    drawStrip(); drawSpot(); drawRest();
+    drawStrip(); drawSpot(); drawRest(); links();
   }
   function drawStrip(){
     var n=rooms.length, h='';
     $('stripTitle').innerHTML=(n?'<span class="livedot">LIVE</span>':'')+'Fill the Dungeon';
     $('stripSub').textContent=n?(n===1?'1 dungeon open right now':n+' dungeons open right now'):'Best spawns this week';
-    if(n) h=rooms.slice(0,6).map(function(r){ return '<span class="mini" style="background-image:url('+preview(r.twitch,320,180)+')"><span class="tag">'+esc(r.twitch)+'</span></span>'; }).join('');
-    else h=best.slice(0,6).map(function(b){ return '<span class="mini" style="border-color:#000">'+sprite(b.sprite,48,b.name)+'<span class="tag">'+esc(b.name)+'</span></span>'; }).join('');
+    if(n) h=rooms.slice(0,8).map(function(r){ return '<span class="mini" title="'+esc(r.twitch)+'"><span class="pic" style="background-image:url('+preview(r.twitch,320,180)+')"></span><span class="nm">'+esc(r.twitch)+'</span></span>'; }).join('');
+    else h=best.slice(0,8).map(function(b){ return '<span class="mini" title="'+esc(b.name)+'"><span class="pic">'+sprite(b.sprite,56,b.name)+'</span><span class="nm">'+esc(b.name)+'</span></span>'; }).join('');
     $('minis').innerHTML=h;
   }
   function evRow(e,i){ return '<div class="ev'+(i===0&&(e.ago|0)<60?' new':'')+'"><div class="ic" style="border-color:'+tcol(e.danger)+'">'+sprite(e.sprite,36,'')+'</div>'+
@@ -882,9 +894,15 @@ button{font:inherit}
   (function(){ var m=/[?&]join=([A-Za-z0-9]{4})/.exec(location.search); if(m){ $('code').value=m[1].toUpperCase(); } })();
 
   /* ---------- your Power and rubies, if this browser has an account ---------- */
-  function myPoints(){ var n=load('cdTokName'), t=load('cdTok'); if(!n||!t) return;
+  /* the top bar's account, Power, rubies and Deck open those panels on a stream page: the last one you were on, else the
+     busiest open dungeon, else the host's (the stream page reads ?tab=) */
+  function home(){ var c=String(load('cdLastLive')||'').replace(/[^A-Za-z0-9_]/g,''); return c.length>=3?c:rooms[0]?rooms[0].twitch:(ON&&ON.twitch)||'mottafierr'; }
+  function links(){ var c=live(home());
+    $('ppill').href=c+'?tab=shop'; $('rpill').href=c+'?tab=shop'; $('dpill').href=c+'?tab=deck'; $('apill').href=c+'?tab=account'; }
+  function myPoints(){ var n=load('cdTokName'), t=load('cdTok'); links(); if(!n||!t) return;
+    $('aname').textContent=load('cdGuest')?'Guest':n;
     rpc('my_points',{q_name:n,q_token:t,q_code:''}).then(function(r){ var x=r&&r[0]; if(!x||!x.account) return;
-      $('pnum').textContent=x.points|0; $('rnum').textContent=x.rubies|0; $('ppill').hidden=false; $('rpill').hidden=false; }).catch(function(){}); }
+      $('pnum').textContent=x.points|0; $('rnum').textContent=x.rubies|0; $('ppill').hidden=false; $('rpill').hidden=false; $('dpill').hidden=false; }).catch(function(){}); }
 
   draw(); refresh(); myPoints();
   setInterval(refresh,30000);
