@@ -1000,7 +1000,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .dq .go.big::after{animation:shine 1.6s ease-in-out infinite}
 @keyframes callme{0%,100%{box-shadow:inset 0 -4px 0 rgba(0,0,0,.22),0 0 0 0 rgba(255,214,90,.85);transform:scale(1)}50%{box-shadow:inset 0 -4px 0 rgba(0,0,0,.22),0 0 0 7px rgba(255,214,90,0);transform:scale(1.05)}}
 #mzdone h4{margin-top:14px}
-.lnk{padding:0;margin:0 0 0 4px;border:0;background:none;cursor:pointer;font:inherit;color:#c9a86a;text-decoration:underline}
+.lnk{padding:2px 0;margin:0;border:0;background:none;cursor:pointer;font:14px var(--body);color:#e0c890;text-decoration:underline}
 .lnk:hover{color:#ffe7b5}
 .dq .st{font:12px var(--body);color:var(--parch-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .trk{display:flex;align-items:flex-start;gap:0;padding-top:3px}
@@ -1094,6 +1094,8 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 }
 @media (prefers-reduced-motion:reduce){ .mc,.mc *,.dq .go,.dq .go::after,.pdot,.rv,.rv *,.trk *{animation:none!important;transition:none!important} }
 .cvrow .ci{flex:0 0 auto;width:42px;height:42px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,var(--tg),#130d07 78%);box-shadow:inset 0 0 0 2px #0b0706;border-radius:4px}
+.dq p.tip{font:14px/1.3 var(--body);color:#f3e6c8;text-align:center}
+.dq p.fl{color:#a89a80}
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
@@ -1218,12 +1220,13 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
                     <form class="mzs" id="mzask">
                       <h4><label for="mktext">What do you want to make?</label></h4>
                       <div class="row"><span class="in"><input id="mktext" maxlength="100" placeholder="a goose with a gun" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="send"><small id="mkcount">0/100</small></span><button type="submit" class="go" id="mkgo">Make<span data-px="ruby:24"></span><i class="mkp">30</i></button></div>
-                      <p>The more powerful the enemy, the more Power it will cost you to spawn. You can't change this after you hit Make. <button type="button" class="lnk" id="mkback">Back</button></p>
+                      <div><button type="button" class="lnk" id="mkback">Back</button></div>
                     </form>
                     <div class="mzs" id="mzwip" hidden>
                       <div class="st" id="mzwhat"></div>
                       <div class="trk" id="mztrk"></div>
                       <p class="fl" id="mzline" aria-live="polite"></p>
+                      <p class="tip">The more powerful it is, the more Power it costs to spawn.</p>
                     </div>
                     <div class="mzs" id="mzdone" hidden>
                       <h4>Your enemy is ready!</h4>
