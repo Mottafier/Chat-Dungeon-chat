@@ -1108,6 +1108,76 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .mc.big .nin{font-size:22.5px;line-height:27px;padding:0 3px}
 @media (max-width:359px){ .deck .mc .nin,.dz .mc .nin{font-size:11px} }
 @media (min-width:1000px){ @container store (max-width:800px){ .deck .mc .nin,.dz .mc .nin{font-size:11px} } }
+/* ---- crowd meters: every Instant is a jar the room fills (the tile is the meter) ---- */
+.ppass{flex:0 0 auto;align-self:center;padding:1px 6px 2px;font-family:var(--display);font-size:13px;line-height:1.1;color:#ffd978;background:#2a1e0c;box-shadow:inset 0 0 0 2px #6b4a12;white-space:nowrap}
+.ppass[hidden]{display:none}
+.pacts.jars{padding-top:12px}
+.act.jar{overflow:visible}
+.act.jar>.ai,.act.jar>.an,.act.jar>.ap{position:relative;z-index:1}
+.act.jar>.an{text-shadow:0 2px 0 rgba(0,0,0,.75),0 0 6px rgba(0,0,0,.6)}
+.jl{position:absolute;inset:2px;z-index:0;overflow:hidden;pointer-events:none}
+.jf{position:absolute;left:0;right:0;bottom:0;height:0;min-height:0;background:linear-gradient(rgba(255,196,64,.78),rgba(226,120,16,.82));transition:height .8s cubic-bezier(.2,1.5,.35,1)}
+.act.some .jf{min-height:3px}
+.jw{position:absolute;left:0;bottom:calc(100% - 1px);width:200%;height:7px;transform-origin:50% 100%;opacity:0;transition:opacity .3s}
+.act.some .jw{opacity:1}
+.jw svg{display:block;width:100%;height:100%;fill:rgba(255,196,64,.78)}
+.jw.w1{animation:jwave 2.6s linear infinite}
+.jw.w2{height:9px;animation:jwave 4.1s linear infinite reverse}
+.jw.w2 svg{fill:rgba(255,230,150,.45)}
+@keyframes jwave{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.jg{position:absolute;left:0;right:0;top:0;height:3px;background:rgba(255,246,200,.55)}
+.jb{position:absolute;bottom:-6px;width:4px;height:4px;border-radius:50%;background:rgba(255,246,200,.7);opacity:0;animation:jbub 3.2s ease-in infinite}
+.jb:nth-of-type(1){left:18%}.jb:nth-of-type(2){left:52%;width:3px;height:3px;animation-duration:2.5s;animation-delay:.9s}.jb:nth-of-type(3){left:80%;animation-duration:3.8s;animation-delay:1.7s}
+@keyframes jbub{0%{transform:translateY(0);opacity:0}15%{opacity:.9}80%{opacity:.7}100%{transform:translateY(-46px);opacity:0}}
+.act.full .jf{background:linear-gradient(rgba(255,226,120,.9),rgba(255,160,32,.9))}
+/* a chip lands: the surface jumps and rocks, the liquid flashes, a drop falls in */
+.act.slosh .jw.w1{animation:jwave .5s linear infinite,jrock .75s ease-out}
+.act.slosh .jw.w2{animation:jwave .7s linear infinite reverse,jrock .75s ease-out}
+.act.slosh .jw{animation-composition:add}
+@keyframes jrock{0%{transform:scaleY(1)}18%{transform:scaleY(3.4)}45%{transform:scaleY(.6)}70%{transform:scaleY(1.9)}100%{transform:scaleY(1)}}
+.act.slosh .jf{animation:jflash .75s ease-out}
+@keyframes jflash{0%{filter:brightness(1.9)}100%{filter:none}}
+.act.slosh{animation:jpush .3s cubic-bezier(.3,1.6,.5,1)}
+@keyframes jpush{0%{transform:scale(.95)}100%{transform:none}}
+.jdrop{position:absolute;top:-6px;width:5px;height:9px;margin-left:-2px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#ffd978;animation:jdrop .45s cubic-bezier(.5,0,1,.6) forwards}
+@keyframes jdrop{0%{transform:translateY(0);opacity:1}100%{transform:translateY(64px);opacity:.2}}
+/* the count on top, the YOU tag, the one-second wait */
+.jc{position:absolute;left:50%;top:-10px;transform:translateX(-50%);z-index:3;padding:0 6px 1px;white-space:nowrap;font-family:var(--display);font-size:13px;line-height:18px;letter-spacing:.5px;color:#a89a80;background:#130d07;box-shadow:inset 0 0 0 2px #6b4a12}
+.jc b{font-weight:500;font-size:16px;color:#ffe7b5;margin-right:1px}.jc em{font-style:normal;margin-left:1px}
+.act.some .jc{box-shadow:inset 0 0 0 2px #c48a2a}
+.jc.tick{animation:jtick .4s cubic-bezier(.3,1.8,.5,1)}
+@keyframes jtick{0%{transform:translateX(-50%) scale(1.35)}100%{transform:translateX(-50%)}}
+.jc.tick b{color:#fff}
+.jy{display:none;position:absolute;right:-4px;top:-10px;z-index:4;padding:0 4px 1px;font-family:var(--display);font-size:11px;line-height:15px;color:#130d07;background:#ffc93a;box-shadow:0 0 0 2px #000}
+.act.mine .jy{display:block}
+.jcd{position:absolute;left:2px;right:2px;bottom:2px;height:3px;z-index:2;background:#fff3c4;transform-origin:0 50%;transform:scaleX(0);pointer-events:none}
+.act.cd .jcd{animation:jcd 1s linear}
+@keyframes jcd{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.act.jar.poor .jf{filter:saturate(.25)}
+.act.jar.poor .jw{filter:saturate(.25)}
+/* full: it spawns */
+.jst{position:absolute;left:50%;top:50%;z-index:5;transform:translate(-50%,-50%) rotate(-7deg);white-space:nowrap;font-family:var(--display);font-weight:700;font-size:22px;line-height:1;color:#fff;text-shadow:0 2px 0 #000,2px 0 0 #000,-2px 0 0 #000,0 -2px 0 #000,0 0 12px rgba(255,200,70,.9);animation:jstamp 1.7s cubic-bezier(.3,1.6,.5,1) both;pointer-events:none}
+@keyframes jstamp{0%{transform:translate(-50%,-50%) rotate(-7deg) scale(2.4);opacity:0}12%{transform:translate(-50%,-50%) rotate(-7deg) scale(1);opacity:1}80%{opacity:1}100%{transform:translate(-50%,-60%) rotate(-7deg) scale(1);opacity:0}}
+.act.spawned{animation:jspawn 1.7s ease-out}
+@keyframes jspawn{0%{filter:brightness(2.6);box-shadow:inset 0 0 0 2px #fff,0 0 22px rgba(255,220,120,1)}30%{filter:brightness(1.5);box-shadow:inset 0 0 0 2px #fff3c4,0 0 18px rgba(255,200,70,.9)}100%{filter:none}}
+.act.spawned>.ai,.act.spawned>.an,.act.spawned>.ap{opacity:.35}
+@media (min-width:1000px){
+  /* PC: the jar is the part above the name bar, and the icon and price boxes turn to glass so the liquid shows behind them */
+  .act.jar .jl{bottom:27px}
+  .act.jar .ai{background:rgba(19,13,7,.42);box-shadow:inset 0 0 0 2px rgba(0,0,0,.45)}
+  .act.jar .ap{background:rgba(19,13,7,.5);box-shadow:inset 0 0 0 2px rgba(0,0,0,.4)}
+  .act.jar .ai .px{filter:drop-shadow(0 2px 0 rgba(0,0,0,.55))}
+  .act.jar.poor .ai .px{filter:grayscale(1) brightness(.8)}
+}
+.jcred{display:none}
+.sview.rewv .jcred{display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;padding:0 6px;opacity:0;font-size:12px;line-height:1.2;color:#9be28a;overflow:hidden}
+.sview.rewv .jcred b{font-family:var(--display);font-weight:500;font-size:13px;color:#ffe7b5;white-space:nowrap}
+.sview.rewv .jcred span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.sview.rewv .jcred.on{animation:jcred 8s linear both}
+@keyframes jcred{0%{opacity:0}3%{opacity:1}90%{opacity:1}100%{opacity:0}}
+.sview.rewv .pacts.jars{row-gap:16px}
+.sview.rewv .jst{font-size:20px}
+@media (prefers-reduced-motion:reduce){ .jw,.jb,.jf,.act.slosh,.act.spawned,.jst,.jc.tick,.jcd{animation:none!important;transition:none!important} }
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
@@ -1199,6 +1269,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
             <div class="dpbar">
               <span class="dpico" id="dpico" data-px="suns:36"></span>
               <span class="dpnum"><b id="pnum">0</b></span>
+              <span class="ppass" id="ppass" hidden title="Power you get every minute you watch">+<b>5</b> / min</span>
               <button type="button" class="pbonus" id="pbonus" hidden title="Bonus Power for watching">+<b>5</b><span data-px="suns:24"></span></button>
               <div class="dpmeter" id="dpmeter" role="img" aria-label="Power">
                 <div class="dpfill" id="dpfill"></div>
@@ -2405,7 +2476,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       if(wantDaily){ wantDaily=false; if(pts.dknown&&pts.dready) openDaily(); else if(!pts.dknown) rubyDaily(); }
       else if(!pts.dknown&&pts.account&&!knew) rubyDaily();  /* (a database from before the reward popup: claimed on arrival, as it was) */
       }).catch(function(){}); }
-  function price(a){ var p=pts.prices[a]; return p==null?0:p|0; }
+  function price(a){ if(isMeter(a)) return meters.chip; var p=pts.prices[a]; return p==null?0:p|0; }
   /* ---- the watching bonus: every few minutes of watching a live room, a "+5" button shows up by your Power; click it to
      take it (like Twitch's channel points chest). The database keeps the clock (points_bonus): the page only asks, once a
      minute while it's on show, and shows the button when the answer is "ready". Guests get the button after the same
@@ -2431,7 +2502,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     tween($('pnum'),pts.n); tween($('pnum2'),pts.n); $('pchip').hidden=!pts.account;
     var m=$('dpmeter'); $('dpfill').style.width=Math.min(100,pts.n/DP_FULL*100)+'%'; m.classList.toggle('over',pts.n>DP_FULL);
     m.setAttribute('aria-label',pts.n+' Power');
-    [].forEach.call(document.querySelectorAll('[data-price]'),function(i){ var p=pts.prices[i.getAttribute('data-price')]; if(p!=null) i.textContent=p; });
+    [].forEach.call(document.querySelectorAll('[data-price]'),function(i){ var k=i.getAttribute('data-price'), p=isMeter(k)?meters.chip:pts.prices[k]; if(p!=null) i.textContent=p; });
     /* a notch on the bar at every price, so the bar shows what you can afford */
     var tk=$('dpticks'), key=JSON.stringify(pts.prices); if(tk.getAttribute('data-k')!==key){ tk.setAttribute('data-k',key); tk.textContent=''; var seen2={};
       [].forEach.call(document.querySelectorAll('.act [data-price]'),function(i){ var p=+i.textContent; if(p>0&&p<DP_FULL&&!seen2[p]){ seen2[p]=1; var n=document.createElement('i'); n.style.left=(p/DP_FULL*100)+'%'; tk.appendChild(n); } }); }
@@ -2545,13 +2616,16 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   function rubyWatch(){ if(document.hidden||!ON||!me||!tokenFor(me)||$('stream').hidden||!roomOpen) return;
     rpc('ruby_watch',withTok({q_code:code,q_name:me})).catch(function(){}); }
   function actBtn(a){ return document.querySelector('.act[data-act="'+a+'"]'); }
+  var noHover=window.matchMedia('(hover:none)');
   function closeAsk(){ asking=null; $('pask').hidden=true; $('pmsg').hidden=!$('gbox').hidden; [].forEach.call(document.querySelectorAll('.act.on'),function(b){ b.classList.remove('on'); }); }
   [].forEach.call(document.querySelectorAll('.act[data-act]'),function(b){
-    b.addEventListener('mouseenter',function(){ pHover=b.getAttribute('data-desc')||''; pline(); });
+    b.addEventListener('mouseenter',function(){ if(noHover.matches) return;   /* (on a touch screen a tap is a hover too, and the line showing up would move the button out from under the finger) */
+      pHover=(isMeter(b.getAttribute('data-act'))&&b.getAttribute('data-jar'))||b.getAttribute('data-desc')||''; pline(); });
     b.addEventListener('mouseleave',function(){ pHover=''; pline(); });
     b.addEventListener('click',function(){
       var a=b.getAttribute('data-act'); pHover='';
       if(!pts.account){ pmsg('Power needs an account. Make one and you get free Power every day.'); openAccount(); return; }
+      if(isMeter(a)){ closeAsk(); meterChip(a,b); return; }
       if(a==='genie'&&pts.genie){ once(b,'no',450); pmsg(pts.genieMine?'You\'re the genie already: type your wishes below.':pts.genie+' is the genie right now. Try again when they\'re done.',pts.genieMine?'ok':'bad'); return; }
       if(pts.n<price(a)){ closeAsk(); once(b,'no',450); once($('dpmeter'),'shake',450); pmsg('Not enough Power. You need '+(price(a)-pts.n)+' more.','bad'); sideTab('shop'); smsg('You need '+(price(a)-pts.n)+' more Power for that.','bad'); return; }
       if(!ASK[a]){ closeAsk(); spend(a,''); return; }
@@ -2607,6 +2681,59 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
      panel, never over the stream) is everything you made, and the Deck is the ones you have equipped.
      The database does all of it (my_cards, make_card, claim_card, deck_set, spawn_card); until it has those the tabs stay
      away and the old Custom Enemy button is in their place. ---- */
+  /* ---- crowd meters (Mott 2026-11-23): every Instant is a jar the whole room fills. A click chips in 5 Power, with a
+     splash; a full jar spawns its thing and credits everyone in it. The database decides how much a jar takes (more
+     when the room is spending fast) and it's the same jar for everyone, so the page asks every few seconds
+     (meter_status) while the jars are on show. That same call is the heartbeat for the Power viewers earn just by
+     watching. A database from before the meters: the old buy-it-now buttons stay. ---- */
+  var MT=['random_enemy','random_item','random_gun','random_event'], MT_NAME={random_enemy:'Random Enemy',random_item:'Random Item',random_gun:'Random Gun',random_event:'Random Event'};
+  var meters={ok:false,chip:5,poll:3,passive:5,m:{},seen:{},primed:false,t:0,cool:0,busy:false,tries:0};
+  function isMeter(a){ return meters.ok&&MT.indexOf(a)>=0; }
+  function jarDom(b){ if(b._jar) return b._jar; var W='<svg viewBox="0 0 240 10" preserveAspectRatio="none" aria-hidden="true"><path d="M0 5 Q15 0 30 5 T60 5 T90 5 T120 5 T150 5 T180 5 T210 5 T240 5 V10 H0Z"/></svg>';
+    var l=document.createElement('span'); l.className='jl'; l.innerHTML='<span class="jf"><span class="jw w1">'+W+'</span><span class="jw w2">'+W+'</span><em class="jb"></em><em class="jb"></em><em class="jb"></em><em class="jg"></em></span>';
+    var c=document.createElement('span'); c.className='jc'; c.innerHTML='<b>0</b>/<em>0</em>';
+    var y=document.createElement('span'); y.className='jy'; y.textContent='YOU';
+    var cd=document.createElement('span'); cd.className='jcd';
+    b.insertBefore(l,b.firstChild); b.appendChild(c); b.appendChild(y); b.appendChild(cd); b.classList.add('jar');
+    return b._jar={l:l,f:l.firstChild,c:c,y:y}; }
+  function meterDraw(){ var on=meters.ok; $('pacts').classList.toggle('jars',on); $('ppass').hidden=!(on&&pts.account&&roomOpen!==false); $('ppass').querySelector('b').textContent=meters.passive;
+    if(!on) return;
+    MT.forEach(function(a){ var b=actBtn(a), m=meters.m[a]; if(!b||!m) return; var j=jarDom(b), f=Math.max(0,Math.min(1,m.goal?m.pool/m.goal:0));
+      j.f.style.height=(f*100)+'%'; b.classList.toggle('some',m.pool>0); b.classList.toggle('full',f>=1); b.classList.toggle('mine',m.you>0);
+      var n=j.c.firstChild; if(+n.textContent!==m.pool){ n.textContent=m.pool; } j.c.lastChild.textContent=m.goal;
+      j.y.title='You put in '+m.you; b.setAttribute('data-jar','Chip in '+meters.chip+' Power. When it\'s full, a '+MT_NAME[a].toLowerCase()+' spawns for everyone in it.'); }); }
+  function meterNames(names){ var l=String(names||'').split(',').filter(Boolean), mine=l.filter(function(n){ return n.toLowerCase()===String(me||'').toLowerCase(); }).length;
+    l=l.filter(function(n){ return n.toLowerCase()!==String(me||'').toLowerCase(); }); if(mine) l.unshift('you'); var more=l.length-5; return l.slice(0,5).join(', ')+(more>0?' +'+more+' more':''); }
+  function meterSpawned(sp){ var b=actBtn(sp.action); if(!b) return; var st=document.createElement('span'); st.className='jst'; st.textContent='SPAWNED!'; b.appendChild(st); once(b,'spawned',1700); setTimeout(function(){ st.remove(); },1700);
+    
+    meters.credit=Date.now()+8000;
+    /* phones: the message line sits above the tabs and would push the tiles down mid-tap, so the credit goes in the free square beside the genie */
+    if(phoneMq.matches){ var c=$('jcred'); if(!c){ c=document.createElement('div'); c.id='jcred'; c.className='jcred'; c.setAttribute('aria-live','polite'); $('pacts').appendChild(c); }
+      c.innerHTML='<b>'+esc(MT_NAME[sp.action])+' spawned!</b><span>'+esc(meterNames(sp.names))+'</span>'; once(c,'on',8000); }
+    else pmsg(MT_NAME[sp.action]+' spawned! Credit: '+meterNames(sp.names),'ok'); }
+  function meterIn(j,mine){ if(!j||typeof j!=='object'||!j.meters) return; var was=meters.ok; meters.ok=true; meters.tries=0; meters.chip=(j.chip|0)||5; meters.poll=Math.max(2,(j.poll|0)||3); meters.passive=(j.passive|0)||5;
+    MT.forEach(function(a){ var m=j.meters[a]; if(m) meters.m[a]={pool:m.pool|0,goal:m.goal|0,you:m.you|0,round:m.round|0}; });
+    (j.spawns||[]).forEach(function(sp){ if(meters.seen[sp.id]) return; meters.seen[sp.id]=1; if(meters.primed||(sp.ago|0)<6) meterSpawned(sp); }); meters.primed=true;
+    if(j.points!=null&&(mine||(j.gained|0)>0||!was)){ pts.n=j.points|0; if((j.gained|0)>0) [$('pchip'),document.querySelector('.dpnum')].forEach(function(h){ if(!h||!h.offsetParent) return; var e=document.createElement('span'); e.className='plus bon'; e.textContent='+'+j.gained; h.appendChild(e); setTimeout(function(){ e.remove(); },1700); }); }
+    if(!was||mine||(j.gained|0)>0) drawPoints(); meterDraw(); }
+  function meterShown(){ return ptNow==='spawn'&&!!$('pacts').offsetParent; }
+  function meterPoll(){ clearTimeout(meters.t); var next=function(s){ meters.t=setTimeout(meterPoll,s*1000); };
+    if(!ON||!code||document.hidden||adUp){ next(5); return; }
+    if(meters.busy){ next(1); return; } meters.busy=true;
+    rpc('meter_status',withTok({q_code:code,q_name:me||''})).then(function(j){ meters.busy=false; if(Date.now()>=meters.hold) meterIn(j); next(meterShown()?meters.poll:20); })
+    .catch(function(){ meters.busy=false; meters.tries++; if(meters.ok&&meters.tries>3){ meters.ok=false; drawPoints(); meterDraw(); } next(meters.ok?meters.poll*2:300); }); }
+  meters.hold=0; meters.credit=0;
+  function meterChip(a,b){ var m=meters.m[a], now=Date.now(); if(!m) return;
+    if(now<meters.cool) return;
+    if(pts.n<meters.chip){ once(b,'no',450); once($('dpmeter'),'shake',450); pmsg('You\'re out of Power. More comes every minute you watch.','bad'); return; }
+    meters.cool=now+1000; meters.hold=now+1500;   /* (a status answer already on its way would show the jar from before this click) */
+    pts.n-=meters.chip; m.pool+=meters.chip; m.you+=meters.chip; drawPoints(); meterDraw(); if(now>meters.credit) pmsg('');
+    var j=jarDom(b); once(b,'slosh',750); once(b,'cd',1000); once(j.c,'tick',400);
+    if(!still){ if(phoneMq.matches) burst(SUN_SVG,b,3); else fly(SUN_SVG,$('dpico'),b,3); var d=document.createElement('em'); d.className='jdrop'; d.style.left=(20+Math.random()*60)+'%'; j.l.appendChild(d); setTimeout(function(){ d.remove(); },700); }
+    rpc('meter_chip',withTok({q_code:code,q_name:me,q_action:a})).then(function(r){ meters.hold=0; meterIn(r,true); })
+    .catch(function(err){ meters.hold=0; var e=String(err&&err.message||''); if(e!=='slow down'){ once(b,'no',450); pmsg(e==='not enough points'?'You\'re out of Power. More comes every minute you watch.':SPEND_ERR[e]||srvErr(err),'bad'); } if(e==='no account') openAccount(); meterPoll(); myPoints(); }); }
+  setTimeout(meterPoll,1500);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) meterPoll(); });
   var cards={ok:false,tried:false,acct:null,price:30,max:6,recharge:100,titleMax:20,making:null,list:[],t:0,from:'chat'}, ptNow='spawn', cardNew=0;
   var MAKE_SECONDS=40;
   /* Make's own state: pick = the Enemy page is open (nothing being made yet); seen = the make this page watched being
@@ -2640,7 +2767,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     drawCards(); }
   function pTab(t){ if(!cards.ok) t='spawn'; ptNow=t;
     [].forEach.call(document.querySelectorAll('#ptabs [data-pt]'),function(b){ b.setAttribute('aria-selected',b.getAttribute('data-pt')===t?'true':'false'); });
-    $('pacts').hidden=t!=='spawn'; $('pmake').hidden=t!=='make'; $('pdeck').hidden=t!=='deck'; if(t!=='make'&&!$('mktext').value.trim()) mz.pick=false; pHover=''; drawCards(); }
+    $('pacts').hidden=t!=='spawn'; if(t==='spawn'&&meters.ok) meterPoll(); $('pmake').hidden=t!=='make'; $('pdeck').hidden=t!=='deck'; if(t!=='make'&&!$('mktext').value.trim()) mz.pick=false; pHover=''; drawCards(); }
   [].forEach.call(document.querySelectorAll('#ptabs [data-pt]'),function(b){ b.addEventListener('click',function(){ pTab(b.getAttribute('data-pt')); }); });
   function deckList(){ return cards.list.filter(function(c){ return c.deck; }); }
   /* where Make is: the three buttons, the prompt, the tracker, or the mystery card waiting to be revealed */
@@ -2768,7 +2895,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     if(ph&&pa.parentNode!==tab) tab.appendChild(pa);
     else if(!ph&&pa.parentNode!==home){ home.insertBefore(pa,home.querySelector('.pline')); if(sideNow==='rewards') sideTab('chat'); } }
   if(phoneMq.addEventListener) phoneMq.addEventListener('change',placeStore); else if(phoneMq.addListener) phoneMq.addListener(placeStore);
-  function sideTab(t,scroll){ sideNow=t; placeStore();
+  function sideTab(t,scroll){ sideNow=t; placeStore(); if(t==='rewards'&&meters.ok) setTimeout(meterPoll,0);
     [].forEach.call(document.querySelectorAll('.stabs [data-side]'),function(b){ b.setAttribute('aria-selected',b.getAttribute('data-side')===t?'true':'false'); });
     [].forEach.call(document.querySelectorAll('.sview'),function(p){ p.hidden=p.getAttribute('data-view')!==t; });
     if(t==='shop'){ smsg(''); myPoints(); }
