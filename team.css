@@ -86,9 +86,9 @@
 @keyframes thop{0%,88%,100%{translate:0 0}90%{translate:0 -6px}92%{translate:0 -9px}94%{translate:0 -6px}96%{translate:0 0}}
 @keyframes tlook{0%,60%,100%{scale:1 1}62%,80%{scale:-1 1}}
 @keyframes twob{0%,70%,100%{transform:rotate(0)}74%{transform:rotate(-8deg)}78%{transform:rotate(7deg)}82%{transform:rotate(-5deg)}86%{transform:rotate(3deg)}90%{transform:rotate(0)}}
-.zz{position:absolute;bottom:calc(var(--lh) + var(--cs)*.78);left:calc(50% + var(--cs)*.22);z-index:3;font:400 16px var(--display);color:#c9d6ff;text-shadow:0 2px 0 #000;animation:tzz 2.4s linear infinite;opacity:0}
+.zz{position:absolute;bottom:calc(var(--lh) + var(--cs)*.62);left:calc(50% - var(--cs)*.34);z-index:3;font:400 22px/1 var(--display);color:#fff;text-shadow:0 2px 0 #000,2px 0 0 #000,-2px 0 0 #000,0 -2px 0 #000;animation:tzz 2.4s linear infinite;opacity:0}
 .zz.b{animation-delay:1.2s}
-@keyframes tzz{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(10px,-26px)}}
+@keyframes tzz{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(-8px,-26px)}}
 .portal{position:absolute;bottom:calc(var(--lh) + 2px);width:calc(var(--cs)*.64);height:calc(var(--cs)*.84);border-radius:50%;background:radial-gradient(ellipse,#f6e8ff 0 12%,#cf96ff 12% 30%,#9648ea 30% 50%,#4f179a 50% 66%,transparent 67%);animation:tswirl 1.2s steps(6) infinite;filter:drop-shadow(0 0 10px rgba(168,90,240,.75))}
 @keyframes tswirl{50%{filter:brightness(1.35) drop-shadow(0 0 14px rgba(168,90,240,.95));transform:scale(1.06,.96)}}
 .arrive{animation:tarrive .55s cubic-bezier(.2,1.5,.4,1)}
