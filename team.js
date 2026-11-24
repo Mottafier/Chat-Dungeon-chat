@@ -142,7 +142,7 @@
     evening:{sky:[[44,60,140],[62,86,168],[90,120,196],[128,158,218],[172,198,234]],star:.35,moon:1,hills:[[114,144,202],[94,126,182]],g:{e:[166,228,152],t:[114,192,122],l:[98,174,112]},b:{t:[148,216,140],r:[76,146,98]}},
     sunset:{sky:[[66,44,112],[120,60,124],[190,84,110],[236,128,92],[252,184,112]],star:.25,sun:1,hills:[[124,62,104],[94,48,92]],g:{e:[178,172,98],t:[124,130,80],l:[104,112,74]},b:{t:[162,162,98],r:[76,84,62]}}
   };
-  var THEME=(function(){ var m=location.search.match(/[?&]camp=(\w+)/), t=m&&m[1].toLowerCase(), all={night:1,evening:1,sunset:1,stage:1,slots:1}; return all[t]?t:'night'; })();
+  var THEME=(function(){ var m=location.search.match(/[?&]camp=(\w+)/), t=m&&m[1].toLowerCase(), all={night:1,evening:1,sunset:1,stage:1,slots:1,ledge:1,portraits:1,room:1}; return all[t]?t:'night'; })();
   var scene=(function(){
     var cv=document.createElement('canvas'), ctx=cv.getContext('2d'), T=2, W=0, H=0, base=null, im=null, stars=[], lines=[], bases=[], tk=0, sig='', TH=THEMES[THEME]||null;
     cv.className='tsky'; cv.setAttribute('aria-hidden','true');
@@ -212,7 +212,7 @@
       if(m.status==='out'){ cls.push('locked','isout'); body='<span class="portal"></span>'; lk='Fighting'; }
       else if(m.egg){ var re=m.status==='resting'; cls.push(re?'locked':'full'); if(re) lk='Resting'; body='<span class="tshadow"></span><span class="who">'+egg(m.hue,2,'wob',2)+'</span>'; }
       else { var r=m.status==='resting'; cls.push(r?'locked':'full'); if(r){ cls.push('asleep'); lk='Resting'; } if(m.evolve_ready&&!r) cls.push('evo');
-        body='<span class="tshadow"></span><span class="who'+(r?'':' look')+'" style="animation-delay:-'+(k*1.3).toFixed(1)+'s">'+img(m,cs,r?'sleep':'alive')+'</span>'+(r?'<span class="zz">z</span><span class="zz b">z</span>':''); }
+        body='<span class="tshadow"></span><span class="who'+(r?'':' look')+'" style="animation-delay:-'+(k*1.3).toFixed(1)+'s">'+img(m,THEME==='portraits'?192:cs,r?'sleep':'alive')+'</span>'+(r?'<span class="zz">z</span><span class="zz b">z</span>':''); }
       if(sel) top=sendTop(m);
       if(!top&&!m.egg) top='<span class="thov">'+cap(m.danger||'normal')+' · Form '+((m.form|0)||1)+'</span>';
       else if(!top) top='<span class="thov">Mystery egg</span>'; }
@@ -240,6 +240,7 @@
     pane.classList.toggle('fixed',fixed);
     if(fixed){ h=Math.max(118,Math.min(320,availH()-2)); cs=h>=142?96:72; lh=43; }
     else { two=pw<560; cs=96; lh=46; h=two?356:232; }
+    if(THEME==='portraits') cs=Math.round((two?h/2:h)-lh-12);
     if(camp.h!==h||camp.two!==two||camp.cs!==cs){ camp.h=h; camp.two=two; camp.cs=cs; camp.lh=lh; lastCamp='';
       campEl.style.height=h+'px'; campEl.style.setProperty('--cs',cs+'px'); campEl.style.setProperty('--lh',lh+'px');
       campEl.classList.toggle('two',two); campEl.classList.toggle('compact',cs<80); campEl.classList.add('th-'+THEME); campEl.classList.toggle('painted',!!THEMES[THEME]); }
