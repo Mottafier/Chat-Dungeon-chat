@@ -411,3 +411,56 @@
 
 .tcamp.th-portraits{overflow:hidden}
 .pteam{overflow-x:clip}
+
+/* ---- simple batch ---- */
+/* shared: no scene, no aura, flat marker */
+.tcamp.th-bare .tglow,.tcamp.th-flat .tglow,.tcamp.th-discs .tglow,.tcamp.th-cols .tglow,.tcamp.th-tiles .tglow{display:none}
+.tcamp.th-bare .tplus,.tcamp.th-flat .tplus,.tcamp.th-discs .tplus,.tcamp.th-cols .tplus,.tcamp.th-tiles .tplus{border-color:#5a4a32;background:none}
+.tcamp.th-bare .tplus i,.tcamp.th-discs .tplus i,.tcamp.th-cols .tplus i,.tcamp.th-tiles .tplus i{color:#8a7a5a}
+.tcamp.th-bare .ttitle,.tcamp.th-discs .ttitle,.tcamp.th-cols .ttitle,.tcamp.th-tiles .ttitle{color:var(--parch-dim)}
+.tcamp.th-bare .tspot .tshadow,.tcamp.th-discs .tspot .tshadow,.tcamp.th-cols .tspot .tshadow,.tcamp.th-tiles .tspot .tshadow{background:rgba(0,0,0,.55)}
+
+/* bare: nothing. Creatures and names straight on the panel; the picked one gets a gold bar */
+.tcamp.th-bare .tspot .mark,.tcamp.th-flat .tspot .mark{bottom:calc(var(--lh) + 1px);height:4px;width:calc(var(--cs)*.8);border-radius:0;border:0}
+.tcamp.th-bare .tspot.sel .mark,.tcamp.th-flat .tspot.sel .mark{border:0;background:var(--flame);box-shadow:0 0 0 2px #000}
+.tcamp.th-bare .tlbl,.tcamp.th-flat .tlbl{padding-top:7px}
+.tcamp.th-bare .who,.tcamp.th-flat .who{margin-bottom:7px}
+.tcamp.th-bare .tspot .tshadow,.tcamp.th-flat .tspot .tshadow{bottom:calc(var(--lh) + 9px)}
+
+/* flat: one plain coloured band, nothing drawn on it */
+.tcamp.th-flat{background:#22304f;border-radius:6px;box-shadow:0 0 0 2px #000}
+.tcamp.th-flat .tspot .tshadow{background:rgba(8,14,34,.55)}
+.tcamp.th-flat .tplus{border-color:#6f82b5}
+.tcamp.th-flat .tplus i{color:#aebbe0}
+
+/* discs: each creature on a flat circle in its tier colour */
+.tcamp.th-discs .tspot::before{content:"";position:absolute;bottom:calc(var(--lh) + 2px);width:calc(var(--cs)*1.12);height:calc(var(--cs)*1.12);border-radius:50%;
+  background:color-mix(in srgb,var(--tc) 30%,#17110b);transition:background .15s,box-shadow .15s}
+.tcamp.th-discs .tspot.empty::before{background:none;box-shadow:inset 0 0 0 3px #3d2e18}
+.tcamp.th-discs .tspot.asleep::before,.tcamp.th-discs .tspot.isout::before{background:color-mix(in srgb,var(--tc) 12%,#17110b)}
+.tcamp.th-discs .tspot.sel::before{background:color-mix(in srgb,var(--tc) 48%,#17110b);box-shadow:0 0 0 2px #000,0 0 0 5px var(--flame)}
+.tcamp.th-discs .tspot .mark,.tcamp.th-discs .tspot .tshadow{display:none}
+.tcamp.th-discs .who{margin-bottom:calc(var(--cs)*.1)}
+.tcamp.th-discs .tplus{border:0;bottom:calc(var(--lh) + var(--cs)*.27)}
+.tcamp.th-discs .tlbl{padding-top:6px}
+
+/* cols: five plain columns split by thin lines; the picked column fills with its colour */
+.tcamp.th-cols .tspot::before{content:"";position:absolute;inset:0 0 0 0;border-left:2px solid #3d2e18;transition:background .15s}
+.tcamp.th-cols .tspot:first-child::before{border-left:0}
+.tcamp.th-cols .tspot.sel::before{background:linear-gradient(180deg,transparent 0,color-mix(in srgb,var(--tc) 30%,transparent) 100%);box-shadow:inset 0 -4px 0 var(--flame)}
+.tcamp.th-cols .tspot .mark{display:none}
+.tcamp.th-cols .tlbl{padding-bottom:4px}
+
+/* tiles: five flat tiles, thin tier-coloured edge, no pattern */
+.tcamp.th-tiles .tspot::before{content:"";position:absolute;inset:4px 6px;background:#0f0b07;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--tc) 55%,#17110b);transition:box-shadow .15s,background .15s}
+.tcamp.th-tiles .tspot.empty::before{box-shadow:inset 0 0 0 2px #3d2e18;background:none}
+.tcamp.th-tiles .tspot.sel::before{background:color-mix(in srgb,var(--tc) 16%,#0f0b07);box-shadow:inset 0 0 0 3px var(--flame)}
+.tcamp.th-tiles .tspot .mark{display:none}
+.tcamp.th-tiles .tlbl{padding-bottom:0}
+.tcamp.th-tiles .ttitle{display:none}
+.tplacing .tcamp.th-tiles .ttitle{display:block}
+@media (hover:hover){
+  .tcamp.th-cols .tspot:hover::before{background:linear-gradient(180deg,transparent 0,color-mix(in srgb,var(--tc) 18%,transparent) 100%)}
+  .tcamp.th-tiles .tspot:hover::before{background:color-mix(in srgb,var(--tc) 12%,#0f0b07)}
+  .tcamp.th-discs .tspot:hover::before{background:color-mix(in srgb,var(--tc) 42%,#17110b)}
+}

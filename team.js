@@ -142,7 +142,7 @@
     evening:{sky:[[44,60,140],[62,86,168],[90,120,196],[128,158,218],[172,198,234]],star:.35,moon:1,hills:[[114,144,202],[94,126,182]],g:{e:[166,228,152],t:[114,192,122],l:[98,174,112]},b:{t:[148,216,140],r:[76,146,98]}},
     sunset:{sky:[[66,44,112],[120,60,124],[190,84,110],[236,128,92],[252,184,112]],star:.25,sun:1,hills:[[124,62,104],[94,48,92]],g:{e:[178,172,98],t:[124,130,80],l:[104,112,74]},b:{t:[162,162,98],r:[76,84,62]}}
   };
-  var THEME=(function(){ var m=location.search.match(/[?&]camp=(\w+)/), t=m&&m[1].toLowerCase(), all={night:1,evening:1,sunset:1,stage:1,slots:1,ledge:1,portraits:1,room:1}; return all[t]?t:'night'; })();
+  var THEME=(function(){ var m=location.search.match(/[?&]camp=(\w+)/), t=m&&m[1].toLowerCase(), all={night:1,evening:1,sunset:1,stage:1,slots:1,ledge:1,portraits:1,room:1,bare:1,flat:1,discs:1,cols:1,tiles:1}; return all[t]?t:'night'; })();
   var scene=(function(){
     var cv=document.createElement('canvas'), ctx=cv.getContext('2d'), T=2, W=0, H=0, base=null, im=null, stars=[], lines=[], bases=[], tk=0, sig='', TH=THEMES[THEME]||null;
     cv.className='tsky'; cv.setAttribute('aria-hidden','true');
