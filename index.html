@@ -1078,7 +1078,6 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
           <h3><span data-px="gift:24"></span>Daily rewards</h3>
           <div class="days" id="ddays"></div>
           <button type="button" class="plaque go" id="dclaim">Claim</button>
-          <p class="dnext" id="dnext"></p>
         </div>
       </div>
       <div class="head">
@@ -2339,9 +2338,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     L.forEach(function(n,i){ var day=i+1, st=day<d||(day===d&&!pts.dready)?'got':day===d?'now':'later', c=document.createElement('div'); c.className='dday '+st;
       c.innerHTML='<small>Day '+day+'</small>'+pix(DAY_ART[Math.min(i,4)],36)+'<b>+'+(n|0)+'</b>'+(st==='got'?pix('tick',24,'tick'):''); box.appendChild(c); });
     var b=$('dclaim'), next=L[d%L.length]|0;
-    b.disabled=acc&&!pts.dready; b.textContent=!acc?'Make account to claim':pts.dready?'Claim +'+(L[d-1]|0):'Claimed';
-    $('dnext').textContent=!acc||pts.dready?(d<L.length?'Tomorrow is worth +'+next+'. Miss a day and it starts over.':'The biggest one! Tomorrow starts again at day 1.')
-      :(d<L.length?'Come back tomorrow for +'+next+'.':'Come back tomorrow for a new round.'); }
+    b.disabled=acc&&!pts.dready; b.textContent=!acc?'Make account to claim':pts.dready?'Claim +'+(L[d-1]|0):'Claimed'; }
   function openDaily(){ closeMenu(); drawDaily(); $('dpop').hidden=false; $('dbtn').setAttribute('aria-expanded','true'); }
   function closeDaily(){ $('dpop').hidden=true; $('dbtn').setAttribute('aria-expanded','false'); }
   $('dbtn').addEventListener('click',function(e){ e.stopPropagation(); if($('dpop').hidden) openDaily(); else closeDaily(); });
@@ -2353,7 +2350,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       if(g>0&&cell){ fly(RUBY_SVG,cell,$('rbtn'),Math.min(8,Math.max(3,Math.round(g/5))),function(){ pts.rubies=r.rubies|0; drawTop(); plus(g); }); once(cell,'pop',600); }
       else { pts.rubies=r.rubies|0; }
       drawTop(); drawDaily();
-    }).catch(function(e){ b.disabled=false; $('dnext').textContent=srvErr(e); }); });
+    }).catch(function(e){ b.disabled=false; pmsg(srvErr(e),'bad'); }); });
   /* (a database from before the reward popup pays the daily rubies on arrival) */
   function rubyDaily(){ if(!ON||!tokenFor(me)) return; rpc('ruby_daily',withTok({q_name:me})).then(function(rows){ var r=rows&&rows[0]; if(!r) return;
       pts.rubies=r.rubies|0; drawTop(); if(r.gained>0){ plus(r.gained); pmsg('+'+r.gained+' rubies for visiting today!','ok'); } }).catch(function(){}); }
@@ -2473,7 +2470,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     rpc('make_card',withTok({q_code:code,q_name:me,q_text:t})).then(function(j){ e.classList.remove('wait'); if(!j) return;
       $('mktext').value=''; mkClose(); fly(RUBY_SVG,$('rbtn'),e.querySelector('.ai'),3); pts.rubies=j.rubies|0; drawTop(); pmsg(''); cardsIn(j.cards);
     }).catch(function(err){ e.classList.remove('wait'); once(e,'no',450); var m=String(err&&err.message||'');
-      pmsg(m==='room closed'?'New enemies are made while the streamer\'s game is running. Try again when it\'s live.':SPEND_ERR[m]||srvErr(err),'bad'); if(m==='no account') openAccount(); if(m==='making'||m==='not enough rubies'){ myCards(); myPoints(); } }); }
+      pmsg(m==='room closed'?'New enemies are made while the streamer\'s game is running. Try again when it\'s live.':m==='not allowed'?'Those words aren\'t allowed. Try something else.':/^You've made /.test(m)?m.slice(0,140):SPEND_ERR[m]||srvErr(err),'bad'); if(m==='no account') openAccount(); if(m==='making'||m==='not enough rubies'){ myCards(); myPoints(); } }); }
   $('mkenemy').addEventListener('click',function(ev){ var e=this; pHover='';
     if(!(pts.account||locked)){ pmsg('Making enemies needs an account. Make one first.'); openAccount(); return; }
     if(cards.making){ once($('mkstrip'),'no',450); pmsg(cards.making.ready?'Add your last one to the Deck first.':'One at a time: this one is still being made.'); return; }
