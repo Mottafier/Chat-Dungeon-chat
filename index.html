@@ -141,7 +141,7 @@ a.pill:hover{border-color:var(--flame);color:var(--sign)}
 .strip .down i{font-style:normal;font-size:20px;line-height:1;animation:bob 1.2s ease-in-out infinite}
 
 /* ---------- phones: join a room ---------- */
-.joinhero{display:none;padding:20px 16px 18px;flex-direction:column;gap:12px;background:rgba(0,0,0,.5);border-bottom:3px solid #000;box-shadow:0 2px 0 var(--mortar)}
+.joinhero{display:none;padding:20px 16px 18px;flex-direction:column;gap:12px;background:rgba(0,0,0,.6);border-bottom:3px solid #000;box-shadow:0 2px 0 var(--mortar)}
 .eyebrow{font-family:var(--display);font-size:13px;letter-spacing:.12em;color:var(--flame);text-shadow:0 2px 0 #000}
 .joinhero h1{margin:0;font-family:var(--display);font-weight:700;font-size:28px;color:var(--sign);text-shadow:0 2px 0 #000}
 .joinhero p{margin:0;font-size:14px;color:var(--parch-dim);line-height:1.45}
@@ -156,8 +156,10 @@ a.pill:hover{border-color:var(--flame);color:var(--sign)}
 /* ---------- Fill the Dungeon (the approved PC design, minus the team dock until teams exist) ---------- */
 .F{position:relative;display:flex;flex-direction:column}
 .F .wrap{position:relative;width:100%;max-width:1440px;margin:0 auto;padding:30px 32px 44px;display:flex;flex-direction:column;gap:26px}
-.F .glow{position:absolute;top:-40px;width:520px;height:420px;pointer-events:none;background:radial-gradient(closest-side,rgba(255,170,70,.26),rgba(255,150,50,.09) 55%,transparent)}
-.F .glow.l{left:8%}.F .glow.r{right:8%}
+main{position:relative}
+#wall{position:absolute;left:0;top:0;width:100%;height:100%;image-rendering:pixelated;z-index:0;pointer-events:none}
+main>section{position:relative;z-index:1}
+.F .head .torch{visibility:hidden;width:24px;height:64px}  /* (placeholders: the wall canvas draws the real torches here) */
 .F .head{position:relative;display:flex;align-items:center;justify-content:center;gap:34px;text-align:center}
 .F .head .mid{display:flex;flex-direction:column;align-items:center;gap:10px}
 .F .signboard{margin:0;font-family:var(--display);font-weight:700;font-size:40px;line-height:1;letter-spacing:.05em;color:var(--sign);background:linear-gradient(#5a3a1c,#472c14);border:3px solid #1c0f07;border-radius:3px;padding:12px 26px 10px;
@@ -243,9 +245,7 @@ a.pill:hover{border-color:var(--flame);color:var(--sign)}
   .pill.deck .lbl,.pill.acct .lbl{display:none}
   .tb nav a{padding:6px 7px}
   .F .wrap{padding:18px 12px 26px;gap:18px}
-  .F .glow{display:none}
   .F .head{gap:12px}
-  .F .head .torch{display:none}
   .F .signboard{font-size:26px;padding:9px 16px 7px}
   .F .feat{aspect-ratio:auto;padding-top:56.25%;background-size:100% auto;background-position:top center}
   .F .feat .over{position:relative;padding:12px;flex-direction:column;align-items:stretch;background:rgba(0,0,0,.92);border-top:2px solid #000}
@@ -284,6 +284,7 @@ a.pill:hover{border-color:var(--flame);color:var(--sign)}
 </header>
 
 <main>
+  <canvas id="wall" aria-hidden="true"></canvas>
   <!-- PC: the first room. Until the game runs in the page this is a picture of it, and the sign says what's coming. -->
   <section class="hero" id="enter" aria-label="Enter the Dungeon">
     <div class="room" role="img" aria-label="The first room of the dungeon, its door sealed"></div>
@@ -318,7 +319,6 @@ a.pill:hover{border-color:var(--flame);color:var(--sign)}
 
   <section class="F" id="fill" aria-label="Fill the Dungeon">
     <div class="wrap">
-      <div class="glow l"></div><div class="glow r"></div>
       <div class="head"><div class="torch"><div class="flame"></div><b></b><i></i></div>
         <div class="mid"><h2 class="signboard">Fill the Dungeon</h2><p id="liveline">Looking for open dungeons…</p></div>
         <div class="torch"><div class="flame"></div><b></b><i></i></div></div>
@@ -871,6 +871,48 @@ a.pill:hover{border-color:var(--flame);color:var(--sign)}
     $('rest').innerHTML=h;
     var sa=$('showall'); if(sa) sa.addEventListener('click',function(){ showAll=true; drawRest(); });
   }
+
+  /* ---------- the wall: the stream page's torch-lit bricks (same recipe, same flicker), behind everything under the room.
+     Torches hang beside the Fill the Dungeon sign, and further down in the side gutters where there's wall to spare. ---------- */
+  (function(){ var cv=$('wall'), ctx=cv.getContext('2d'), main=document.querySelector('main'), still=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    var T=4, W=0, H=0, base, img, torch=[], lit=[];
+    function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; var t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+    var STONES=[[156,134,96],[143,122,86],[163,141,102],[134,114,79],[150,128,90],[128,110,80]], MOSS=[112,124,74], MORTAR=[52,43,30];
+    function build(){
+      var a=main.getBoundingClientRect(); W=Math.ceil(a.width/T); H=Math.ceil(a.height/T); if(!W||!H) return; cv.width=W; cv.height=H;
+      base=new Uint8ClampedArray(W*H*3); img=ctx.createImageData(W,H);
+      var r=rng(11), BW=12, BH=6, x, y, i;
+      for(var row=0; row*BH<H; row++){ var off=(row%2?BW/2:0)+Math.floor(r()*2);
+        for(var c0=-1; c0*BW<W; c0++){ var c=r()<.03?MOSS:STONES[Math.floor(r()*STONES.length)], sh=.9+r()*.2;
+          for(var by=0; by<BH; by++) for(var bx=0; bx<BW; bx++){ x=c0*BW+off+bx; y=row*BH+by; if(x<0||x>=W||y>=H) continue; i=(y*W+x)*3;
+            var m=(bx===0||by===0), k=m?1:sh*(by===1?1.08:by===BH-1?.86:1)*(.95+r()*.1), s=m?MORTAR:c; base[i]=s[0]*k; base[i+1]=s[1]*k; base[i+2]=s[2]*k; } } }
+      torch=[];
+      document.querySelectorAll('.F .head .torch').forEach(function(el){ var b=el.getBoundingClientRect(); if(b.width) torch.push({x:Math.round((b.left+b.width/2-a.left)/T),y:Math.round((b.top+18-a.top)/T)}); });
+      if(!torch.length){ var sg=document.querySelector('.F .signboard').getBoundingClientRect(), ty=Math.round((sg.top+sg.height/2-a.top)/T)-2; torch.push({x:7,y:ty},{x:W-8,y:ty}); }
+      var wr=document.querySelector('.F .wrap').getBoundingClientRect(), gl=wr.left-a.left+24, gr=a.right-wr.right+24;   /* (the gutters beside the hub, if any) */
+      if(gl>=60) for(var yy=torch[0].y+Math.round(640/T); yy<H-40; yy+=Math.round(640/T)) torch.push({x:Math.round(gl/2/T),y:yy},{x:W-Math.round(gr/2/T),y:yy});
+      lit=torch.map(function(t){ var f=new Float32Array(W*H); for(y=0; y<H; y++) for(x=0; x<W; x++){ var p=x-t.x, q=y-(t.y-4); f[y*W+x]=1.3/(1+(p*p+q*q)/900); } return f; });
+    }
+    var fr=rng(99);
+    function px(x,y,c){ if(x<0||y<0||x>=W||y>=H) return; var j=(y*W+x)*4, d=img.data; d[j]=c[0]; d[j+1]=c[1]; d[j+2]=c[2]; }
+    function paint(){ if(!W||!H) return;
+      var d=img.data, n=W*H, I=lit.map(function(){ return still?1:.86+fr()*.14; }), L=lit.length;
+      for(var i=0, j=0, k=0; i<n; i++, j+=4, k+=3){ var w=0; for(var t=0; t<L; t++) w+=I[t]*lit[t][i]; var warm=Math.round(Math.min(w,1.3)*14)/14;
+        d[j]=base[k]*(.26+warm); d[j+1]=base[k+1]*(.27+warm*.84); d[j+2]=base[k+2]*(.34+warm*.6); d[j+3]=255; }
+      for(var t2=0; t2<torch.length; t2++){ var x=torch[t2].x, y=torch[t2].y;
+        for(var s=0; s<9; s++){ px(x,y+2+s,[70,46,24]); px(x-1,y+2+s,[46,30,16]); }
+        for(var c=-2; c<=2; c++){ px(x+c,y,[58,54,52]); px(x+c,y+1,[30,28,28]); }
+        px(x-3,y-1,[30,28,28]); px(x+3,y-1,[30,28,28]);
+        var hgt=8+(still?0:Math.floor(fr()*3)), sway=still?0:Math.round((fr()-.5)*1.6);
+        for(var r2=0; r2<hgt; r2++){ var half=Math.max(0,2.6-r2*.36+(still?0:(fr()-.5)*.9)), cx=x+Math.round(sway*r2/hgt);
+          for(var o=-3; o<=3; o++){ var ad=Math.abs(o); if(ad>half) continue;
+            px(cx+o,y-1-r2, ad<half-1.4&&r2<hgt-3?[255,241,168]:ad<half-.6?[255,178,58]:[226,83,27]); } } }
+      ctx.putImageData(img,0,0); }
+    var rz, lastH=0; function layout(){ clearTimeout(rz); rz=setTimeout(function(){ build(); paint(); },60); }
+    window.__wall=layout; build(); paint(); if(!still) setInterval(function(){ if(!document.hidden) paint(); },110);
+    window.addEventListener('resize',layout); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(layout);
+    if(window.ResizeObserver) new ResizeObserver(function(){ var h=main.getBoundingClientRect().height; if(Math.abs(h-lastH)>8){ lastH=h; layout(); } }).observe(main);
+  })();
 
   /* ---------- top tabs follow the scroll: the room is Enter, the hub is Fill ---------- */
   (function(){ var en=$('tabEnter'), fi=$('tabFill'), fill=$('fill');
