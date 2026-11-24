@@ -1,0 +1,260 @@
+/* Chat Dungeon: Team camp + Collection (see team.js). Uses the streamer page's colours and fonts. */
+.ptabs [hidden],.stabs [hidden]{display:none!important}
+.ptabs .tegg svg{width:16px;height:20px;display:block}
+.pteam{min-width:0;position:relative}
+.pteam[hidden]{display:none}
+
+/* ---------- buttons ---------- */
+.tbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:6px 14px;border:0;border-radius:0;cursor:pointer;
+  font:400 19px/1 var(--display);color:#130d07;background:linear-gradient(#ffd75a,#f2b52a);box-shadow:inset 0 -4px 0 #c98a12,0 0 0 3px #000,0 4px 0 3px #000;margin:3px 3px 7px;text-align:center}
+.tbtn:hover{filter:brightness(1.08)}
+.tbtn:active:not(.gray):not(:disabled){transform:translateY(2px);box-shadow:inset 0 -2px 0 #c98a12,0 0 0 3px #000,0 2px 0 3px #000}
+.tbtn.sm{min-height:34px;font-size:16px;padding:4px 10px}
+.tbtn.free{background:linear-gradient(#8fe878,#3fae36);box-shadow:inset 0 -4px 0 #2a7a24,0 0 0 3px #000,0 4px 0 3px #000;color:#0b1a08;justify-content:space-between}
+.tbtn.free small{font:700 12px var(--body);letter-spacing:.06em;opacity:.85}
+.tbtn.free.evo{background:linear-gradient(#ffe48a,#ffb22a);box-shadow:inset 0 -4px 0 #c97a12,0 0 0 3px #000,0 4px 0 3px #000,0 0 18px rgba(255,200,70,.75);animation:tevo 1.6s ease-in-out infinite}
+.tbtn.gray{background:#2e2620;color:#a89878;box-shadow:inset 0 -3px 0 #1f1a14,0 0 0 3px #000;cursor:default;font-size:16px}
+.tbtn.ghost{background:var(--slab,#14100c);color:var(--parch);box-shadow:inset 0 0 0 2px #4a3a22,0 0 0 3px #000,0 3px 0 3px #000}
+.tbtn:disabled{opacity:.6;cursor:default}
+@keyframes tevo{0%,100%{transform:rotate(0)}6%{transform:rotate(-1.5deg)}12%{transform:rotate(1.5deg)}18%{transform:rotate(0)}}
+
+/* ---------- the camp ---------- */
+.trow{display:flex;gap:12px;align-items:stretch;min-width:0}
+.tcamp{position:relative;flex:1 1 auto;min-width:0;height:216px;overflow:hidden;background:#120d08;box-shadow:inset 0 0 0 3px #000;border-radius:2px;transition:box-shadow .2s}
+.tcamp.two{height:352px}
+.tcamp .twall{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;z-index:0}
+.tplacing .tcamp{box-shadow:inset 0 0 0 3px var(--flame),0 0 18px rgba(255,190,60,.4)}
+.ttitle{position:absolute;left:0;right:0;top:6px;z-index:3;text-align:center;font:400 17px/1 var(--display);color:#ffe7b5;text-shadow:0 2px 0 #000,0 0 6px #000;letter-spacing:.04em;pointer-events:none}
+.ttitle .tt2{display:none;color:var(--flame)}
+.ttitle .tcancel{pointer-events:auto;margin-left:8px;font:400 14px var(--display);color:var(--parch);background:#0b0706;border:2px solid #4a3a22;padding:1px 7px;cursor:pointer}
+.tplacing .ttitle .tt1{display:none}.tplacing .ttitle .tt2{display:inline}
+.tpads{position:absolute;inset:0;z-index:2}
+.tpad{position:absolute;width:112px;height:156px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;cursor:pointer;transition:transform .2s;outline:0;-webkit-tap-highlight-color:transparent}
+.tpad:focus-visible .disc{box-shadow:0 0 0 3px #fff}
+.tpad .disc{position:absolute;bottom:44px;width:84px;height:20px;border-radius:50%;background:radial-gradient(ellipse at 50% 40%,#6b5d4a 0,#4a3f31 45%,#2a221a 80%);box-shadow:0 3px 0 #000,inset 0 -3px 0 rgba(0,0,0,.4);transition:box-shadow .2s}
+.tpad.sel .disc{box-shadow:0 3px 0 #000,0 0 0 3px var(--flame),0 0 14px rgba(255,190,60,.7)}
+.tpad .tshadow{position:absolute;bottom:50px;width:50px;height:9px;border-radius:50%;background:rgba(0,0,0,.55);animation:tshad 1.6s ease-in-out infinite}
+.tpad .who{position:absolute;bottom:52px;transform-origin:50% 100%;transition:transform .25s,opacity .25s,filter .25s;line-height:0}
+.tpad .who img,.tcard img,.tbig img,.tf img,.tghost img{image-rendering:pixelated;display:block}
+.tpad .tnm{position:relative;z-index:3;max-width:118px;font:400 15px/1.05 var(--display);color:#ffe7b5;white-space:nowrap;overflow:hidden;text-overflow:clip;text-shadow:0 2px 0 #000,0 0 4px #000}
+.tpad .tnm.dim{color:#a8977a}
+.tpad .txp{position:relative;z-index:3;width:60px;height:6px;margin-top:2px;background:#0b0706;box-shadow:0 0 0 2px #000}
+.tpad .txp b{position:absolute;left:0;top:0;bottom:0;background:#6fd0ff}
+.tpad .txp.max b{background:var(--flame)}
+.tst{position:relative;z-index:3;margin-top:5px;padding:1px 6px 2px;font:400 14px/1.1 var(--display);white-space:nowrap;box-shadow:0 0 0 2px #000}
+.tst.ok{background:#2f8f2f;color:#fff}.tst.out{background:#7a2ad0;color:#fff}.tst.rest{background:#3a3128;color:#c9b48a}.tst.egg{background:#ffb23a;color:#130d07}
+.tst.none{background:#221b14;color:#8a7a5a}
+.tst.evo{background:#ffc93a;color:#130d07;animation:tevo 1.4s ease-in-out infinite}
+.tpad.evo .who{animation:tevohop 1.4s ease-in-out infinite}
+@keyframes tevohop{0%,60%,100%{translate:0 0}70%{translate:0 -8px}80%{translate:0 0}88%{translate:0 -4px}}
+.tplus{position:absolute;bottom:62px;font:400 34px/1 var(--display);color:#6b5a40;text-shadow:0 2px 0 #000;transition:color .2s,transform .2s}
+.alive{animation:tbreathe 1.6s ease-in-out infinite}
+.look{animation:tlook 4.6s steps(1) infinite}
+.tpad .who.look{animation:tlook 4.6s steps(1) infinite,thop 5.3s steps(1) infinite}
+.sleep{filter:grayscale(.85) brightness(.5);animation:tbreathe 3.2s ease-in-out infinite}
+.wob{animation:twob 2.6s steps(1) infinite;transform-origin:50% 92%}
+@keyframes tbreathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.03,.96)}}
+@keyframes tshad{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@keyframes thop{0%,88%,100%{translate:0 0}90%{translate:0 -6px}92%{translate:0 -9px}94%{translate:0 -6px}96%{translate:0 0}}
+@keyframes tlook{0%,60%,100%{scale:1 1}62%,80%{scale:-1 1}}
+@keyframes twob{0%,70%,100%{transform:rotate(0)}74%{transform:rotate(-8deg)}78%{transform:rotate(7deg)}82%{transform:rotate(-5deg)}86%{transform:rotate(3deg)}90%{transform:rotate(0)}}
+.zz{position:absolute;bottom:112px;left:70px;z-index:3;font:400 16px var(--display);color:#c9d6ff;text-shadow:0 2px 0 #000;animation:tzz 2.4s linear infinite;opacity:0}
+.zz.b{animation-delay:1.2s}
+@keyframes tzz{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(10px,-26px)}}
+.portal{position:absolute;bottom:48px;width:58px;height:72px;border-radius:50%;background:radial-gradient(ellipse,#f0d8ff 0,#a85af0 30%,#4a1490 62%,transparent 71%);animation:tswirl 1.2s linear infinite;filter:drop-shadow(0 0 10px rgba(168,90,240,.7))}
+@keyframes tswirl{50%{filter:brightness(1.4) drop-shadow(0 0 14px rgba(168,90,240,.9));transform:scale(1.05,.97)}}
+.arrive{animation:tarrive .55s cubic-bezier(.2,1.5,.4,1)}
+@keyframes tarrive{0%{transform:translateY(-60px) scale(.6);opacity:0}60%{transform:translateY(4px) scale(1.05,.92);opacity:1}100%{transform:none}}
+.leave{animation:tleave .3s ease-in forwards}
+@keyframes tleave{to{transform:translateY(-30px) scale(.5);opacity:0}}
+.tpad.landed .who{animation:tdrop .7s cubic-bezier(.3,1.4,.5,1)}
+@keyframes tdrop{0%{transform:translateY(-120px)}60%{transform:translateY(0) scale(1.15,.85)}100%{transform:none}}
+.who.evolving img,.who.evolving svg,.who.evolving .tspr{animation:tevolve 1.3s steps(2,end)}
+@keyframes tevolve{0%{filter:brightness(0) invert(1)}15%{filter:none}30%{filter:brightness(0) invert(1)}50%{filter:brightness(0) invert(1) drop-shadow(0 0 12px #fff)}100%{filter:brightness(0) invert(1) drop-shadow(0 0 20px #fff)}}
+
+/* drop marks */
+.tpad .mark{position:absolute;bottom:36px;width:96px;height:36px;border-radius:50%;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none}
+.tplacing .tpad.can-add .mark{opacity:1;border:3px dashed #7fe06a;animation:tring 1s ease-in-out infinite}
+.tplacing .tpad.can-swap .mark{opacity:1;border:3px dashed var(--flame);animation:tring 1s ease-in-out infinite}
+@keyframes tring{50%{transform:scale(1.12)}}
+.tplacing .tpad.can-add .tplus{color:#7fe06a;transform:scale(1.25)}
+.tplacing .tpad.can-swap .who{transform:rotate(-6deg) translateY(-3px)}
+.tplacing .tpad.no{opacity:.5}
+.tpad .lk{display:none;position:absolute;bottom:84px;z-index:4;font:400 14px var(--display);background:#0b0706;color:#c9b48a;padding:1px 6px;box-shadow:0 0 0 2px #3d2e18}
+.tplacing .tpad.no .lk{display:block}
+.tpad.hot{transform:translateX(-50%) scale(1.1)}
+.tpad.hot .mark{border-style:solid!important;background:radial-gradient(ellipse,rgba(255,220,120,.35),transparent 70%);animation:none!important}
+.tpad.hot.can-add .mark{background:radial-gradient(ellipse,rgba(127,224,106,.4),transparent 70%)}
+.tpad.hot.can-swap .who{opacity:.3;transform:translateY(8px) scale(.8)!important;filter:grayscale(1)}
+.tpad .swapi{display:none;position:absolute;bottom:126px;z-index:4;font:400 18px/1.1 var(--display);color:#130d07;background:var(--flame);padding:0 7px;box-shadow:0 0 0 2px #000,0 3px 0 2px #000}
+.tpad.hot:not(.no) .swapi{display:block}
+.tpad.hot.can-add .swapi{background:#7fe06a}
+.tpad.shake{animation:tshake .35s}
+@keyframes tshake{25%{translate:-6px 0}50%{translate:6px 0}75%{translate:-3px 0}}
+
+/* ---------- the detail strip beside (or under) the camp ---------- */
+.tdet{flex:0 0 300px;min-width:0;display:flex;flex-direction:column;gap:7px;background:#1a130d;box-shadow:inset 0 0 0 2px #3d2e18;padding:10px 12px;overflow-y:auto;max-height:216px;scrollbar-width:thin;scrollbar-color:#4a3a22 transparent}
+.pteam.narrow .trow{flex-direction:column}
+.pteam.narrow .tdet{flex:none;max-height:none}
+.thd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tname{font:400 23px/1 var(--display);color:#ffe7b5;text-shadow:0 2px 0 #000;overflow-wrap:anywhere}
+.tform{font:400 15px var(--display);color:var(--parch-dim)}
+.ttier{font:400 14px/1.2 var(--display);padding:1px 6px;color:#130d07;box-shadow:0 0 0 2px #000}
+.tt-harmless{background:#9aa39a}.tt-weak{background:#7fbf6a}.tt-normal{background:#e2b04a}.tt-tough{background:#f08a12}.tt-deadly{background:#e8324a;color:#fff}.tt-god{background:#c9a8ff}.t-egg.ttier{background:#ffb23a}
+.tmuted{margin:0;color:var(--parch-dim);font-size:13px;line-height:1.4}
+.tmuted b{color:var(--parch)}
+.txpbar{position:relative;height:12px;background:#0b0706;box-shadow:inset 0 0 0 2px #2a3a4a}
+.txpbar b{position:absolute;left:2px;top:2px;bottom:2px;min-width:0;background:linear-gradient(#9be6ff,#3aa0e0)}
+.txpbar.full b,.txpbar.max b{background:linear-gradient(#ffe48a,#f2a21a)}
+.txpbar.full{box-shadow:inset 0 0 0 2px #6b4a12,0 0 10px rgba(255,200,70,.5)}
+.txpl{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--parch-dim)}
+.tstats{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:13px;color:var(--parch-dim)}
+.tstats b{color:var(--parch);font-weight:600}
+.tacts{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.trep{background:#120d08;box-shadow:inset 0 0 0 2px #2b241a;padding:6px 8px;font-size:12.5px;color:var(--parch-dim)}
+.trep summary{cursor:pointer;display:flex;gap:6px;align-items:center;font:400 15px var(--display);color:var(--parch);list-style:none}
+.trep summary::-webkit-details-marker{display:none}
+.trep summary::before{content:"\25B8";color:var(--flame)}
+.trep[open] summary::before{content:"\25BE"}
+.trep summary b{margin-left:auto;color:#6fd0ff;font-weight:400}
+.trs{display:flex;flex-wrap:wrap;gap:2px 12px;margin:5px 0 3px}
+.trs b{color:var(--parch);font-weight:600}
+.trs .ko{color:#ffc93a}
+.trep ul{list-style:none;margin:0;padding:0}
+.trep li{display:flex;justify-content:space-between;gap:8px;padding:1px 0;border-top:1px dashed #2b241a}
+.trep li b{color:#6fd0ff;font-weight:600}
+.trep li.grey{opacity:.45}
+.trep li.grey b{text-decoration:line-through}
+.tlive h4{margin:2px 0 4px;font:400 15px var(--display);color:var(--flame)}
+.tlive a{display:flex;align-items:center;gap:7px;padding:4px 6px;color:var(--parch);text-decoration:none;font-size:13px;background:#120d08;box-shadow:inset 0 0 0 2px #2b241a;margin-bottom:4px}
+.tlive a:hover{box-shadow:inset 0 0 0 2px var(--flame)}
+.tlive a small{margin-left:auto;color:var(--parch-dim)}
+.tlive .dotl{width:8px;height:8px;background:#e8324a;box-shadow:0 0 0 2px #000;flex:none}
+
+/* hatch reveal: over the Team tab */
+.pteam.rvon .trow{visibility:hidden}
+.trv{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;min-height:216px}
+.trv[hidden]{display:none}
+.trvbox{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 16px;width:min(420px,100%);text-align:center;background:#1a130d;box-shadow:inset 0 0 0 3px var(--flame),0 0 0 3px #000,0 0 30px rgba(255,190,60,.45);overflow:hidden;animation:trvin .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes trvin{from{transform:scale(.7);opacity:0}}
+.trvbox .rays{position:absolute;left:50%;top:44%;width:520px;height:520px;margin:-260px 0 0 -260px;background:repeating-conic-gradient(rgba(255,210,120,.16) 0 10deg,transparent 10deg 22deg);animation:trays 14s linear infinite;pointer-events:none}
+@keyframes trays{to{transform:rotate(1turn)}}
+.trvbox>*{position:relative}
+.trvh{margin:0;font:400 26px/1 var(--display);color:var(--flame);text-shadow:0 2px 0 #000}
+.trvf{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center}
+.trvf input{height:36px;width:170px;padding:0 8px;font:400 18px var(--display);color:var(--parch);background:#0b0706;border:3px solid #000;box-shadow:inset 0 0 0 2px #4a3a22;border-radius:0}
+.trverr{margin:0;min-height:1em;color:var(--bad,#f2a08c);font-size:13px}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- cards: the page's card look (.mc), no Power price on team cards ---------- */
+.mc.t-egg{--tc:#ffb23a;--tg:#5a3a10}
+.mc .ew{position:absolute;left:0;right:0;top:22px;bottom:4px;display:flex;align-items:center;justify-content:center}
+.mc .ew svg{display:block}
+.tcard{border:0;padding:0;cursor:pointer;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;transition:transform .2s,box-shadow .2s,opacity .2s;font:inherit;color:inherit}
+.tcard .tspr{position:absolute;left:4px;top:22px;width:var(--s);height:var(--s)}
+.tcard .nospr .px{width:100%;height:100%}
+.tcard.sel{transform:translateY(-3px);box-shadow:inset 0 0 0 2px var(--flame),inset 0 0 0 4px #0b0706,0 0 0 3px var(--flame),0 0 18px rgba(255,200,60,.8)}
+.tcard.sel .nin{background:var(--flame)}
+.tcard.cool .cspr,.tcard.cool .tspr{filter:grayscale(1) brightness(.45)}
+.tcard.lifted{opacity:.25;transform:scale(.94)}
+.tcard.landed{animation:tdrop .7s cubic-bezier(.3,1.4,.5,1)}
+.tchip{position:absolute;right:4px;bottom:4px;z-index:2;font:400 13px/1 var(--display);padding:3px 5px;box-shadow:0 0 0 2px #000;color:#fff}
+.tchip.team{background:#2f8f2f}.tchip.out{background:#7a2ad0}.tchip.rest{background:#3a3128;color:#c9b48a}
+.thand{position:absolute;right:-8px;bottom:-10px;width:28px;height:30px;pointer-events:none;z-index:4;animation:thandgo 1.8s ease-in-out infinite;filter:drop-shadow(0 2px 0 #000)}
+@keyframes thandgo{0%,15%{transform:translate(0,0) scale(1)}25%{transform:translate(0,0) scale(.85)}70%{transform:translate(-16px,-16px) scale(.85)}85%,100%{transform:translate(-16px,-16px) scale(1);opacity:0}}
+.thint{position:absolute;left:50%;bottom:-19px;transform:translateX(-50%);font:400 13px var(--display);color:var(--flame);white-space:nowrap;pointer-events:none}
+
+/* ---------- the Collection view ---------- */
+.colv h3 small{font:400 13px var(--body);color:var(--parch-dim);margin-left:2px}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));justify-items:center;gap:14px 6px;padding:4px 0 18px}
+.tcolnote{margin-top:-6px!important}
+.tprev{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease;position:sticky;top:-12px;z-index:5;margin:0 -4px}
+.tprev.open{grid-template-rows:1fr}
+.tprev>div{overflow:hidden;min-height:0;padding:0 4px}
+.tpin{position:relative;display:flex;gap:10px;align-items:flex-start;margin:4px 0 8px;padding:10px;background:#1f170f;box-shadow:inset 0 0 0 2px #5a4322,0 0 0 3px #000,0 10px 18px rgba(0,0,0,.65)}
+.mc.tbig{--s:112px;width:120px;height:138px;flex:none;animation:tpop .28s cubic-bezier(.2,1.4,.4,1)}
+.mc.tbig .tspr{position:absolute;left:4px;top:22px;width:112px;height:112px}
+@keyframes tpop{from{transform:scale(.8);opacity:.3}}
+.tpi{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.tpi .tname{font-size:21px;padding-right:22px}
+.trowi{display:flex;align-items:center;gap:8px}
+.tforms{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
+.tforms .tf{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:#120d08;box-shadow:inset 0 0 0 2px #2b241a}
+.tforms .tf.now{box-shadow:inset 0 0 0 2px var(--flame)}
+.tforms .tf.q{font:400 20px var(--display);color:#6b5a40}
+.tforms i{font-style:normal;color:#6b5a40}
+.tdragtip{font:400 14px var(--display);color:var(--flame)}
+.tx{position:absolute;right:4px;top:4px;width:30px;height:30px;border:0;background:none;color:var(--parch-dim);font:400 22px var(--display);cursor:pointer}
+.tx:hover{color:#fff}
+
+/* ---------- the dragged card: turns into the creature over a pad it can go on ---------- */
+.tghost{position:fixed;left:0;top:0;z-index:1000;pointer-events:none;will-change:transform}
+.tghost .gcard>.mc{transform:rotate(-5deg) scale(1.06);box-shadow:inset 0 0 0 2px var(--flame),inset 0 0 0 4px #0b0706,0 12px 20px rgba(0,0,0,.7),0 0 18px rgba(255,200,60,.7);transition:transform .18s,opacity .18s}
+.tghost .gc{position:absolute;left:52px;top:61px;transform:translate(-50%,-50%) scale(.4);opacity:0;transition:transform .2s,opacity .2s;filter:drop-shadow(0 6px 4px rgba(0,0,0,.6));line-height:0}
+.tghost.over .gcard>.mc{transform:scale(.3);opacity:0}
+.tghost.over .gc{transform:translate(-50%,-60%) scale(1);opacity:1}
+.tghost.back{transition:transform .3s cubic-bezier(.3,.7,.3,1)}
+
+/* ---------- toast ---------- */
+.ttoast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;z-index:1100;pointer-events:none;
+  background:#1f170f;box-shadow:inset 0 0 0 2px var(--flame),0 0 0 3px #000,0 6px 0 3px #000;padding:9px 14px;font:400 17px/1.2 var(--display);color:#ffe7b5;transition:opacity .25s,transform .25s;max-width:calc(100vw - 32px);text-align:center}
+.ttoast.on{opacity:1;transform:translate(-50%,0)}
+.ttoast.bad{box-shadow:inset 0 0 0 2px #e8324a,0 0 0 3px #000,0 6px 0 3px #000}
+
+/* ---------- Make, in team mode: the egg that's ready ---------- */
+.dz .mc.tegg{cursor:pointer;box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 4px #0b0706,0 3px 0 #000,0 0 18px rgba(255,200,70,.85);animation:mystpulse 1.3s ease-in-out infinite;border:0;padding:0}
+.dz .mc.tegg .nin{background:#ffc93a;color:#130d07}
+
+/* ---------- phones ---------- */
+@media (max-width:640px){
+  .tdet{padding:10px}
+  .tgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .tpin{gap:8px;padding:8px}
+  .mc.tbig{--s:96px;width:104px;height:122px}
+  .mc.tbig .tspr{width:96px;height:96px}
+  .tpi .tname{font-size:19px}
+}
+@media (prefers-reduced-motion:reduce){
+  .tcamp *,.tcard,.tcard *,.tpin *,.ttoast,.tghost,.tghost *,.trv *{animation:none!important;transition:none!important}
+}
+
+/* ---------- PC: fixed-height store, details beside the camp ---------- */
+.pteam.fixed .tdet{flex-basis:300px}
+.pteam.slim .tdet{flex-basis:228px;padding:8px 10px}
+.pteam.slim .tname{font-size:20px}
+.pteam.slim .tpad .tnm{max-width:84px}
+.pteam.slim .tst{font-size:12px;padding:1px 4px 2px}
+.pteam.fixed .trv{min-height:0}
+/* the side panel gets one more tab: Avatar (and Shop on phones) shrink to their icons */
+.cdteam .stabs [data-side=avatar]{flex:0 0 40px;font-size:0;gap:0}
+@media (max-width:640px){ .cdteam .stabs [data-side=shop]{flex:0 0 40px;font-size:0;gap:0} }
+/* PC store is short (about 130px for the camp): smaller creatures, name and state on two small lines */
+.tcamp.compact .ttitle{top:3px;font-size:14px}
+.tcamp.compact .ttitle .tcancel{font-size:12px;padding:0 5px}
+.tcamp.compact .tpad{height:120px}
+.tcamp.compact .tpad .disc{bottom:30px;width:66px;height:15px}
+.tcamp.compact .tpad .tshadow{bottom:35px;width:40px;height:7px}
+.tcamp.compact .tpad .who{bottom:37px}
+.tcamp.compact .tpad .who img,.tcamp.compact .tpad .who .tspr{width:56px;height:56px}
+.tcamp.compact .tpad .who svg{width:38px;height:48px}
+.tcamp.compact .portal{bottom:33px;width:46px;height:58px}
+.tcamp.compact .tplus{bottom:42px;font-size:26px}
+.tcamp.compact .tpad .tnm{font-size:13px}
+.tcamp.compact .tpad .txp{width:50px;height:4px;margin-top:1px}
+.tcamp.compact .tst{font-size:12px;margin-top:3px;padding:0 4px 1px}
+.tcamp.compact .zz{bottom:84px;left:66px;font-size:13px}
+.tcamp.compact .tpad .mark{bottom:24px;width:80px;height:28px}
+.tcamp.compact .tpad .lk{bottom:58px;font-size:12px}
+.tcamp.compact .tpad .swapi{bottom:96px;font-size:15px}
+.cdteam .stabs [data-side=shop]{flex:0 0 40px;font-size:0;gap:0}
+@media (max-width:640px){ .cdteam .stabs button{font-size:13px;letter-spacing:-.3px} }
+@media (max-width:640px){ .cdteam .stabs [data-side=collection] .px{display:none} }
+.trvt{display:contents}
+.trvh{order:-1}
+.pteam.fixed .trv{align-items:stretch}
+.pteam.fixed .trvbox{flex-direction:row;width:100%;height:100%;gap:16px;padding:6px 16px;justify-content:center;text-align:left}
+.pteam.fixed .trvt{display:flex;flex-direction:column;gap:6px;align-items:flex-start;justify-content:center}
+.pteam.fixed .trvf{justify-content:flex-start}
+.pteam.fixed .trvbox .mc.tbig{--s:84px;width:92px;height:110px;align-self:center}
+.pteam.fixed .trvbox .mc.tbig .tspr{width:84px;height:84px}
+.pteam.fixed .trvh{font-size:22px}
