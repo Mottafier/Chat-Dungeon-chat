@@ -2378,7 +2378,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   $('pask').addEventListener('submit',function(e){ e.preventDefault(); var t=$('ptext').value.trim(); if(!t){ $('ptext').focus(); return; } spend(asking,t); });
   $('pbuy').addEventListener('click',function(){ if(pts.known&&!pts.account){ openAccount(); return; } sideTab('shop',true); });
   var SPEND_ERR={'not enough points':'Not enough Power for that.','room closed':'The streamer\'s game isn\'t running right now. Try again when it\'s live.',
-    'slow down':'One at a time: wait a few seconds.','too busy':'Lots of people are using the buttons. Try again in a moment.','too long':'Keep it under 100 characters.',
+    'slow down':'One at a time: wait a few seconds.','too busy':'Lots of people are using the buttons. Try again in a moment.','too long':'Keep it under 100 characters.','daily limit':'That\'s your makes for today. Come back tomorrow.',
     'empty':'Type something first.','no account':'Power needs an account. Make one first.','name taken':'This name is locked. Log in with its password.',
     'bad name':'Your name needs letters or numbers. Pick another.','genie busy':'Someone else is the genie right now. Try again soon.',
     'making':'Add your last one to the Deck first.','have it':'You already have that card.','recharging':'That card is still recharging.','no card':'That card isn\'t in your Deck.','deck full':'Your Deck is full. Take a card out first.','not ready':'It isn\'t ready yet.',
