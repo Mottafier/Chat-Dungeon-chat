@@ -1013,6 +1013,9 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
   }
 }
 @media (prefers-reduced-motion:reduce){ .strip *,.strip,.dcard,.dcard *,.pdot,.act.mk .ap::after{animation:none!important;transition:none!important} }
+.cspr{display:block;image-rendering:pixelated;image-rendering:crisp-edges;image-rendering:pixelated}
+.dcard.cool .cspr{filter:grayscale(1) brightness(.55)}
+.strip .si .cart{display:flex}
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
@@ -2423,7 +2426,9 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   var cards={ok:false,tried:false,acct:null,price:30,max:6,recharge:100,making:null,list:[],t:0,from:'chat'}, ptNow='spawn', cardNew=0;
   var MAKE_SECONDS=45;
   function hue(t){ var h=0; t=String(t||''); for(var i=0;i<t.length;i++) h=(h*31+t.charCodeAt(i))%360; return h; }
-  function cardArt(c,n){ return '<span class="cart" style="filter:hue-rotate('+hue(c.name)+'deg)">'+pix('custom',n)+'</span>'; }
+  /* a card's picture: the 48x48 pixel sprite the database drew for it (my_cards' sprite, a base64 PNG), else a tinted face */
+  function cardArt(c,n){ var sp=c&&typeof c.sprite==='string'&&c.sprite.length<60000&&/^[A-Za-z0-9+\/]+=*$/.test(c.sprite)?c.sprite:'';
+    return sp?'<img class="cspr" alt="" width="'+n+'" height="'+n+'" src="data:image/png;base64,'+sp+'">':'<span class="cart" style="filter:hue-rotate('+hue(c.name)+'deg)">'+pix('custom',n)+'</span>'; }
   function myCards(){ if(!ON) return; rpc('my_cards',withTok({q_name:me})).then(function(j){ cardsIn(j); }).catch(function(){ setTimeout(function(){ cards.tried=false; },60000); }); }
   function cardsIn(j,quiet){ if(!j||typeof j!=='object'||!j.cards) return; var now=Date.now(), was=cards.making;
     if(!quiet) cards.ok=true; cards.price=(j.price|0)||cards.price; cards.max=(j.max|0)||cards.max; cards.recharge=(j.recharge|0)||cards.recharge;
@@ -2446,7 +2451,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     $('mkdot').hidden=!ready; $('mkadd').hidden=!ready;
     if(mk){ $('mktxt').textContent=ready?mk.name+' is ready!':'Making: '+mk.text;
       $('mkbar').style.width=ready?'0':Math.min(94,8+(now-mk.since)/1000/MAKE_SECONDS*86)+'%';
-      st.querySelector('.si').style.filter=ready?'hue-rotate('+hue(mk.name)+'deg)':''; }
+      var si=st.querySelector('.si'), art=ready?cardArt(mk,24):pix('custom',24); if(si._h!==art){ si._h=art; si.innerHTML=art; } }
     /* the deck */
     var box=$('deck'), d=deckList(), html='';
     d.forEach(function(c){ var wait=Math.max(0,Math.ceil((c.until-now)/1000)), poor=!c.free&&pts.n<c.cost;
