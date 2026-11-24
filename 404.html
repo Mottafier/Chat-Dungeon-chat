@@ -1101,6 +1101,13 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 @keyframes stopin{0%{transform:scale(.5)}100%{transform:translateY(-3px)}}
 .dq p.tip{min-height:36px;margin-top:3px}
 .dq p.tip.swap{animation:rvin .4s ease-out}
+/* card names: Jersey 15, a compact pixel face that stays readable small (the site only loads its digits otherwise) */
+@font-face{font-family:'CardName';font-style:normal;font-weight:400;font-display:swap;src:url(https://fonts.gstatic.com/s/jersey15/v4/_6_9EDzuROGsUuk2TWjiZYAg.woff2) format('woff2')}
+.mc .nin,.mzm{font-family:'CardName',var(--display);font-size:15px;letter-spacing:0}
+.mc .nin{line-height:18px;padding:0 2px}
+.mc.big .nin{font-size:22.5px;line-height:27px;padding:0 3px}
+@media (max-width:359px){ .deck .mc .nin,.dz .mc .nin{font-size:11px} }
+@media (min-width:1000px){ @container store (max-width:800px){ .deck .mc .nin,.dz .mc .nin{font-size:11px} } }
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
@@ -2600,7 +2607,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
      panel, never over the stream) is everything you made, and the Deck is the ones you have equipped.
      The database does all of it (my_cards, make_card, claim_card, deck_set, spawn_card); until it has those the tabs stay
      away and the old Custom Enemy button is in their place. ---- */
-  var cards={ok:false,tried:false,acct:null,price:30,max:6,recharge:100,titleMax:16,making:null,list:[],t:0,from:'chat'}, ptNow='spawn', cardNew=0;
+  var cards={ok:false,tried:false,acct:null,price:30,max:6,recharge:100,titleMax:20,making:null,list:[],t:0,from:'chat'}, ptNow='spawn', cardNew=0;
   var MAKE_SECONDS=40;
   /* Make's own state: pick = the Enemy page is open (nothing being made yet); seen = the make this page watched being
      built (so its last stop, the painting, gets a moment); readyAt = when it was first seen ready; rv = the reveal is up */
@@ -2609,16 +2616,17 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   /* a card's picture: the 48x48 pixel sprite the database drew for it (my_cards' sprite, a base64 PNG), else a tinted face */
   function cardArt(c,n){ var sp=c&&typeof c.sprite==='string'&&c.sprite.length<60000&&/^[A-Za-z0-9+\/]+=*$/.test(c.sprite)?c.sprite:'';
     return sp?'<img class="cspr" alt="" width="'+n+'" height="'+n+'" src="data:image/png;base64,'+sp+'">':'<span class="cart" style="filter:hue-rotate('+hue(c.name)+'deg)">'+pix('custom',n)+'</span>'; }
-  /* a card's name has to fit its name bar with no "...": 90px of the display font at 13px (the big card's bar is the
+  /* a card's name has to fit its name bar with no "...": 91px of the card-name font at 15px (the big card's bar is the
      same shape, 1.5x). Whole words are dropped from the end first, then letters. */
-  var NAME_W=86, fitMemo={};
+  var NAME_W=91, fitMemo={};
   var mzM=document.createElement('span'); mzM.className='mzm'; mzM.setAttribute('aria-hidden','true'); document.body.appendChild(mzM);
   function nameW(t){ mzM.textContent=t; return mzM.getBoundingClientRect().width; }
   function nameFits(t){ return t.length<=cards.titleMax&&nameW(t)<=NAME_W; }
   function fitName(t){ t=String(t||'').replace(/\s+/g,' ').trim(); if(fitMemo[t]!=null) return fitMemo[t];
-    var w=t.split(' '), o=t; while(w.length>1&&!nameFits(w.join(' '))) w.pop(); o=w.join(' '); while(o.length>1&&!nameFits(o)) o=o.slice(0,-1); o=o.trim();
-    if(document.fonts&&document.fonts.status!=='loaded') return o; fitMemo[t]=o; return o; }
-  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ fitMemo={}; $('deck')._h=''; drawCards(); });
+    var w=t.split(' '), o=t; while(w.length>1&&!nameFits(w.join(' '))) w.pop(); if(w.length<t.split(' ').length) while(w.length>1&&/^(that|with|the|of|and|a|an|in|on|who|to|for|from)$/i.test(w[w.length-1])) w.pop(); o=w.join(' '); while(o.length>1&&!nameFits(o)) o=o.slice(0,-1); o=o.trim();
+    if(!nameFont) return o; fitMemo[t]=o; return o; }
+  var nameFont=false;   /* (names are measured in their own font: nothing is remembered until it's here) */
+  if(document.fonts&&document.fonts.load) document.fonts.load("15px CardName").then(function(){ nameFont=true; fitMemo={}; $('deck')._h=''; drawCards(); },function(){ nameFont=true; }); else nameFont=true;
   function cardHtml(c,cls,tag,extra){ tag=tag||'div';
     return '<'+tag+(tag==='button'?' type="button"':'')+' class="mc t-'+esc(c.danger||'normal')+(cls?' '+cls:'')+'"'+(extra||'')+'><span class="nin">'+esc(fitName(c.name))+'</span>'+cardArt(c,96)
       +'<span class="cost">'+SUN_SVG+'<i>'+(c.cost|0)+'</i></span></'+tag+'>'; }
