@@ -22,7 +22,7 @@
   function account(){ return typeof X.account==='function'?X.account():!!X.account; }
   var BASE=(function(){ var s=document.currentScript&&document.currentScript.src; return s?s.replace(/team\.js.*$/,''):'/'; })();
   var VER=(function(){ var s=document.currentScript&&document.currentScript.src, m=s&&s.match(/[?&]v=([\w.-]+)/); return m?m[1]:'1'; })();
-  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.3'; document.head.appendChild(l); })();
+  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.4'; document.head.appendChild(l); })();
 
   /* ---------------------------------------------------------------- state */
   var S={on:false,known:false,slots:5,cooldown:14400,members:[],byId:{},making:null,at:0,got:0,
@@ -118,7 +118,7 @@
     if(X.redrawMake) X.redrawMake();
     if(X.layout) X.layout(); }
   function shown(){ return (!pane.hidden&&!!pane.offsetParent)||(!colv.hidden&&!!colv.offsetParent); }
-  X.onTab=function(t){ ptCur=t; pane.hidden=t!=='team'; if(t==='team'){ tabDot(false); draw(); scene.kick(); if(S.on) soon(150); } };
+  X.onTab=function(t){ ptCur=t; pane.hidden=t!=='team'; if(t==='team'){ tabDot(false); draw(); if(S.on) soon(150); } };
   X.onSide=function(t){ sideCur=t; if(t==='collection'){ drawCol(); if(S.on) soon(150); } else if(S.placing!=null&&!drag&&!phone()&&t!=='rewards') stopPlacing(); };
   X.teamOn=function(){ return S.on; };
 
@@ -134,60 +134,8 @@
     else { S.pick=id; if(phone()) X.pTab('team'); else X.sideTab('collection',true); toast('Your team is full, so your egg went to your Collection.'); }
     S.landed=id; setTimeout(function(){ S.landed=null; },2500); draw(); };
 
-  /* ---------------------------------------------------------------- the camp, outside the dungeon. Everything in it is on one 2px grid
-     (a creature's 48px sprite is always shown at exactly 2x), so no two things have different-sized pixels.
-     ?camp=night|evening|sunset|stage|slots tries the other looks. */
-  var THEMES={
-    night:{sky:[[14,18,52],[20,28,74],[28,42,98],[40,58,122],[56,78,146]],star:1,moon:1,hills:[[34,50,112],[24,38,90]],g:{e:[92,170,120],t:[52,124,96],l:[42,104,88]},b:{t:[82,154,114],r:[30,82,74]}},
-    evening:{sky:[[44,60,140],[62,86,168],[90,120,196],[128,158,218],[172,198,234]],star:.35,moon:1,hills:[[114,144,202],[94,126,182]],g:{e:[166,228,152],t:[114,192,122],l:[98,174,112]},b:{t:[148,216,140],r:[76,146,98]}},
-    sunset:{sky:[[66,44,112],[120,60,124],[190,84,110],[236,128,92],[252,184,112]],star:.25,sun:1,hills:[[124,62,104],[94,48,92]],g:{e:[178,172,98],t:[124,130,80],l:[104,112,74]},b:{t:[162,162,98],r:[76,84,62]}}
-  };
-  var THEME=(function(){ var m=location.search.match(/[?&]camp=(\w+)/), t=m&&m[1].toLowerCase(), all={night:1,evening:1,sunset:1,stage:1,slots:1,ledge:1,portraits:1,room:1,bare:1,flat:1,discs:1,cols:1,tiles:1}; return all[t]?t:'night'; })();
-  var scene=(function(){
-    var cv=document.createElement('canvas'), ctx=cv.getContext('2d'), T=2, W=0, H=0, base=null, im=null, stars=[], lines=[], bases=[], tk=0, sig='', TH=THEMES[THEME]||null;
-    cv.className='tsky'; cv.setAttribute('aria-hidden','true');
-    function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; var t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
-    function put(x,y,c){ if(x<0||y<0||x>=W||y>=H) return; var i=(y*W+x)*3; base[i]=c[0]; base[i+1]=c[1]; base[i+2]=c[2]; }
-    function build(){ var host=cv.parentNode; if(!host||!TH) return; var w=host.clientWidth, h=host.clientHeight; if(!w||!h) return;
-      W=Math.ceil(w/T); H=Math.ceil(h/T); cv.width=W; cv.height=H; im=ctx.createImageData(W,H); base=new Uint8ClampedArray(W*H*3);
-      var g0=Math.max(4,Math.min(H-2,Math.round((lines.length?lines[0]:h*.6)/T))), r=rng(7), x, y, i, SKY=TH.sky, u=4/T;
-      /* sky: a few clean bands, lighter toward the hills, one dithered row between bands */
-      for(y=0;y<H;y++){ var t=Math.min(1,y/Math.max(1,g0))*(SKY.length-.001), b=Math.floor(t), bandH=g0/SKY.length, into=(t-b)*bandH;
-        for(x=0;x<W;x++) put(x,y,SKY[Math.min(SKY.length-1,b+((into>bandH-u*1.5&&((x+y)&1))?1:0))]); }
-      var mx=Math.round(W*(lines.length>1?.665:.8)), R, my;
-      if(TH.sun){ R=Math.max(4,Math.round(g0*.3)); my=g0+Math.round(R*.25);
-        for(y=my-R;y<=g0;y++) for(x=mx-R;x<=mx+R;x++){ var sx2=x-mx, sy2=y-my; if(sx2*sx2+sy2*sy2<=R*R) put(x,y,sy2<-R*.55?[255,244,190]:sy2<-R*.2?[255,226,150]:[255,204,120]); } }
-      else if(TH.moon){ R=Math.max(3,Math.round(g0*.17)); my=Math.max(R+3,Math.round(g0*.34));
-        for(y=my-R-3;y<=my+R+3;y++) for(x=mx-R-3;x<=mx+R+3;x++){ if(x<0||y<0||x>=W||y>=H) continue; var dx=x-mx, dy=y-my, dd=Math.sqrt(dx*dx+dy*dy); i=(y*W+x)*3;
-          if(dd<=R+.2) put(x,y,(dx+dy)>R*.8?[222,212,180]:[250,244,210]);
-          else if(dd<=R+2.6&&((x+y)&1)){ base[i]+=(200-base[i])*.3; base[i+1]+=(214-base[i+1])*.3; base[i+2]+=(245-base[i+2])*.3; } } }
-      var sc=Math.max(.5,g0*T/4/30)*u*.7;
-      function far(x){ var s=x/u; return g0-Math.round((2.5+4*(Math.sin(s*.043+1.1)+1)+2.4*(Math.sin(s*.117+4)+1))*sc); }
-      function near(x){ var s=x/u; return g0-Math.round((.8+2.3*(Math.sin(s*.071+2.2)+1)+1.3*(Math.sin(s*.19+.4)+1))*sc); }
-      stars=[]; var n=Math.round(W*g0/420*(TH.star||0));
-      for(i=0;i<n;i++){ var sx=Math.floor(r()*W), sy=Math.floor(r()*g0*.5), md=Math.sqrt((sx-mx)*(sx-mx)+(sy-(my||0))*(sy-(my||0))); if((R&&md<R+5)||sy>=far(sx)-1) continue;
-        stars.push({x:sx,y:sy,b:r()<.2?2:r()<.55?1:0,ph:Math.floor(r()*16),w:r()<.3}); }
-      for(x=0;x<W;x++){ for(y=far(x);y<g0;y++) put(x,y,TH.hills[0]); }
-      for(x=0;x<W;x++){ for(y=near(x);y<g0;y++) put(x,y,TH.hills[1]); }
-      /* the ground: flat and quiet, so the creatures are the loudest thing */
-      var G=TH.g, rr=rng(31), span=Math.max(1,H-g0);
-      for(y=g0;y<H;y++){ var d=y-g0, p=d/span;
-        for(x=0;x<W;x++){ var c=d<1?G.e:p<.5?G.t:G.l; if(Math.abs(p-.5)<1/span&&((x+y)&1)) c=G.t; var q=rr(); if(d>2&&q<.006) c=G.e; else if(d>2&&q>.994) c=G.l; put(x,y,c); } }
-      /* an oval of ground under each spot */
-      bases.forEach(function(B){ var cx=Math.round(B.x/T), cy=Math.round(B.y/T), rx=Math.round(B.rx/T), ry=Math.max(2,Math.round(B.ry/T));
-        for(y=cy-ry;y<=cy+ry;y++) for(x=cx-rx;x<=cx+rx;x++){ var v=(x-cx)*(x-cx)/(rx*rx)+(y-cy)*(y-cy)/(ry*ry); if(v<=1) put(x,y,v>.74?TH.b.r:TH.b.t); } });
-      paint(true); }
-    function paint(force){ if(!im||(!force&&(!cv.offsetParent||document.hidden))) return; var d=im.data, n=W*H; tk++;
-      for(var i=0,j=0,k=0;i<n;i++,j+=4,k+=3){ d[j]=base[k]; d[j+1]=base[k+1]; d[j+2]=base[k+2]; d[j+3]=255; }
-      stars.forEach(function(s){ var ph=(tk+s.ph)%16, off=!still&&s.w&&ph<2, v=s.b===2?255:s.b===1?215:170; if(off) v*=.6;
-        var q=(s.y*W+s.x)*4; d[q]=Math.max(d[q],v*.94); d[q+1]=Math.max(d[q+1],v*.96); d[q+2]=Math.max(d[q+2],v);
-        if(s.b===2&&!off){ [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(o){ var x=s.x+o[0], y=s.y+o[1]; if(x<0||y<0||x>=W||y>=H) return; var z=(y*W+x)*4; d[z]=Math.max(d[z],v*.6); d[z+1]=Math.max(d[z+1],v*.63); d[z+2]=Math.max(d[z+2],v*.72); }); } });
-      ctx.putImageData(im,0,0); }
-    if(!still&&TH) setInterval(function(){ paint(false); },420);
-    var rz=0; function kick(){ clearTimeout(rz); rz=setTimeout(build,40); }
-    function set(l,key,bs){ var s=l.join(',')+'/'+key+'/'+bs.map(function(b){ return Math.round(b.x)+':'+Math.round(b.y); }).join(','); if(s!==sig){ sig=s; lines=l; bases=bs; kick(); } }
-    window.addEventListener('resize',kick);
-    return {el:cv,kick:kick,set:set}; })();
+  /* ---------------------------------------------------------------- the team strip: five plain columns, one fun colour per creature
+     (a creature's 48px sprite is always shown at exactly 2x, so every pixel on it is the same size). */
 
   /* ---------------------------------------------------------------- drawing the Team tab */
   var TIER={harmless:1,weak:1,normal:1,tough:1,deadly:1,god:1};
@@ -217,7 +165,7 @@
       if(m.status==='out'){ cls.push('locked','isout'); body='<span class="portal"></span>'; lk='Fighting'; }
       else if(m.egg){ var re=m.status==='resting'; cls.push(re?'locked':'full'); if(re) lk='Resting'; body='<span class="tshadow"></span><span class="who">'+egg(m.hue,2,'wob',2)+'</span>'; }
       else { var r=m.status==='resting'; cls.push(r?'locked':'full'); if(r){ cls.push('asleep'); lk='Resting'; } if(m.evolve_ready&&!r) cls.push('evo');
-        body='<span class="tshadow"></span><span class="who'+(r?'':' look')+'" style="animation-delay:-'+(k*1.3).toFixed(1)+'s">'+img(m,THEME==='portraits'?192:cs,r?'sleep':'alive')+'</span>'+(r?'<span class="zz">z</span><span class="zz b">z</span>':''); }
+        body='<span class="tshadow"></span><span class="who'+(r?'':' look')+'" style="animation-delay:-'+(k*1.3).toFixed(1)+'s">'+img(m,cs,r?'sleep':'alive')+'</span>'+(r?'<span class="zz">z</span><span class="zz b">z</span>':''); }
       if(sel) top=sendTop(m);
       if(!top&&!m.egg) top='<span class="thov">'+cap(m.danger||'normal')+' · Form '+((m.form|0)||1)+'</span>';
       else if(!top) top='<span class="thov">Mystery egg</span>'; }
@@ -234,10 +182,10 @@
     used+=(parseFloat(cs.rowGap)||0)*Math.max(0,n-1);
     return pts.clientHeight-(parseFloat(cs.paddingTop)||0)-(parseFloat(cs.paddingBottom)||0)-used; }
   function buildPane(){ if(campEl) return;
-    pane.innerHTML='<div class="tstage"><div class="tcamp" id="tcamp"><div class="tflies" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>'
+    pane.innerHTML='<div class="tstage"><div class="tcamp th-cols" id="tcamp">'
       +'<div class="ttitle"><span class="tt1"></span><span class="tt2">Pick a spot for it <button type="button" class="tcancel" data-act="cancel">Cancel</button></span></div><div class="tspots"></div></div>'
       +'<div class="trv" id="trv" hidden></div></div><div class="tcolhost" id="tcolhost"></div>';
-    campEl=$('tcamp'); campEl.insertBefore(scene.el,campEl.firstChild); }
+    campEl=$('tcamp'); }
   function drawTeam(){ if(!S.on) return; buildPane(); mount();
     /* on a PC the store under the stream has a fixed height: the camp fills all of it, one row of five.
        On a phone (and anything narrow) it's two rows, three on a ridge and two in front. */
@@ -245,19 +193,17 @@
     pane.classList.toggle('fixed',fixed);
     if(fixed){ h=Math.max(118,Math.min(320,availH()-2)); cs=h>=142?96:72; lh=43; }
     else { two=pw<560; cs=96; lh=46; h=two?356:232; }
-    if(THEME==='portraits') cs=Math.round((two?h/2:h)-lh-12);
     if(camp.h!==h||camp.two!==two||camp.cs!==cs){ camp.h=h; camp.two=two; camp.cs=cs; camp.lh=lh; lastCamp='';
       campEl.style.height=h+'px'; campEl.style.setProperty('--cs',cs+'px'); campEl.style.setProperty('--lh',lh+'px');
-      campEl.classList.toggle('two',two); campEl.classList.toggle('compact',cs<80); campEl.classList.add('th-'+THEME); campEl.classList.toggle('painted',!!THEMES[THEME]); }
+      campEl.classList.toggle('two',two); campEl.classList.toggle('compact',cs<80); }
     camp.lh=lh;
-    var rows=two?[[0,1,2],[3,4]]:[[0,1,2,3,4]], rh=h/rows.length, P=[], lines=[], bases=[], cw=campEl.clientWidth||pw, sw=Math.round(cw*(two?.3333:.2));
+    var rows=two?[[0,1,2],[3,4]]:[[0,1,2,3,4]], rh=h/rows.length, P=[], cw=campEl.clientWidth||pw, sw=Math.round(cw*(two?.3333:.2));
     campEl.style.setProperty('--sw',sw+'px'); camp.sw=sw;
-    rows.forEach(function(row,ri){ var by=Math.round((ri+1)*rh-lh-8); lines.push(by-Math.round(cs*.36)); row.forEach(function(k,i){ bases.push({x:cw*(two?(ri?[32,68]:[17,50,83])[i]:10+i*20)/100,y:by,rx:cs*.52,ry:cs*.13}); }); row.forEach(function(k,i){ P[k]={x:two?(ri?[32,68]:[17,50,83])[i]:10+i*20,y:Math.round(ri*rh),h:Math.round(rh),e:sw<216?(i===0?'el':i===row.length-1?'er':''):''}; }); });
-    scene.set(lines,h+'x'+campEl.clientWidth,bases);
+    rows.forEach(function(row,ri){ row.forEach(function(k,i){ P[k]={x:two?(ri?[25,75]:[17,50,83])[i]:10+i*20,y:Math.round(ri*rh),h:Math.round(rh),e:sw<216?(i===0?'el':i===row.length-1?'er':''):''}; }); });
     campEl.querySelector('.tt1').textContent='Your team  '+teamCount()+' / '+S.slots; var pk=S.pick!=null&&M(S.pick); campEl.classList.toggle('haspick',!!(pk&&pk.slot!=null));
     var html=''; for(var k=0;k<S.slots;k++) html+=spotHtml(k,P[k]||P[P.length-1]);
     var hs=sig(html); if(hs!==lastCamp){ lastCamp=hs; campEl.querySelector('.tspots').innerHTML=html; if(S.placing!=null) markPads(); }
-    if(!scene.el.width) scene.kick(); }
+ }
 
   /* ---------------------------------------------------------------- the Collection: everyone who is not on the team, and
      the full page about whoever is picked (a team member or a card). On a PC it's the side tab beside Chat; on a phone
@@ -466,6 +412,6 @@
   /* ---------------------------------------------------------------- start */
   var demo=null;
   window.CDTEAM={S:S,draw:draw,stateIn:stateIn,poll:poll,api:api,setDemo:function(d){ demo=d; }};
-  if(DEMO){ var s=document.createElement('script'); s.src=BASE+'team-demo.js?v='+VER+'.3'; s.onload=function(){ if(window.CDTEAM_DEMO){ demo=window.CDTEAM_DEMO(stateIn,X); } }; document.head.appendChild(s); }
+  if(DEMO){ var s=document.createElement('script'); s.src=BASE+'team-demo.js?v='+VER+'.4'; s.onload=function(){ if(window.CDTEAM_DEMO){ demo=window.CDTEAM_DEMO(stateIn,X); } }; document.head.appendChild(s); }
   else { var wait=function(){ if(me()) poll(); else setTimeout(wait,1500); }; setTimeout(wait,800); }
 })();
