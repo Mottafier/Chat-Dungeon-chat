@@ -78,7 +78,8 @@
 /* the creatures themselves */
 .alive{animation:tbreathe 1.6s ease-in-out infinite}
 .tspot .who.look{animation:tlook 4.6s steps(1) infinite,thop 5.3s steps(1) infinite}
-.sleep{filter:grayscale(.7) brightness(.55);animation:tbreathe 3.2s ease-in-out infinite}
+/* resting: flat on its back in full colour, breathing slowly (never greyed out) */
+.sleep{rotate:-90deg;animation:tbreathe 3.2s ease-in-out infinite}
 .wob{animation:twob 2.6s steps(1) infinite;transform-origin:50% 92%}
 @keyframes tbreathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.03,.96)}}
 @keyframes tshad{0%,100%{scale:1}50%{scale:1.07}}
@@ -184,7 +185,7 @@
 .tcard .nospr .px{width:100%;height:100%}
 .tcard.sel{transform:translateY(-3px);box-shadow:inset 0 0 0 2px var(--flame),inset 0 0 0 4px #0b0706,0 0 0 3px var(--flame),0 0 18px rgba(255,200,60,.8)}
 .tcard.sel .nin{background:var(--flame)}
-.tcard.cool .cspr,.tcard.cool .tspr{filter:grayscale(1) brightness(.45)}
+.tcard.cool .cspr,.tcard.cool .tspr{rotate:-90deg}
 .tcard.lifted{opacity:.25;transform:scale(.94)}
 .tcard.landed{animation:tdrop .7s cubic-bezier(.3,1.4,.5,1)}
 .tchip{position:absolute;right:4px;bottom:4px;z-index:2;font:400 13px/1 var(--display);padding:3px 5px;box-shadow:0 0 0 2px #000;color:#fff}
@@ -211,7 +212,7 @@
 .tart{position:relative;flex:none;width:112px;height:112px;display:flex;align-items:center;justify-content:center;overflow:hidden;line-height:0;
   background:radial-gradient(circle at 50% 60%,color-mix(in srgb,var(--tc) 46%,#130d07),#130d07 84%);box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 4px #0b0706}
 .tart .tglow{display:none}
-.tart.dozing img{filter:grayscale(.7) brightness(.6)}
+.tart.dozing img{rotate:-90deg}
 .tpi{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
 .twhere{align-self:flex-start;padding:1px 6px 2px;font:400 12px/1.1 var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--parch-dim);background:#120d08;box-shadow:0 0 0 2px #000}
 .twhere.on{color:#e3e9ff;background:#2a3a8a}
