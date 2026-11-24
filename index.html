@@ -923,7 +923,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .mw{display:flex;flex-direction:column;align-items:center;flex:0 0 auto;min-width:0;position:relative}
 .mc{--tc:#c9962e;--tg:#5a4320;--s:96px;position:relative;display:block;flex:0 0 auto;box-sizing:border-box;width:calc(var(--s) + 8px);height:calc(var(--s) + 26px);padding:0;margin:0;border:0;border-radius:6px;font:inherit;color:var(--parch);
   background:radial-gradient(circle at 50% 58%,var(--tg),#130d07 82%);box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 4px #0b0706,0 3px 0 var(--line)}
-.mc.t-harmless,.cvrow.t-harmless,.rq.t-harmless{--tc:#9aa39a;--tg:#3c423c}.mc.t-weak,.cvrow.t-weak,.rq.t-weak{--tc:#7fbf6a;--tg:#2f5a2a}.mc.t-minor,.cvrow.t-minor,.rq.t-minor{--tc:#4aa3ff;--tg:#1e3f7a}
+.mc.t-harmless,.cvrow.t-harmless,.rq.t-harmless{--tc:#9aa39a;--tg:#3c423c}.mc.t-weak,.cvrow.t-weak,.rq.t-weak{--tc:#7fbf6a;--tg:#2f5a2a}
 .mc.t-normal,.rq.t-normal{--tc:#c9962e;--tg:#5a4320}.mc.t-tough,.cvrow.t-tough,.rq.t-tough{--tc:#f08a12;--tg:#7a3a10}.mc.t-deadly,.cvrow.t-deadly,.rq.t-deadly{--tc:#e8324a;--tg:#6e0a1f}.mc.t-god,.cvrow.t-god,.rq.t-god{--tc:#c9a8ff;--tg:#5b3aa6}
 .mc.t-god{box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 4px #0b0706,0 3px 0 var(--line),0 0 10px rgba(201,168,255,.55)}
 .mc .cspr,.mc>.cart{position:absolute;left:4px;top:22px;width:var(--s);height:var(--s)}
@@ -1049,7 +1049,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .cvlist{display:flex;flex-direction:column;gap:7px;margin-top:8px}
 .cvrow{--tc:#c9962e;--tg:#5a4320;display:flex;align-items:center;gap:8px;padding:6px 7px;background:#1b140d;box-shadow:inset 0 0 0 2px #3d2e18}
 .cvrow.in{box-shadow:inset 0 0 0 2px var(--tc)}
-.cvrow.t-harmless{--tc:#9aa39a;--tg:#3c423c}.cvrow.t-weak{--tc:#7fbf6a;--tg:#2f5a2a}.cvrow.t-minor{--tc:#4aa3ff;--tg:#1e3f7a}.cvrow.t-tough{--tc:#f08a12;--tg:#7a3a10}.cvrow.t-deadly{--tc:#e8324a;--tg:#6e0a1f}.cvrow.t-god{--tc:#c9a8ff;--tg:#5b3aa6}
+.cvrow.t-harmless{--tc:#9aa39a;--tg:#3c423c}.cvrow.t-weak{--tc:#7fbf6a;--tg:#2f5a2a}.cvrow.t-tough{--tc:#f08a12;--tg:#7a3a10}.cvrow.t-deadly{--tc:#e8324a;--tg:#6e0a1f}.cvrow.t-god{--tc:#c9a8ff;--tg:#5b3aa6}
 .cvrow .ci{width:42px;height:42px}
 .cvn{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
 .cvn b{font-family:var(--display);font-weight:500;font-size:14.5px;color:#ffe7b5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1186,9 +1186,8 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 /* an enemy's toughness is the splash behind its picture: green up to orange, deadly a red glow with faint beams, god the only one with stripes */
 .mc.k-enemy{background:#120c0a}
 .mc.k-enemy.t-harmless{background:radial-gradient(circle at 50% 62%,#2f8f3f 0,#2f8f3f99 28%,#120c0a 52%)}
-.mc.k-enemy.t-weak{background:radial-gradient(circle at 50% 62%,#7fbf3a 0,#7fbf3a99 28%,#120c0a 56%)}
-.mc.k-enemy.t-minor{background:radial-gradient(circle at 50% 62%,#d6d23a 0,#d6d23a99 28%,#120c0a 60%)}
-.mc.k-enemy.t-normal{background:radial-gradient(circle at 50% 62%,#ffc93a 0,#ffc93a99 28%,#120c0a 64%)}
+.mc.k-enemy.t-weak{background:radial-gradient(circle at 50% 62%,#a6c93a 0,#a6c93a99 28%,#120c0a 56%)}
+.mc.k-enemy.t-normal{background:radial-gradient(circle at 50% 62%,#f2d83a 0,#f2d83a99 28%,#120c0a 62%)}
 .mc.k-enemy.t-tough{background:radial-gradient(circle at 50% 62%,#f08a12 0,#f08a1299 28%,#120c0a 70%)}
 .mc.k-enemy.t-deadly{background:repeating-conic-gradient(from 11deg at 50% 62%,rgba(255,140,90,.2) 0 22deg,transparent 22deg 45deg),radial-gradient(circle at 50% 62%,#ff7a55 0,#e8324a 30%,#8a1220 68%,#2a0808 100%);box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 4px #0b0706,0 3px 0 var(--line),0 0 8px rgba(232,50,74,.6)}
 .mc.k-enemy.t-god{background:repeating-conic-gradient(from 0deg at 50% 62%,rgba(255,255,255,.8) 0 7deg,transparent 7deg 18deg),radial-gradient(circle at 50% 62%,#fff 0,#ffd27a 22%,#ff3a2a 55%,#5a0808 95%);box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 4px #0b0706,0 3px 0 var(--line),0 0 16px rgba(255,90,60,1)}
@@ -2821,7 +2820,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   var nameFont=false;   /* (names are measured in their own font: nothing is remembered until it's here) */
   if(document.fonts&&document.fonts.load) document.fonts.load("15px CardName").then(function(){ nameFont=true; fitMemo={}; $('deck')._h=''; drawCards(); },function(){ nameFont=true; }); else nameFont=true;
   /* a card's color says what it is (enemy red, weapon yellow, item green, event blue); an enemy's danger is the small tag */
-  var TIERS={harmless:1,weak:1,minor:1,normal:1,tough:1,deadly:1,god:1};
+  var TIERS={harmless:1,weak:1,normal:1,tough:1,deadly:1,god:1};
   function cardKind(c){ var k=c&&c.kind; return k==='weapon'||k==='item'||k==='event'?k:k==='wish'?'event':'enemy'; }
   function kindBadge(c){ return ''; }
   function cardHtml(c,cls,tag,extra){ tag=tag||'div';
@@ -2920,7 +2919,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     while(v.length&&!nameFits(v.trim())){ v=v.slice(0,-1); cut=true; } if(v!==i.value){ var at=i.selectionStart; i.value=v; try{ i.setSelectionRange(at,at); }catch(e){} } if(cut) once(i.parentNode,'no',450);
     o.querySelector('.mc.big .nin').textContent=v.trim()||o._made; }
   function rvOpen(){ var mk=cards.making; if(!mk||!mk.ready||mz.rv) return; var host=rvHost(), o=document.createElement('div'), wk=mk.kind==='weapon', dn=wk?'normal':String(mk.danger||'normal'), tier=wk?'Weapon':dn.charAt(0).toUpperCase()+dn.slice(1);
-    var c={name:mk.name,kind:mk.kind,danger:dn,sprite:mk.sprite,cost:mk.cost||({harmless:10,weak:15,minor:20,normal:30,tough:45,deadly:70,god:120})[dn]||30};
+    var c={name:mk.name,kind:mk.kind,danger:dn,sprite:mk.sprite,cost:mk.cost||({harmless:10,weak:15,normal:30,tough:45,deadly:70,god:120})[dn]||30};
     o.className='rv'; o._id=mk.id; o._made=fitName(mk.name); o.setAttribute('role','dialog'); o.setAttribute('aria-label','Your new '+(wk?'weapon':'enemy'));
     o.innerHTML='<div class="rays"></div><div class="glow"></div><button type="button" class="rx" id="rvx" aria-label="Close" title="Name it later">&#10005;</button>'+cardHtml(c,'big')
       +'<form class="dq rq t-'+esc(dn)+'"><h4 class="rt">'+esc(tier)+'!</h4><div class="tier"><span class="cost">'+SUN_SVG+c.cost+'</span><p>to spawn. First one is free.</p></div>'
