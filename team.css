@@ -446,11 +446,8 @@
 
 /* cols: five plain columns split by thin lines, every one filled boldly with its tier colour (asleep, out and eggs too); the picked one gets a gold frame */
 .tcamp.th-cols .tspot{--cc:var(--tc)}
-.tcamp.th-cols .tspot.t-harmless,.tcamp.th-cols .tspot.t-egg{--cc:#eef2ff}
-.tcamp.th-cols .tspot.t-weak{--cc:#6fd45a}.tcamp.th-cols .tspot.t-normal{--cc:#f2c531}.tcamp.th-cols .tspot.t-tough{--cc:#ff8a1c}.tcamp.th-cols .tspot.t-deadly{--cc:#ff3b52}.tcamp.th-cols .tspot.t-god{--cc:#b98bff}
 .tcamp.th-cols .tspot::before{content:"";position:absolute;inset:0;border-left:2px solid #000;transition:filter .15s,box-shadow .15s;
-  background:linear-gradient(180deg,color-mix(in srgb,var(--cc) 14%,transparent) 0,color-mix(in srgb,var(--cc) 50%,transparent) 100%);box-shadow:inset 0 -4px 0 color-mix(in srgb,var(--cc) 85%,#17110b)}
-.tcamp.th-cols .tspot.t-harmless::before,.tcamp.th-cols .tspot.t-egg::before{background:linear-gradient(180deg,color-mix(in srgb,var(--cc) 22%,transparent) 0,color-mix(in srgb,var(--cc) 62%,transparent) 100%)}
+  background:linear-gradient(180deg,color-mix(in srgb,var(--cc) 22%,transparent) 0,color-mix(in srgb,var(--cc) 62%,transparent) 100%);box-shadow:inset 0 -4px 0 var(--cc)}
 .tcamp.th-cols .tspot:first-child::before,.tcamp.th-cols.two .tspot:nth-child(4)::before{border-left:0}
 .tcamp.th-cols .tspot.empty::before{background:none;box-shadow:inset 0 -4px 0 #3d2e18}
 .tcamp.th-cols .tspot.sel:not(.empty)::before{filter:brightness(1.18);box-shadow:inset 0 0 0 3px var(--flame),inset 0 -6px 0 var(--flame)}

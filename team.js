@@ -205,6 +205,11 @@
     if(!roomOpen()) return '<span class="tsend gray">Stream is offline</span>';
     var what=m.egg?'Send to hatch!':m.evolve_ready?'Send to evolve!':'Send to dungeon!';
     return '<button type="button" class="tsend'+(m.evolve_ready&&!m.egg?' evo':'')+'" data-act="send" data-id="'+m.id+'">'+what+'</button>'; }
+  /* every creature gets its own fun panel colour, picked from a fixed set by its id so it never changes */
+  var FUN=['#5fd04a','#3fa7ff','#ff8a1c','#ff5fa8','#2fd0c0','#f2c531','#ff4a4a','#a56bff'];
+  function funCol(m){ var t=String(m.id), h=2166136261, i; for(i=0;i<t.length;i++){ h^=t.charCodeAt(i); h=Math.imul(h,16777619); } h^=h>>>13; h=Math.imul(h,0x5bd1e995); h^=h>>>15; return (h>>>0)%FUN.length; }
+  /* two team mates never share a colour: a later spot steps on to the next free one */
+  function teamCol(k){ var used={}, j, m, c; for(j=0;j<=k;j++){ m=onPad(j); if(!m) continue; c=funCol(m); while(used[c]) c=(c+1)%FUN.length; used[c]=1; } return FUN[c]; }
   function spotHtml(k,pos){ var m=onPad(k), cls=['tspot'], body='', lk='', tag='', top='', sel=m?S.pick===m.id:S.spot===k, cs=camp.cs;
     if(!m){ cls.push('empty'); body='<span class="tplus" aria-hidden="true"><i>+</i></span>'; tag='<span class="tnm dim">Empty spot</span>'; }
     else { cls.push(tcls(m)); var nm=m.egg?'Egg':esc(camp.sw<170?X.fitName(m.name):m.name), bar=m.egg?'':'<span class="txp'+(m.xp_next?'':' max')+(m.evolve_ready?' full':'')+'"><b style="width:'+Math.round(xpPct(m))+'%"></b></span>';
@@ -217,7 +222,7 @@
       if(!top&&!m.egg) top='<span class="thov">'+cap(m.danger||'normal')+' · Form '+((m.form|0)||1)+'</span>';
       else if(!top) top='<span class="thov">Mystery egg</span>'; }
     if(sel) cls.push('sel'); if(m&&S.landed===m.id) cls.push('landed'); if(pos.e) cls.push(pos.e);
-    return '<div class="'+cls.join(' ')+'" data-k="'+k+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" aria-label="'+(m?esc(m.egg?'Egg':m.name):'Empty spot')+'" style="left:'+pos.x+'%;top:'+pos.y+'px;height:'+pos.h+'px">'
+    return '<div class="'+cls.join(' ')+'" data-k="'+k+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" aria-label="'+(m?esc(m.egg?'Egg':m.name):'Empty spot')+'" style="left:'+pos.x+'%;top:'+pos.y+'px;height:'+pos.h+'px'+(m?';--cc:'+teamCol(k):'')+'">'
       +'<span class="tglow"></span><span class="mark"></span><span class="swapi">'+(m?'⇄ Swap':'+ Here')+'</span>'+(lk?'<span class="lk">'+lk+'</span>':'')+top+body+'<span class="tlbl">'+tag+stLine(m)+'</span></div>'; }
   /* what's compared to decide on a redraw: the HTML without its running clocks (the 1 s tick keeps those going) */
   function sig(h){ return h.replace(/(data-(?:out|left)="\d+" data-pre="[^"]*">)[^<]*/g,'$1'); }
