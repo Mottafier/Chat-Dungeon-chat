@@ -283,6 +283,7 @@ main>section{position:relative;z-index:1}
   <a class="pill" id="ppill" hidden title="Your Power: spend it in the shop" href="/live/mottafierr?tab=shop"><span data-px="sun:18"></span><span class="num" id="pnum">0</span></a>
   <a class="pill ruby" id="rpill" hidden title="Your rubies: open the shop" href="/live/mottafierr?tab=shop"><span data-px="ruby:18"></span><span class="num" id="rnum">0</span></a>
   <a class="pill deck" id="dpill" hidden title="Your Deck" href="/live/mottafierr?tab=deck"><span data-px="cards:18"></span><span class="lbl">Deck</span></a>
+  <a class="pill deck" id="tpill" hidden title="Your team: send them into a dungeon" href="/live/mottafierr?tab=team"><span data-px="egg:18"></span><span class="lbl">Team</span></a>
   <a class="pill acct" id="apill" title="Your account" href="/live/mottafierr?tab=account"><span data-px="user:18"></span><span class="lbl" id="aname">Log in</span></a>
 </header>
 
@@ -976,11 +977,13 @@ main>section{position:relative;z-index:1}
      busiest open dungeon, else the host's (the stream page reads ?tab=) */
   function home(){ var c=String(load('cdLastLive')||'').replace(/[^A-Za-z0-9_]/g,''); return c.length>=3?c:rooms[0]?rooms[0].twitch:(ON&&ON.twitch)||'mottafierr'; }
   function links(){ var c=live(home());
-    $('ppill').href=c+'?tab=shop'; $('rpill').href=c+'?tab=shop'; $('dpill').href=c+'?tab=deck'; $('apill').href=c+'?tab=account'; }
+    $('ppill').href=c+'?tab=shop'; $('rpill').href=c+'?tab=shop'; $('dpill').href=c+'?tab=deck'; $('tpill').href=c+'?tab=team'; $('apill').href=c+'?tab=account'; }
   function myPoints(){ var n=load('cdTokName'), t=load('cdTok'); links(); if(!n||!t) return;
     $('aname').textContent=load('cdGuest')?'Guest':n;
     rpc('my_points',{q_name:n,q_token:t,q_code:''}).then(function(r){ var x=r&&r[0]; if(!x||!x.account) return;
-      $('pnum').textContent=x.points|0; $('rnum').textContent=x.rubies|0; $('ppill').hidden=false; $('rpill').hidden=false; $('dpill').hidden=false; }).catch(function(){}); }
+      $('pnum').textContent=x.points|0; $('rnum').textContent=x.rubies|0; $('ppill').hidden=false; $('rpill').hidden=false; $('dpill').hidden=false; }).catch(function(){});
+    /* Team shows only once team mode is switched on in the database (team_state.on) */
+    rpc('team_state',{q_name:n,q_token:t}).then(function(j){ if(j&&j.on) $('tpill').hidden=false; }).catch(function(){}); }
 
   draw(); refresh(); myPoints();
   setInterval(refresh,30000);
