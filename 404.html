@@ -1233,6 +1233,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .sview.rewv .mkbox .go{padding:0 8px 3px}
 .m1 h4 label{font:inherit;color:inherit;cursor:text}
 .ptabs [hidden],.stabs [hidden],.pteam[hidden]{display:none!important}
+:has(> #pteam:not([hidden])) + .pline:not(:has(> .pmsg:not(:empty):not([hidden]), > form:not([hidden]), > .gbox:not([hidden]))){display:none}
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
@@ -2818,7 +2819,8 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
      called after every store tab change, onSide(t) after every side tab change, if team.js sets them. */
   window.CDX={rpc:rpc,withTok:withTok,pix:pix,esc:esc,cardHtml:cardHtml,cardArt:cardArt,fitName:fitName,pTab:pTab,sideTab:sideTab,pmsg:pmsg,layout:layout,once:once,store:store,load:load,
     needAccount:needAccount,myPoints:myPoints,drawPoints:drawPoints,phone:function(){ return phoneMq.matches; },
-    get me(){ return me; }, get pts(){ return pts; }, get room(){ return code; }, get channel(){ return channel; }, get account(){ return !!(pts.account||locked); }, get cards(){ return cards; },
+    get me(){ return me; }, get pts(){ return pts; }, get room(){ return code; }, get channel(){ return channel; }, get account(){ return !!(pts.account||locked); }, get cards(){ return cards; }, get ptNow(){ return ptNow; }, get sideNow(){ return sideNow; }, get roomOpen(){ return roomOpen; },
+    cardsIn:cardsIn,redrawMake:function(){ $('mzcard')._h=''; drawCards(); },teamOn:null,teamTips:null,eggCard:null,eggReady:null,makeDraw:null,
     onTab:null,onSide:null};
   try{ document.dispatchEvent(new Event('cdx')); }catch(e){}
   setTimeout(meterPoll,1500);
@@ -2882,14 +2884,15 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     board.fresh.forEach(function(x,n){ f+='<div class="mw">'+cardHtml({name:x.name,danger:x.danger||'normal',kind:x.kind,sprite:x.sprite,cost:0},'',x.text?'button':'div',' data-fresh="'+n+'"'+(x.text?' title="'+esc(x.text)+'"':''))+(n===0&&(x.ago|0)<3600?'<span class="tag">NEW</span>':'')+'<span class="by">'+(x.by?'by '+esc(x.by):'&nbsp;')+'</span></div>'; });
     var cb=$('mkchips'), fb=$('mkfrow'); if(cb._h!==c){ cb._h=c; cb.innerHTML=c; } if(fb._h!==f){ fb._h=f; fb.innerHTML=f; }
     $('mkideas').hidden=!board.ideas.length; $('mkfeed').hidden=!board.fresh.length; }
-  function mkTips(k){ return [k==='weapon'?'It drops into the game as a present to open.':'The more powerful it is, the more Power it costs to spawn.','Your first spawn of a new card is free.','You get to name it when it\'s done.',
+  function teamOn(){ var x=window.CDX; try{ return !!(x&&typeof x.teamOn==='function'&&x.teamOn()); }catch(e){ return false; } }
+  function mkTips(k){ if(teamOn()&&window.CDX.teamTips&&window.CDX.teamTips.length) return window.CDX.teamTips; return [k==='weapon'?'It drops into the game as a present to open.':'The more powerful it is, the more Power it costs to spawn.','Your first spawn of a new card is free.','You get to name it when it\'s done.',
     'After a spawn, a card recharges for '+cards.recharge+' seconds.','Your Deck holds '+cards.max+' cards. The rest wait in All cards.','You can leave this page. It keeps making.']; }
   function mkStage(now){ var mk=cards.making; if(!mk) return 'home'; if(!mk.ready) return 'wip';
     if(mz.fake&&mz.fake.id===mk.id&&now-mz.fake.t0<FAKE_MS) return 'wip';   /* (saved words: pretend to build) */
     if(mk.sprite===null&&now-mz.readyAt<20000) return 'wip';       /* (made, its card not painted yet) */
     if(mz.seen===mk.id&&now-mz.readyAt<1800) return 'wip';          /* (watched all the way: the last stop gets its moment) */
     return 'done'; }
-  function drawMake(now){ var mk=cards.making, st=mkStage(now), kind=mk?mk.kind:'', wk=kind==='weapon', what=wk?'weapon':kind==='enemy'?'enemy':'card', h, price=mkPrice('');
+  function drawMake(now){ var mk=cards.making, st=mkStage(now), kind=mk?mk.kind:'', wk=kind==='weapon', tm=teamOn(), what=tm?'egg':wk?'weapon':kind==='enemy'?'enemy':'card', h, price=mkPrice('');
     [].forEach.call(document.querySelectorAll('.mkp'),function(i){ i.textContent=price; }); $('mkgo').classList.toggle('poor',pts.account&&pts.rubies<price);
     $('mzready').textContent='Your '+what+' is ready!';
     $('mkrow').hidden=st!=='home'; $('mkdz').hidden=st==='home'; $('mzwip').hidden=st!=='wip'; $('mzdone').hidden=st!=='done';
@@ -2901,9 +2904,11 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
         :'<div class="ts '+(i<step?'did':'on')+'"><span class="ti">'+pix(s[0],24)+'<em>&#10003;</em></span><span class="tl">'+s[1]+'</span></div>'; });
       var tr=$('mztrk'); if(tr._h!==t){ tr._h=t; tr.innerHTML=t; }
       $('mzwhat').textContent='\u201c'+mk.text+'\u201d'; var tips=mkTips(kind), line=tips[Math.floor(Math.max(0,el)/6)%tips.length], tl=$('mzline'); if(tl.textContent!==line){ tl.textContent=line; once(tl,'swap',400); } }
+    else if(st==='done'&&tm&&typeof window.CDX.eggCard==='function') h=String(window.CDX.eggCard(mk)||'');
     else if(st==='done') h='<button type="button" class="mc myst ready" id="mzmyst" aria-label="Reveal your '+what+'"><span class="nin">? ? ?</span><span class="q">?</span></button>';
     var box=$('mzcard'); if(st!=='home'&&box._h!==h){ box._h=h; box.innerHTML=h; }
-    if(mz.rv&&(st!=='done'||!mk||mz.rv._id!==mk.id)) rvClose(); }
+    if(mz.rv&&(st!=='done'||!mk||mz.rv._id!==mk.id)) rvClose();
+    if(tm&&typeof window.CDX.makeDraw==='function'){ try{ window.CDX.makeDraw(st,mk); }catch(e){} } }
   function drawCards(){ var pt=$('points'), now=Date.now();
     pt.classList.toggle('cardsok',cards.ok); $('pstore').classList.toggle('cardsok',cards.ok); if($('room').classList.contains('cardsok')!==cards.ok){ $('room').classList.toggle('cardsok',cards.ok); layout(); } if(!cards.ok){ if(ptNow!=='spawn') pTab('spawn'); return; }
     drawMake(now);
@@ -2942,7 +2947,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   function rvName(o){ var i=o.querySelector('#rvname'), v=i.value.replace(/[^A-Za-z0-9 '.!-]/g,'').replace(/\s+/g,' ').replace(/^ /,''), cut=false;
     while(v.length&&!nameFits(v.trim())){ v=v.slice(0,-1); cut=true; } if(v!==i.value){ var at=i.selectionStart; i.value=v; try{ i.setSelectionRange(at,at); }catch(e){} } if(cut) once(i.parentNode,'no',450);
     o.querySelector('.mc.big .nin').textContent=v.trim()||o._made; }
-  function rvOpen(){ var mk=cards.making; if(!mk||!mk.ready||mz.rv) return; var host=rvHost(), o=document.createElement('div'), wk=mk.kind==='weapon', dn=wk?'normal':String(mk.danger||'normal'), tier=wk?'Weapon':dn.charAt(0).toUpperCase()+dn.slice(1);
+  function rvOpen(){ var mk=cards.making; if(!mk||!mk.ready||mz.rv) return; if(teamOn()&&typeof window.CDX.eggReady==='function'){ window.CDX.eggReady(mk); return; } var host=rvHost(), o=document.createElement('div'), wk=mk.kind==='weapon', dn=wk?'normal':String(mk.danger||'normal'), tier=wk?'Weapon':dn.charAt(0).toUpperCase()+dn.slice(1);
     var c={name:mk.name,kind:mk.kind,danger:dn,sprite:mk.sprite,cost:mk.cost||({harmless:10,weak:15,normal:30,tough:45,deadly:70,god:120})[dn]||30};
     o.className='rv'; o._id=mk.id; o._made=fitName(mk.name); o.setAttribute('role','dialog'); o.setAttribute('aria-label','Your new '+(wk?'weapon':'enemy'));
     o.innerHTML='<div class="rays"></div><div class="glow"></div><button type="button" class="rx" id="rvx" aria-label="Close" title="Name it later">&#10005;</button>'+cardHtml(c,'big')
@@ -3120,5 +3125,6 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   if(ON&&!wantRecharge) siteIn(); else if(false) tryJoin(true);  /* (a remembered name rejoins after a reload or in a new tab) */
 })();
 </script>
+<script defer src="/team.js?v=1"></script>
 </body>
 </html>
