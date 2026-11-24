@@ -2655,7 +2655,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       STOPS.forEach(function(s,i){ t+=i>step?'<div class="ts"><span class="ti"><b class="tq">?</b></span><span class="tl">???</span></div>'
         :'<div class="ts '+(i<step?'did':'on')+'"><span class="ti">'+pix(s[0],24)+'<em>&#10003;</em></span><span class="tl">'+s[1]+'</span></div>'; });
       var tr=$('mztrk'); if(tr._h!==t){ tr._h=t; tr.innerHTML=t; }
-      $('mzwhat').textContent='Making: '+mk.text; var line=JOKES[step][Math.floor(el/4)%3]; if($('mzline').textContent!==line) $('mzline').textContent=line; }
+      $('mzwhat').textContent='\u201c'+mk.text+'\u201d'; var line=JOKES[step][Math.floor(el/4)%3]; if($('mzline').textContent!==line) $('mzline').textContent=line; }
     else if(st==='done') h='<button type="button" class="mc myst ready" id="mzmyst" aria-label="Reveal your enemy"><span class="nin">? ? ?</span><span class="q">?</span></button>';
     var box=$('mzcard'); if(st!=='tiles'&&box._h!==h){ box._h=h; box.innerHTML=h; }
     if(mz.rv&&(st!=='done'||!mk||mz.rv._id!==mk.id)) rvClose(); }
