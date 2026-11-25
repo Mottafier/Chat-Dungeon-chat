@@ -39,7 +39,10 @@
 .bag-err{color:#f2a08c}
 @media (prefers-reduced-motion:reduce){ .bag-it:hover canvas,.bag-btn:active{transform:none} }
 /* on a PC the side panel is narrow, so the Bag tab is its icon alone, like Shop */
-@media (min-width:641px){ .stabs [data-side=bag]{flex:0 0 40px;padding:0;font-size:0;gap:0} .stabs [data-side=bag]:not([hidden])~[data-side=avatar]{flex:0 0 36px} .stabs:has([data-side=bag]:not([hidden])) [data-side=collection]{flex:0 0 40px;padding:0;font-size:0;gap:0} }
+/* side tabs: the open tab shows its name, the rest are icons (Mott 2026-11-25) */
+#side .stabs button[data-side]{flex:0 0 36px;padding:0;font-size:0;gap:0}
+#side .stabs button[data-side][aria-selected="true"]{flex:1 1 0;padding:0 2px;font-size:14px;gap:4px}
+@media (max-width:640px){ #side .stabs button[data-side][aria-selected="true"]{font-size:13.5px} }
 /* dragging a bean onto a creature */
 .bag-it[data-it],.bag-hero{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .bag-it[data-it]{cursor:grab}
