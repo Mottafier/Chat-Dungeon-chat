@@ -1,0 +1,42 @@
+/* Chat Dungeon: the Bag side tab (bag.js). Uses the streamer page's own colours and fonts. */
+.sview.bagv{padding:10px;gap:10px}
+.bagv .dim{text-align:center}
+.bag-card{display:flex;gap:10px;align-items:flex-start;background:#1d1610;border:2px solid #000;box-shadow:inset 0 0 0 1px #3a2d1a;padding:8px}
+.bag-hero{flex:0 0 auto;width:120px;height:120px;image-rendering:pixelated;background:#120d09;border:2px solid #000}
+.bag-info{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:6px}
+.bag-name{margin:0;font-family:var(--display);font-weight:700;font-size:19px;line-height:1;color:var(--flame)}
+.bag-line{margin:0;font-size:13.5px;line-height:1.4;color:var(--parch)}
+.bag-what{margin:0;font-size:12.5px;line-height:1.35;color:var(--parch-dim)}
+.bag-card.done{flex-direction:column;align-items:center;text-align:center;padding:16px 12px}
+.bag-big{margin:0;font-family:var(--display);font-weight:700;font-size:26px;color:var(--flame)}
+.bag-btn{display:flex;align-items:center;justify-content:center;min-height:36px;padding:0 12px 3px;cursor:pointer;font-family:var(--display);font-weight:700;font-size:16px;line-height:1.1;color:#1a1205;
+  background:var(--flame);border:2px solid #000;box-shadow:inset 0 0 0 2px #ffe08a,inset 0 -5px 0 rgba(160,80,0,.35)}
+.bag-btn:hover{filter:brightness(1.08)}
+.bag-btn:active{transform:translateY(1px)}
+.bag-btn:focus-visible,.bag-it:focus-visible,.bag-who:focus-visible{outline:2px solid #fff;outline-offset:1px}
+.bag-btn[disabled]{filter:grayscale(1);cursor:default}
+.bag-btn.ghost{background:#2a2016;color:var(--parch);box-shadow:inset 0 0 0 1px #4a3a22}
+.bag-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
+.bag-it{position:relative;aspect-ratio:1;padding:0;display:flex;align-items:center;justify-content:center;background:#1d1610;border:2px solid #000;box-shadow:inset 0 0 0 1px #3a2d1a;cursor:pointer;min-width:0}
+.bag-it canvas{width:80px;height:80px;image-rendering:pixelated;display:block}
+.bag-it:hover{background:#2a2016}
+.bag-it:hover canvas{transform:translateY(-2px)}
+.bag-it.on{box-shadow:inset 0 0 0 2px var(--flame);background:#2a2016}
+.bag-it.none{cursor:default;background:#120d09;box-shadow:inset 0 0 0 1px #241b11}
+.bag-empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 8px}
+.bag-team{display:flex;flex-direction:column;gap:6px}
+.bag-who{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:10px;padding:4px 10px 4px 6px;text-align:left;cursor:pointer;color:var(--parch);background:#1d1610;border:2px solid #000;box-shadow:inset 0 0 0 1px #3a2d1a}
+.bag-who b{font-family:var(--display);font-weight:500;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bag-who i{font-style:normal;font-size:12px;color:var(--parch-dim)}
+.bag-who:hover:not([disabled]){background:#2a2016;box-shadow:inset 0 0 0 2px var(--flame)}
+.bag-who[disabled]{cursor:default;opacity:.55}
+.bag-spr{width:48px;height:48px;image-rendering:pixelated;display:flex;align-items:center;justify-content:center}
+.bag-ask{display:flex;flex-direction:column;gap:8px;background:#1d1610;border:2px solid #000;box-shadow:inset 0 0 0 2px var(--flame);padding:10px}
+.bag-ask p{margin:0;font-size:14px;line-height:1.4}
+.bag-ask .dim{text-align:left}
+.bag-row{display:flex;gap:8px}
+.bag-row .bag-btn{flex:1 1 0}
+.bag-err{color:#f2a08c}
+@media (prefers-reduced-motion:reduce){ .bag-it:hover canvas,.bag-btn:active{transform:none} }
+/* on a PC the side panel is narrow, so the Bag tab is its icon alone, like Shop */
+@media (min-width:641px){ .stabs [data-side=bag]{flex:0 0 40px;padding:0;font-size:0;gap:0} .stabs [data-side=bag]:not([hidden])~[data-side=avatar]{flex:0 0 36px} .stabs:has([data-side=bag]:not([hidden])) [data-side=collection]{flex:1.3 1 0} .stabs:has([data-side=bag]:not([hidden])) [data-side=collection] .px{display:none} }
