@@ -37,6 +37,9 @@
   function nameOf(m){ return m.egg?'Your egg':(m.name||'It'); }
   /* egg creatures carry a level (1-99): shown as "Lv 12 Name" */
   function lvl(m){ return !m.egg&&m.level?'Lv '+(m.level|0)+' ':''; }
+  /* a creature with a level changes only by eating a bean, once it has gained enough levels since it last changed */
+  function beanLine(m){ if(m.egg||!m.level||m.final||m.changing) return '';
+    return m.can_eat?'Ready for a bean':'Can eat a bean at Lv '+(m.eat_at_level|0); }
   function hm(s){ s=Math.max(0,s|0); var h=Math.floor(s/3600), m=Math.floor(s%3600/60); return h?h+'h '+(m<10?'0':'')+m+'m':m?m+'m':Math.max(1,s)+'s'; }
   function ms(s){ s=Math.max(0,s|0); return Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60; }
   function chan(){ return channel()||'the'; }
@@ -149,6 +152,7 @@
     if(m.egg) return '<span class="tst egg">Ready to hatch</span>';
     if(m.changing) return '<span class="tst evo">Changing…</span>';
     if(m.evolve_ready) return '<span class="tst evo">Ready to evolve!</span>';
+    if(m.level&&m.can_eat&&!m.final) return '<span class="tst evo">Ready for a bean</span>';
     return '<span class="tst ok">Ready</span>'; }
   function xpPct(m){ var a=m.xp_from|0, b=m.xp_next; if(!b) return 100; return Math.max(0,Math.min(100,100*((m.xp|0)-a)/Math.max(1,b-a))); }
   /* the big button that appears over the one you picked */
@@ -220,6 +224,7 @@
   function xpBlock(m){ if(m.egg) return '';
     if(!m.xp_next) return '<div class="txpbar max"><b style="width:calc(100% - 4px)"></b></div><div class="txpl"><span>XP '+(m.xp|0)+'</span><span>Final form</span></div>';
     var pct=xpPct(m);
+    if(m.level) return '<div class="txpbar"><b style="width:calc('+pct.toFixed(1)+'% - 4px)"></b></div><div class="txpl"><span>XP '+(m.xp|0)+' / '+m.xp_next+'</span><span>'+(m.xp_next-(m.xp|0))+' to Lv '+((m.level|0)+1)+'</span></div>';
     return '<div class="txpbar'+(m.evolve_ready?' full':'')+'"><b style="width:calc('+pct.toFixed(1)+'% - 4px)"></b></div><div class="txpl"><span>XP '+(m.xp|0)+' / '+m.xp_next+'</span><span>'+(m.evolve_ready?'Evolves on its next send!':(m.xp_next-(m.xp|0))+' to evolve')+'</span></div>'; }
   function report(m){ var l=m.last; if(!l||m.egg) return ''; var lines=(l.lines||[]).map(function(x){ return '<li'+(x[2]?' class="grey"':'')+'><span>'+esc(x[0])+'</span><b>+'+(x[1]|0)+'</b></li>'; }).join('');
     var tot=l.xp!=null?(l.xp|0):(l.lines||[]).reduce(function(a,x){ return a+(x[2]?0:(x[1]|0)); },0);
@@ -243,6 +248,7 @@
       :m.status==='resting'?'Resting. It can fight or swap again in <b data-left="'+m.id+'" data-pre="">'+hm(left(m))+'</b>.'
       :m.egg?'Nobody knows what’s inside. '+(on?'Send it into a stream and it hatches there, live.':'Put it on your team, then send it into a stream to hatch it.')
       :m.changing?'It ate a bean and is changing… Its new form shows up here in about half a minute.'
+      :beanLine(m)?(m.can_eat?'Ready for a bean: drag one from your Bag onto it and it changes, shaped by the bean.':beanLine(m)+'. It levels up in the dungeon.')+(on?' Press <b>Send to dungeon!</b> above it to fight.':'')
       :on?(m.evolve_ready?'It’s ready to evolve. Send it in and it changes on stream!':'Ready to fight. Press <b>Send to dungeon!</b> above it.'):'Ready. Add it to your team to send it into a stream.';
     var acts=on?(lock?'':'<button type="button" class="tbtn ghost sm" data-act="off">Take off team</button>')
       :'<button type="button" class="tbtn" data-act="add">Add to team</button><span class="tdragtip">'+(phone()?'or hold and drag it up':'or drag its card onto your team')+'</span>';
