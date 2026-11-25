@@ -34,6 +34,8 @@
   function onPad(k){ for(var i=0;i<S.members.length;i++) if(S.members[i].slot===k) return S.members[i]; return null; }
   function teamCount(){ return S.members.filter(function(m){ return m.slot!=null; }).length; }
   function cap(s){ s=String(s||''); return s.charAt(0).toUpperCase()+s.slice(1); }
+  /* what players read for a danger tier: the top one is stored as 'god' and shown as Legendary */
+  function tierName(d){ d=String(d||'normal').toLowerCase(); return d==='god'?'Legendary':cap(d); }
   function nameOf(m){ return m.egg?'Your egg':(m.name||'It'); }
   /* egg creatures carry a level (1-99): shown as "Lv 12 Name" */
   function lvl(m){ return !m.egg&&m.level?'Lv '+(m.level|0)+' ':''; }
@@ -202,7 +204,7 @@
       else { cls.push(r?'locked':'full'); if(r){ cls.push('asleep'); lk='Resting'; } if(m.evolve_ready&&!r) cls.push('evo'); if(m.changing) cls.push('changing');
         body=bean(m)+'<span class="tshadow"></span><span class="who'+(r?'':' look')+'" style="animation-delay:-'+(k*1.3).toFixed(1)+'s">'+(r?dozy(m,cs,'','sleep'):img(m,cs,'alive'))+'</span>'+(r?'<span class="zz">z</span><span class="zz b">z</span>':''); }
       if(sel) top=sendTop(m);
-      if(!top&&!m.egg) top='<span class="thov">'+(m.changing?'Changing…':cap(m.danger||'normal')+(m.level?' · Lv '+(m.level|0):' · Form '+((m.form|0)||1)))+'</span>';
+      if(!top&&!m.egg) top='<span class="thov">'+(m.changing?'Changing…':tierName(m.danger)+(m.level?' · Lv '+(m.level|0):' · Form '+((m.form|0)||1)))+'</span>';
       else if(!top) top='<span class="thov">Mystery egg</span>'; }
     if(sel) cls.push('sel'); if(m&&S.landed===m.id) cls.push('landed'); if(m&&S.lift===m.id) cls.push('lifted'); if(m&&fly[m.id]) cls.push('flying'); if(pos.e) cls.push(pos.e);
     return '<div class="'+cls.join(' ')+'" data-k="'+k+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" aria-label="'+(m?esc(m.egg?'Egg':m.name):'Empty spot')+'" style="left:'+pos.x+'%;top:'+pos.y+'px;height:'+pos.h+'px'+(m?';--cc:'+teamCol(k):'')+'">'
@@ -248,7 +250,7 @@
   function mount(){ var ph=phone(), host=ph?$('tcolhost'):colv; if(host&&colEl.parentNode!==host) host.appendChild(colEl);
     tabCol.hidden=!S.on||ph; document.documentElement.classList.toggle('tphone',ph&&S.on);
     if(ph&&S.on&&sideNow()==='collection'){ X.sideTab('rewards'); X.pTab('team'); } }
-  function tierTag(m){ return m.egg?'<span class="ttier t-egg">Egg</span>':'<span class="ttier tt-'+esc(m.danger||'normal')+'">'+cap(m.danger||'normal')+'</span>'; }
+  function tierTag(m){ return m.egg?'<span class="ttier t-egg">Egg</span>':'<span class="ttier tt-'+esc(m.danger||'normal')+'">'+tierName(m.danger)+'</span>'; }
   function xpBlock(m){ if(m.egg) return '';
     if(!m.xp_next) return '<div class="txprow"><span>XP</span><div class="txpbar max"><b style="width:calc(100% - 4px)"></b></div></div><div class="txpl"><span>'+(m.xp|0)+'</span><span>Final form</span></div>';
     var pct=xpPct(m);
@@ -534,7 +536,7 @@
   /* ---------------------------------------------------------------- evolving: shown on the site while the stream shows it */
   function evolved(m,from){ S.played[m.id]=1; var k=m.slot, w=k!=null&&campEl&&campEl.querySelector('.tspot[data-k="'+k+'"] .who');
     if(w){ w.classList.add('evolving'); setTimeout(function(){ w.classList.remove('evolving'); w.classList.add('arrive'); },1300); }
-    toast(nameOf(m)+' evolved! Form '+(m.form|0)+(m.danger?', now '+cap(m.danger):'')+'.'); if(ptNow()!=='team') tabDot(true); }
+    toast(nameOf(m)+' evolved! Form '+(m.form|0)+(m.danger?', now '+tierName(m.danger):'')+'.'); if(ptNow()!=='team') tabDot(true); }
 
   /* ---------------------------------------------------------------- a small toast of its own (bottom of the screen) */
   var tEl=document.createElement('div'), tT=0; tEl.className='ttoast'; tEl.setAttribute('role','status'); tEl.setAttribute('aria-live','polite'); document.body.appendChild(tEl);

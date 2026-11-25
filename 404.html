@@ -2873,6 +2873,8 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   if(document.fonts&&document.fonts.load) document.fonts.load("15px CardName").then(function(){ nameFont=true; fitMemo={}; $('deck')._h=''; drawCards(); },function(){ nameFont=true; }); else nameFont=true;
   /* a card's color says what it is (enemy red, weapon yellow, item green, event blue); an enemy's danger is the small tag */
   var TIERS={harmless:1,weak:1,normal:1,tough:1,deadly:1,god:1};
+  /* what players read for a danger tier: the top one is stored as 'god' and shown as Legendary */
+  function tierName(d){ d=String(d||'normal').toLowerCase(); return d==='god'?'Legendary':d.charAt(0).toUpperCase()+d.slice(1); }
   function cardKind(c){ var k=c&&c.kind; return k==='weapon'||k==='item'||k==='event'?k:k==='wish'?'event':'enemy'; }
   function kindBadge(c){ return ''; }
   function cardHtml(c,cls,tag,extra){ tag=tag||'div';
@@ -2973,7 +2975,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   function rvName(o){ var i=o.querySelector('#rvname'), v=i.value.replace(/[^A-Za-z0-9 '.!-]/g,'').replace(/\s+/g,' ').replace(/^ /,''), cut=false;
     while(v.length&&!nameFits(v.trim())){ v=v.slice(0,-1); cut=true; } if(v!==i.value){ var at=i.selectionStart; i.value=v; try{ i.setSelectionRange(at,at); }catch(e){} } if(cut) once(i.parentNode,'no',450);
     o.querySelector('.mc.big .nin').textContent=v.trim()||o._made; }
-  function rvOpen(){ var mk=cards.making; if(!mk||!mk.ready||mz.rv) return; if(teamOn()&&typeof window.CDX.eggReady==='function'){ window.CDX.eggReady(mk); return; } var host=rvHost(), o=document.createElement('div'), wk=mk.kind==='weapon', dn=wk?'normal':String(mk.danger||'normal'), tier=wk?'Weapon':dn.charAt(0).toUpperCase()+dn.slice(1);
+  function rvOpen(){ var mk=cards.making; if(!mk||!mk.ready||mz.rv) return; if(teamOn()&&typeof window.CDX.eggReady==='function'){ window.CDX.eggReady(mk); return; } var host=rvHost(), o=document.createElement('div'), wk=mk.kind==='weapon', dn=wk?'normal':String(mk.danger||'normal'), tier=wk?'Weapon':tierName(dn);
     var c={name:mk.name,kind:mk.kind,danger:dn,sprite:mk.sprite,cost:mk.cost||({harmless:10,weak:15,normal:30,tough:45,deadly:70,god:120})[dn]||30};
     o.className='rv'; o._id=mk.id; o._made=fitName(mk.name); o.setAttribute('role','dialog'); o.setAttribute('aria-label','Your new '+(wk?'weapon':'enemy'));
     o.innerHTML='<div class="rays"></div><div class="glow"></div><button type="button" class="rx" id="rvx" aria-label="Close" title="Name it later">&#10005;</button>'+cardHtml(c,'big')
