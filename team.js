@@ -35,6 +35,8 @@
   function teamCount(){ return S.members.filter(function(m){ return m.slot!=null; }).length; }
   function cap(s){ s=String(s||''); return s.charAt(0).toUpperCase()+s.slice(1); }
   function nameOf(m){ return m.egg?'Your egg':(m.name||'It'); }
+  /* egg creatures carry a level (1-99): shown as "Lv 12 Name" */
+  function lvl(m){ return !m.egg&&m.level?'Lv '+(m.level|0)+' ':''; }
   function hm(s){ s=Math.max(0,s|0); var h=Math.floor(s/3600), m=Math.floor(s%3600/60); return h?h+'h '+(m<10?'0':'')+m+'m':m?m+'m':Math.max(1,s)+'s'; }
   function ms(s){ s=Math.max(0,s|0); return Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60; }
   function chan(){ return channel()||'the'; }
@@ -145,6 +147,7 @@
     if(m.status==='out') return m.egg?'<span class="tst out">Hatching…</span>':'<span class="tst out">Fighting <b data-out="'+m.id+'" data-pre="">'+ms((Date.now()-(S.outSince[m.id]||Date.now()))/1000)+'</b></span>';
     if(m.status==='resting') return '<span class="tst rest">Resting <b data-left="'+m.id+'" data-pre="">'+hm(left(m))+'</b></span>';
     if(m.egg) return '<span class="tst egg">Ready to hatch</span>';
+    if(m.changing) return '<span class="tst evo">Changing…</span>';
     if(m.evolve_ready) return '<span class="tst evo">Ready to evolve!</span>';
     return '<span class="tst ok">Ready</span>'; }
   function xpPct(m){ var a=m.xp_from|0, b=m.xp_next; if(!b) return 100; return Math.max(0,Math.min(100,100*((m.xp|0)-a)/Math.max(1,b-a))); }
@@ -160,14 +163,14 @@
   function teamCol(k){ var used={}, j, m, c; for(j=0;j<=k;j++){ m=onPad(j); if(!m) continue; c=funCol(m); while(used[c]) c=(c+1)%FUN.length; used[c]=1; } return FUN[c]; }
   function spotHtml(k,pos){ var m=onPad(k), cls=['tspot'], body='', lk='', tag='', top='', sel=m?S.pick===m.id:S.spot===k, cs=camp.cs;
     if(!m){ cls.push('empty'); body='<span class="tplus" aria-hidden="true"><i>+</i></span>'; tag='<span class="tnm dim">Empty spot</span>'; }
-    else { cls.push(tcls(m)); var nm=m.egg?'Egg':esc(camp.sw<170?X.fitName(m.name):m.name), bar=m.egg?'':'<span class="txp'+(m.xp_next?'':' max')+(m.evolve_ready?' full':'')+'"><b style="width:'+Math.round(xpPct(m))+'%"></b></span>';
+    else { cls.push(tcls(m)); var nm=m.egg?'Egg':esc(lvl(m)+(camp.sw<170?X.fitName(m.name):m.name)), bar=m.egg?'':'<span class="txp'+(m.xp_next?'':' max')+(m.evolve_ready?' full':'')+'"><b style="width:'+Math.round(xpPct(m))+'%"></b></span>';
       tag='<span class="tnm">'+nm+'</span>'+bar;
       if(m.status==='out'){ cls.push('locked','isout'); body='<span class="portal"></span>'; lk='Fighting'; }
       else if(m.egg){ var re=m.status==='resting'; cls.push(re?'locked':'full'); if(re) lk='Resting'; body='<span class="tshadow"></span><span class="who">'+egg(m.hue,2,'wob',2)+'</span>'; }
-      else { var r=m.status==='resting'; cls.push(r?'locked':'full'); if(r){ cls.push('asleep'); lk='Resting'; } if(m.evolve_ready&&!r) cls.push('evo');
+      else { var r=m.status==='resting'; cls.push(r?'locked':'full'); if(r){ cls.push('asleep'); lk='Resting'; } if(m.evolve_ready&&!r) cls.push('evo'); if(m.changing) cls.push('changing');
         body='<span class="tshadow"></span><span class="who'+(r?'':' look')+'" style="animation-delay:-'+(k*1.3).toFixed(1)+'s">'+img(m,cs,r?'sleep':'alive')+'</span>'+(r?'<span class="zz">z</span><span class="zz b">z</span>':''); }
       if(sel) top=sendTop(m);
-      if(!top&&!m.egg) top='<span class="thov">'+cap(m.danger||'normal')+' · Form '+((m.form|0)||1)+'</span>';
+      if(!top&&!m.egg) top='<span class="thov">'+(m.changing?'Changing…':cap(m.danger||'normal')+(m.level?' · Lv '+(m.level|0):' · Form '+((m.form|0)||1)))+'</span>';
       else if(!top) top='<span class="thov">Mystery egg</span>'; }
     if(sel) cls.push('sel'); if(m&&S.landed===m.id) cls.push('landed'); if(m&&S.lift===m.id) cls.push('lifted'); if(pos.e) cls.push(pos.e);
     return '<div class="'+cls.join(' ')+'" data-k="'+k+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" aria-label="'+(m?esc(m.egg?'Egg':m.name):'Empty spot')+'" style="left:'+pos.x+'%;top:'+pos.y+'px;height:'+pos.h+'px'+(m?';--cc:'+teamCol(k):'')+'">'
@@ -226,7 +229,7 @@
     if(!l.length) return ''; return '<div class="tlive"><h4>Your other creatures can fight here</h4>'+l.map(function(r){ return '<a href="/live/'+encodeURIComponent(r.twitch)+'"><span class="dotl"></span><b>'+esc(r.twitch)+'</b><small>'+(r.spawns_hour|0)+' spawns this hour</small></a>'; }).join('')+'</div>'; }
   function getLive(){ if(!api||Date.now()-S.liveAt<60000) return; S.liveAt=Date.now(); api.live().then(function(l){ S.live=Array.isArray(l)?l:[]; drawCol(); },function(){}); }
   function smallCard(m){ var cls='mc tcard k-enemy '+(m.egg?'t-egg':'t-'+esc(m.danger||'normal'))+(S.pick===m.id?' sel':'')+(lockOf(m)?' cool':'')+(S.landed===m.id?' landed':'');
-    var inner=m.egg?'<span class="nin">Egg</span><span class="ew">'+egg(m.hue,2,'wob',2)+'</span>':'<span class="nin">'+esc(X.fitName(m.name))+'</span>'+img(m,96,'cspr');
+    var inner=m.egg?'<span class="nin">Egg</span><span class="ew">'+egg(m.hue,2,'wob',2)+'</span>':'<span class="nin">'+esc(lvl(m)+X.fitName(m.name))+'</span>'+img(m,96,'cspr');
     var chip=m.status==='out'?'<span class="tchip out">Fighting</span>':m.status==='resting'?'<span class="tchip rest" data-left="'+m.id+'" data-pre="">'+hm(left(m))+'</span>':'';
     return '<button type="button" class="'+cls+'" data-id="'+m.id+'" aria-label="'+esc(m.egg?'Egg':m.name)+'">'+inner+chip+(S.pick===m.id?HAND+'<span class="thint">drag me</span>':'')+'</button>'; }
   function forms(m){ var f=(m.forms_seen||[]).filter(function(x){ return x&&spriteOk(x.sprite); }), h='';
@@ -235,14 +238,15 @@
     h+='<span class="tf now">'+img(m,48)+'</span>'; if(m.xp_next) h+='<i>›</i><span class="tf q">?</span>';
     return '<div class="tforms" aria-label="Its forms so far"><em>Forms</em>'+h+'</div>'; }
   function pinHtml(m){ var on=m.slot!=null, lock=lockOf(m), where=chan();
-    var art='<div class="tart'+(m.status==='resting'?' dozing':'')+'"><span class="tglow"></span>'+(m.egg?egg(m.hue,2,'wob',2):img(m,96,'alive'))+'</div>';
+    var art='<div class="tart'+(m.status==='resting'?' dozing':'')+(m.changing?' changing':'')+'"><span class="tglow"></span>'+(m.egg?egg(m.hue,2,'wob',2):img(m,96,'alive'))+'</div>';
     var state=m.status==='out'?(m.egg?'It’s in '+esc(m.out_where||where)+'’s dungeon. It hatches about 10 seconds after it lands, or sooner if the streamer hits it.':'Fighting in '+esc(m.out_where||where)+'’s stream right now.')
       :m.status==='resting'?'Resting. It can fight or swap again in <b data-left="'+m.id+'" data-pre="">'+hm(left(m))+'</b>.'
       :m.egg?'Nobody knows what’s inside. '+(on?'Send it into a stream and it hatches there, live.':'Put it on your team, then send it into a stream to hatch it.')
+      :m.changing?'It ate a bean and is changing… Its new form shows up here in about half a minute.'
       :on?(m.evolve_ready?'It’s ready to evolve. Send it in and it changes on stream!':'Ready to fight. Press <b>Send to dungeon!</b> above it.'):'Ready. Add it to your team to send it into a stream.';
     var acts=on?(lock?'':'<button type="button" class="tbtn ghost sm" data-act="off">Take off team</button>')
       :'<button type="button" class="tbtn" data-act="add">Add to team</button><span class="tdragtip">'+(phone()?'or hold and drag it up':'or drag its card onto your team')+'</span>';
-    return '<div class="tpin '+tcls(m)+(on?' onteam':'')+'"><div class="tptop">'+art+'<div class="tpi"><span class="twhere'+(on?' on':'')+'">'+(on?'On your team':'In your collection')+'</span><span class="tname">'+(m.egg?'Mystery egg':esc(m.name))+'</span>'
+    return '<div class="tpin '+tcls(m)+(on?' onteam':'')+'"><div class="tptop">'+art+'<div class="tpi"><span class="twhere'+(on?' on':'')+'">'+(on?'On your team':'In your collection')+'</span><span class="tname">'+(m.egg?'Mystery egg':esc(lvl(m)+m.name))+'</span>'
       +'<span class="trowi">'+tierTag(m)+(m.egg?'':'<span class="tform">Form '+((m.form|0)||1)+'</span>')+'</span>'+xpBlock(m)+(m.egg?'':'<div class="tstats"><span>Streams <b>'+(m.sends|0)+'</b></span><span>KOs <b>'+(m.kos|0)+'</b></span></div>')+'</div></div>'
       +forms(m)+'<p class="tmuted">'+state+'</p>'+(acts?'<div class="tacts">'+acts+'</div>':'')+report(m)+(m.status==='resting'?liveList():'')
       +'<button type="button" class="tx" data-act="close" aria-label="Close">×</button></div>'; }
@@ -272,7 +276,8 @@
   setInterval(function(){ if(!S.on||document.hidden) return; var now=Date.now();
     $$('[data-left]').forEach(function(el){ var m=M(+el.getAttribute('data-left')); if(!m) return; var pre=el.getAttribute('data-pre'); el.textContent=(pre==null?'Resting ':pre)+hm(left(m)); });
     $$('[data-out]').forEach(function(el){ var m=M(+el.getAttribute('data-out')); if(!m||m.egg) return; var pre=el.getAttribute('data-pre'); el.textContent=(pre==null?'Fighting ':pre)+ms((now-(S.outSince[m.id]||now))/1000); });
-    if(S.members.some(function(m){ return m.status==='resting'&&left(m)===0; })) soon(1500); },1000);
+    if(S.members.some(function(m){ return m.status==='resting'&&left(m)===0; })) soon(1500);
+    if(S.members.some(function(m){ return m.changing; })) soon(4000); },1000);
 
   /* ---------------------------------------------------------------- clicks (the camp, and the Collection wherever it sits) */
   function showInfo(){ if(!phone()&&sideNow()!=='collection'&&!tabCol.hidden) X.sideTab('collection',true); }
