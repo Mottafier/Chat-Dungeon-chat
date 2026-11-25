@@ -22,7 +22,7 @@
   function account(){ return typeof X.account==='function'?X.account():!!X.account; }
   var BASE=(function(){ var s=document.currentScript&&document.currentScript.src; return s?s.replace(/team\.js.*$/,''):'/'; })();
   var VER=(function(){ var s=document.currentScript&&document.currentScript.src, m=s&&s.match(/[?&]v=([\w.-]+)/); return m?m[1]:'1'; })();
-  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.7'; document.head.appendChild(l); })();
+  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.8'; document.head.appendChild(l); })();
 
   /* ---------------------------------------------------------------- state */
   var S={on:false,known:false,slots:5,cooldown:14400,members:[],byId:{},making:null,at:0,got:0,
@@ -179,9 +179,9 @@
       if(sel) top=sendTop(m);
       if(!top&&!m.egg) top='<span class="thov">'+(m.changing?'Changing…':cap(m.danger||'normal')+(m.level?' · Lv '+(m.level|0):' · Form '+((m.form|0)||1)))+'</span>';
       else if(!top) top='<span class="thov">Mystery egg</span>'; }
-    if(sel) cls.push('sel'); if(m&&S.landed===m.id) cls.push('landed'); if(m&&S.lift===m.id) cls.push('lifted'); if(pos.e) cls.push(pos.e);
+    if(sel) cls.push('sel'); if(m&&S.landed===m.id) cls.push('landed'); if(m&&S.lift===m.id) cls.push('lifted'); if(m&&fly[m.id]) cls.push('flying'); if(pos.e) cls.push(pos.e);
     return '<div class="'+cls.join(' ')+'" data-k="'+k+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" aria-label="'+(m?esc(m.egg?'Egg':m.name):'Empty spot')+'" style="left:'+pos.x+'%;top:'+pos.y+'px;height:'+pos.h+'px'+(m?';--cc:'+teamCol(k):'')+'">'
-      +'<span class="tglow"></span><span class="mark"></span><span class="swapi">'+(m?'⇄ Swap':'+ Here')+'</span>'+(lk?'<span class="lk">'+lk+'</span>':'')+top+body+'<span class="tlbl">'+tag+stLine(m)+'</span></div>'; }
+      +'<span class="tglow"></span><span class="mark"></span>'+(lk?'<span class="lk">'+lk+'</span>':'')+top+body+'<span class="tlbl">'+tag+stLine(m)+'</span></div>'; }
   /* what's compared to decide on a redraw: the HTML without its running clocks (the 1 s tick keeps those going) */
   function sig(h){ return h.replace(/(data-(?:out|left)="\d+" data-pre="[^"]*">)[^<]*/g,'$1'); }
   var campEl=null, lastCamp='', camp={cs:96,lh:40,two:false,h:216,sw:200};
@@ -193,7 +193,7 @@
     return pts.clientHeight-(parseFloat(cs.paddingTop)||0)-(parseFloat(cs.paddingBottom)||0)-used; }
   function buildPane(){ if(campEl) return;
     pane.innerHTML='<div class="tstage"><div class="tcamp th-cols" id="tcamp">'
-      +'<div class="ttitle"><span class="tt1"></span><span class="tt2">Pick a spot for it <button type="button" class="tcancel" data-act="cancel">Cancel</button></span></div><div class="tspots"></div></div>'
+      +'<div class="ttitle"><span class="tt1"></span></div><div class="tspots"></div></div>'
       +'<div class="trv" id="trv" hidden></div></div><div class="tcolhost" id="tcolhost"></div>';
     campEl=$('tcamp'); }
   function drawTeam(){ if(!S.on) return; buildPane(); mount();
@@ -236,7 +236,7 @@
   function liveList(){ var me=String(channel()||'').toLowerCase(), l=(S.live||[]).filter(function(r){ return r.twitch&&r.twitch.toLowerCase()!==me; }).slice(0,4);
     if(!l.length) return ''; return '<div class="tlive"><h4>Your other creatures can fight here</h4>'+l.map(function(r){ return '<a href="/live/'+encodeURIComponent(r.twitch)+'"><span class="dotl"></span><b>'+esc(r.twitch)+'</b><small>'+(r.spawns_hour|0)+' spawns this hour</small></a>'; }).join('')+'</div>'; }
   function getLive(){ if(!api||Date.now()-S.liveAt<60000) return; S.liveAt=Date.now(); api.live().then(function(l){ S.live=Array.isArray(l)?l:[]; drawCol(); },function(){}); }
-  function smallCard(m){ var cls='mc tcard k-enemy '+(m.egg?'t-egg':'t-'+esc(m.danger||'normal'))+(S.pick===m.id?' sel':'')+(lockOf(m)?' cool':'')+(S.landed===m.id?' landed':'');
+  function smallCard(m){ var cls='mc tcard k-enemy '+(m.egg?'t-egg':'t-'+esc(m.danger||'normal'))+(S.pick===m.id?' sel':'')+(lockOf(m)?' cool':'')+(S.landed===m.id?' landed':'')+(fly[m.id]?' flying':'');
     var inner=m.egg?'<span class="nin">Egg</span><span class="ew">'+egg(m.hue,2,'wob',2)+'</span>':'<span class="nin">'+esc(lvl(m)+X.fitName(m.name))+'</span>'+img(m,96,'cspr');
     var chip=m.status==='out'?'<span class="tchip out">Fighting</span>':m.status==='resting'?'<span class="tchip rest" data-left="'+m.id+'" data-pre="">'+hm(left(m))+'</span>':'';
     return '<button type="button" class="'+cls+'" data-id="'+m.id+'" aria-label="'+esc(m.egg?'Egg':m.name)+'">'+inner+chip+(S.pick===m.id?HAND+'<span class="thint">drag me</span>':'')+'</button>'; }
@@ -268,9 +268,9 @@
      Anyone not placed yet comes first, newest first. */
   var colOrder=[]; try{ colOrder=JSON.parse(localStorage.getItem('cdColOrder')||'[]')||[]; }catch(e){ colOrder=[]; }
   function colList(){ return S.members.filter(function(m){ return m.slot==null; }).sort(function(a,b){ var i=colOrder.indexOf(a.id), j=colOrder.indexOf(b.id); return i<0&&j<0?b.id-a.id:i<0?-1:j<0?1:i-j; }); }
-  function reorder(id,target,after){ var ids=colList().map(function(m){ return m.id; }).filter(function(x){ return x!==id; }), at=target==null?ids.length:ids.indexOf(target);
-    if(at<0) at=ids.length; else if(after&&target!=null) at++; ids.splice(at,0,id); colOrder=ids; try{ localStorage.setItem('cdColOrder',JSON.stringify(ids)); }catch(e){}
-    S.landed=id; setTimeout(function(){ S.landed=null; },900); colEl.querySelector('#tgrid')._h=''; drawCol(); }
+  function reorder(id,target,after,from){ var ids=colList().map(function(m){ return m.id; }).filter(function(x){ return x!==id; }), at=target==null?ids.length:ids.indexOf(target);
+    if(at<0) at=ids.length; else if(after&&target!=null) at++; ids.splice(at,0,id);
+    smooth(function(){ colOrder=ids; try{ localStorage.setItem('cdColOrder',JSON.stringify(ids)); }catch(e){} redraw(); },from); }
   function drawCol(){ if(!S.on) return; mount();
     var list=colList();
     colEl.querySelector('.tcount').textContent=list.length?list.length+' waiting':'';
@@ -298,7 +298,6 @@
   function onClick(e){ if(justDragged) return; var a=e.target.closest('[data-act]');
     if(a){ var act=a.getAttribute('data-act');
       if(act==='send') send(+a.getAttribute('data-id'),a);
-      else if(act==='cancel') stopPlacing();
       else if(act==='keep') nameDone(false); else if(act==='rename') nameDone(true);
       else if(act==='close'){ S.pick=null; S.spot=null; draw(); }
       else if(act==='add') addToTeam(S.pick);
@@ -335,11 +334,11 @@
     var k=-1; if(S.spot!=null&&!onPad(S.spot)) k=S.spot; else for(var i=0;i<S.slots;i++) if(!onPad(i)){ k=i; break; }
     if(k>=0){ S.placing=id; goTeam(); tryDrop(k); return; }
     startPlacing(id,false); }
-  function bench(id){ var m=M(id); if(!m||m.slot==null) return;
+  function bench(id,from){ var m=M(id); if(!m||m.slot==null) return;
     if(lockOf(m)){ toast(busyWhy(m,false),true); return; }
-    var was=m.slot; m.slot=null; S.landed=id; setTimeout(function(){ S.landed=null; },900); lastCamp=''; draw(); toast(nameOf(m)+' went back to your Collection.');
+    var was=m.slot; smooth(function(){ m.slot=null; redraw(); },from); toast(nameOf(m)+' went back to your Collection.');
     (api?api.set(id,null):demo.set(id,null)).then(function(j){ if(j&&j.members) stateIn(j); else soon(200); })
-    .catch(function(e){ m.slot=was; lastCamp=''; draw(); toast(errText(e),true); soon(200); }); }
+    .catch(function(e){ smooth(function(){ m.slot=was; redraw(); }); toast(errText(e),true); soon(200); }); }
   function markPads(){ var src=M(S.placing), busy=lockOf(src);
     $$('.tspot',campEl).forEach(function(p){ var m=onPad(+p.getAttribute('data-k'));
       p.classList.remove('can-add','can-swap','no');
@@ -352,18 +351,61 @@
     return true; }
   function stopPlacing(){ S.placing=null; document.documentElement.classList.remove('tplacing','tfromteam'); $$('.tspot.hot').forEach(function(p){ p.classList.remove('hot'); }); }
   function shake(el){ if(!el) return; el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
-  function tryDrop(k){ var id=S.placing, src=M(id), old=onPad(k), pad=campEl&&campEl.querySelector('.tspot[data-k="'+k+'"]');
+  /* ---------------------------------------------------------------- smooth moves: nobody ever jumps. Whenever creatures change
+     places (a swap, a move, joining or leaving the team, a new order in the Collection) each one glides from where it was to
+     where it now is. The real one stays hidden where it will land until its glide gets there. */
+  var fly={};
+  function redraw(){ lastCamp=''; colEl.querySelector('#tgrid')._h=''; draw(); }
+  function spotOf(id){ var m=M(id); return m&&m.slot!=null&&campEl?campEl.querySelector('.tspot[data-k="'+m.slot+'"]'):null; }
+  function cardOf(id){ return colEl.querySelector('#tgrid .tcard[data-id="'+id+'"]'); }
+  function seen(r){ return r.width>0&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth; }
+  /* where a creature is drawn right now: the middle of its picture, and how wide the picture is */
+  function at(id){ var p=spotOf(id), r, e;
+    if(p){ r=p.getBoundingClientRect(); if(!seen(r)) return null; return {x:r.left+r.width/2,y:r.bottom-camp.lh-camp.cs/2,w:camp.cs,team:true}; }
+    e=cardOf(id); if(!e) return null; r=e.getBoundingClientRect();
+    var sv=e.closest('.sview'), b=sv&&sv.getBoundingClientRect();
+    if(!seen(r)||(b&&(r.bottom<b.top||r.top>b.bottom))){ /* its card is scrolled out of view: its big picture, if that's showing, stands in */
+      var art=S.pick===id&&colEl.querySelector('#tprev.open .tart'), ar=art&&art.getBoundingClientRect(); return ar&&seen(ar)?{x:ar.left+ar.width/2,y:ar.top+ar.height/2,w:96}:null; }
+    var sp=e.querySelector('.cspr,.ew'), q=sp?sp.getBoundingClientRect():r; return {x:q.left+q.width/2,y:q.top+q.height/2,w:Math.min(q.width,q.height)||r.width*.8,card:r}; }
+  function places(){ var o={}; S.members.forEach(function(m){ var a=at(m.id); if(a) o[m.id]=a; }); return o; }
+  function ease(t){ return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2; }
+  function unhide(id){ delete fly[id]; var p=spotOf(id), c=cardOf(id); if(p) p.classList.remove('flying'); if(c) c.classList.remove('flying'); }
+  function glide(id,a){ var m=M(id); if(!m) return; var g=document.createElement('div'); g.className='tflyer';
+    g.innerHTML='<span>'+(m.egg?egg(m.hue,2,'',2):img(m,96))+'</span>'; document.body.appendChild(g);
+    var nat=g.firstChild.getBoundingClientRect().width||96, t0=0, run=(fly[id]|0)+1, last=null; fly[id]=run;
+    var p=spotOf(id), c=cardOf(id); if(p) p.classList.add('flying'); if(c) c.classList.add('flying');
+    function put(x,y,w,o){ g.style.transform='translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px) scale('+(w/nat).toFixed(3)+')'; g.style.opacity=o; }
+    put(a.x,a.y,a.w,1);
+    function step(now){ if(fly[id]!==run||!M(id)){ g.remove(); return; }
+      if(!t0) t0=now; var t=Math.min(1,(now-t0)/400), e=ease(t), b=at(id), o=1;
+      if(!b){ /* it lands somewhere that isn't on screen (the Collection behind another tab): it shrinks into that tab's button */
+        var tb=tabCol&&!tabCol.hidden?tabCol.getBoundingClientRect():null; b=last||(tb&&tb.width?{x:tb.left+tb.width/2,y:tb.top+tb.height/2,w:20}:{x:a.x,y:a.y+30,w:a.w*.5}); if(!last) o=1-e*e; }
+      else last=b;
+      put(a.x+(b.x-a.x)*e,a.y+(b.y-a.y)*e-Math.sin(Math.PI*e)*Math.min(26,Math.abs(b.x-a.x)/5+Math.abs(b.y-a.y)/8),a.w+(b.w-a.w)*e,o);
+      if(t<1) requestAnimationFrame(step); else { g.remove(); unhide(id); } }
+    requestAnimationFrame(step); }
+  /* run a change (it redraws), then glide everyone who ended up somewhere else. from = where a dragged one was let go */
+  function smooth(fn,from){ if(still||document.hidden) return fn();
+    var a=places(), k, ret; if(from) for(k in from) a[k]=from[k];
+    ret=fn(); var b=places();
+    S.members.forEach(function(m){ var p=a[m.id], q=b[m.id]; if(!p) return; if(q&&Math.abs(p.x-q.x)+Math.abs(p.y-q.y)<3) return;
+      if(!q&&(m.slot!=null||p.card)) return;
+      /* a card that only shifts along in the Collection slides as a whole card */
+      if(q&&p.card&&q.card){ var c=cardOf(m.id); if(c&&c.animate) c.animate([{transform:'translate('+(p.card.left-q.card.left)+'px,'+(p.card.top-q.card.top)+'px)'},{transform:'none'}],{duration:320,easing:'cubic-bezier(.3,.8,.3,1)'}); return; }
+      glide(m.id,p); });
+    return ret; }
+
+  function tryDrop(k,from){ var id=S.placing, src=M(id), old=onPad(k), pad=campEl&&campEl.querySelector('.tspot[data-k="'+k+'"]');
     if(!src) { stopPlacing(); return false; }
     if(lockOf(src)){ shake(pad); toast(busyWhy(src,true),true); return false; }
     if(lockOf(old)){ shake(pad); toast(busyWhy(old,false),true); return false; }
+    if(old===src){ stopPlacing(); return false; }
     /* looks done at once; the database has the last word */
-    var who=pad&&pad.querySelector('.who'); if(who) who.classList.add('leave');
-    if(old===src){ stopPlacing(); return true; }
-    var was=src.slot; if(old) old.slot=was; src.slot=k; S.pick=id; S.spot=null; stopPlacing();
-    setTimeout(function(){ lastCamp=''; draw(); var w=campEl.querySelector('.tspot[data-k="'+k+'"] .who')||campEl.querySelector('.tspot[data-k="'+k+'"]'); if(w){ w.classList.add('arrive'); } },who?240:0);
+    var was=src.slot;
+    smooth(function(){ if(old) old.slot=was; src.slot=k; S.pick=id; S.spot=null; S.lift=null; stopPlacing(); redraw(); },from);
     toast(was!=null?(old?nameOf(src)+' and '+(old.egg?'the egg':old.name)+' swapped places.':nameOf(src)+' moved over.'):old?nameOf(src)+' joined your team. '+(old.egg?'The egg':old.name)+' went back to your Collection.':nameOf(src)+' joined your team.');
     (api?api.set(id,k):demo.set(id,k)).then(function(j){ if(j&&j.members) stateIn(j); else soon(200); })
-    .catch(function(e){ src.slot=was; if(old) old.slot=k; lastCamp=''; draw(); toast(errText(e),true); soon(200); });
+    .catch(function(e){ smooth(function(){ src.slot=was; if(old) old.slot=k; redraw(); }); toast(errText(e),true); soon(200); });
     return true; }
 
   var drag=null, justDragged=false, press=null, lp=null;
@@ -386,7 +428,7 @@
     else startPlacing(id,true);
     moveDrag(x,y); }
   function colZone(hit){ return !!(hit&&hit.closest&&(hit.closest('.tcol')||hit.closest('.sview[data-view="collection"]'))); }
-  function moveDrag(x,y){ if(!drag) return; drag.g.style.transform='translate('+(x-drag.ox)+'px,'+(y-drag.oy)+'px)';
+  function moveDrag(x,y){ if(!drag) return; drag.x=x; drag.y=y; drag.g.style.transform='translate('+(x-drag.ox)+'px,'+(y-drag.oy)+'px)';
     var hit=document.elementFromPoint(x,y), p=hit&&hit.closest&&hit.closest('#tcamp .tspot');
     if(p!==drag.hot){ if(drag.hot) drag.hot.classList.remove('hot'); drag.hot=p; if(p) p.classList.add('hot'); }
     drag.g.classList.toggle('over',!!(p&&!p.classList.contains('no')));
@@ -402,9 +444,12 @@
   function endDrag(){ var d=drag; drag=null; justDragged=true; setTimeout(function(){ justDragged=false; },60);
     document.documentElement.classList.remove('tdragging'); colEl.classList.remove('tdrop'); if(d.card) d.card.classList.remove('ins-l','ins-r'); S.lift=null;
     function done(){ d.g.remove(); d.el.classList.remove('lifted'); }
-    if(d.hot){ if(tryDrop(+d.hot.getAttribute('data-k'))){ done(); lastCamp=''; drawTeam(); return; } }
-    else if(d.team&&d.col){ stopPlacing(); done(); bench(d.id); return; }
-    else if(!d.team&&d.card){ stopPlacing(); done(); reorder(d.id,+d.card.getAttribute('data-id'),d.after); return; }
+    /* where it was let go: its glide to the new place starts here */
+    var from={}, gr=d.g.getBoundingClientRect(), gx=d.x-d.ox, gy=d.y-d.oy;
+    from[d.id]=d.team||d.g.classList.contains('over')?{x:gx+52,y:gy+(d.team?60:52),w:96}:{x:gx+d.home.width/2,y:gy+d.home.height/2+9,w:Math.min(96,d.home.width*.8),card:{left:gx,top:gy}};
+    if(d.hot){ if(tryDrop(+d.hot.getAttribute('data-k'),from)){ done(); return; } }
+    else if(d.team&&d.col){ stopPlacing(); done(); bench(d.id,from); return; }
+    else if(!d.team&&d.card){ stopPlacing(); done(); reorder(d.id,+d.card.getAttribute('data-id'),d.after,from); return; }
     stopPlacing();
     requestAnimationFrame(function(){ var r=d.el.isConnected&&d.el.offsetParent?d.el.getBoundingClientRect():d.home; d.g.classList.add('back'); d.g.classList.remove('over'); d.g.style.transform='translate('+(d.team?r.left+r.width/2-52:r.left)+'px,'+(d.team?r.top+r.height/2-60:r.top)+'px)'; });
     setTimeout(function(){ done(); colEl.querySelector('#tgrid')._h=''; lastCamp=''; draw(); },320); }

@@ -24,12 +24,8 @@
 .tcamp::after{content:"";position:absolute;inset:0;z-index:7;pointer-events:none;border-radius:4px;box-shadow:inset 0 0 0 3px #000,inset 0 0 0 5px rgba(126,156,255,.42);transition:box-shadow .2s}
 .tplacing .tcamp::after{box-shadow:inset 0 0 0 3px #000,inset 0 0 0 6px var(--flame),inset 0 0 26px rgba(255,190,60,.45)}
 .ttitle{position:absolute;left:11px;top:8px;z-index:3;font:400 14px/1 var(--display);color:#cdd8ff;text-shadow:0 2px 0 #000,0 0 6px #000;letter-spacing:.06em;white-space:pre;pointer-events:none}
-.ttitle .tt2{display:none}
 .tcamp.haspick .tt1{visibility:hidden}
 .tcamp:has(.tspot:first-child:hover) .tt1{visibility:hidden}
-.ttitle .tcancel{pointer-events:auto;margin-left:8px;font:400 14px var(--display);color:var(--parch);background:#0b0706;border:2px solid #4a3a22;padding:1px 7px;cursor:pointer}
-.tplacing .ttitle{left:0;right:0;top:6px;text-align:center;font-size:17px;color:var(--flame);z-index:8}
-.tplacing .ttitle .tt1{display:none}.tplacing .ttitle .tt2{display:inline}
 .tspots{position:absolute;inset:0;z-index:2}
 
 .tspot{--tc:#c9962e;position:absolute;width:20%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;cursor:pointer;outline:0;-webkit-tap-highlight-color:transparent}
@@ -152,9 +148,6 @@
 .tspot.hot .mark{border-style:solid!important;background:radial-gradient(ellipse,rgba(255,220,120,.4),transparent 70%)!important;animation:none!important;transform:scale(1.15)}
 .tspot.hot.can-add .mark{background:radial-gradient(ellipse,rgba(127,224,106,.45),transparent 70%)!important}
 .tspot.hot.can-swap .who{opacity:.3;transform:translateY(8px) scale(.8)!important;filter:grayscale(1)}
-.tspot .swapi{display:none;position:absolute;bottom:min(calc(var(--lh) + var(--cs) + 2px),calc(100% - 26px));z-index:5;font:400 17px/1.15 var(--display);color:#130d07;background:var(--flame);padding:1px 8px 2px;white-space:nowrap;box-shadow:0 0 0 2px #000,0 3px 0 2px #000}
-.tspot.hot:not(.no) .swapi{display:block}
-.tspot.hot.can-add .swapi{background:#8cf07a}
 .tspot.shake{animation:tshake .35s}
 @keyframes tshake{25%{translate:-6px 0}50%{translate:6px 0}75%{translate:-3px 0}}
 
@@ -345,7 +338,6 @@
 .tghost.spr.over .gc{transform:translate(-50%,-55%) scale(1)}
 /* a team member held over the Collection: it would come off the team */
 .tcol.tdrop{box-shadow:inset 0 0 0 2px var(--flame);background:rgba(255,178,58,.08)}
-.tcol.tdrop h3::before{content:"Drop to take it off the team";order:3;font:400 12px var(--body);color:var(--flame)}
 .tfromteam .tcol{outline:2px dashed #6b5a3c;outline-offset:2px}
 .tfromteam .tcol.tdrop{outline-color:transparent}
 /* a card held over another card: the gold bar shows where it lands */
@@ -365,3 +357,10 @@
 .tbtip canvas{width:48px;height:48px;image-rendering:pixelated;float:left;margin:0 8px 4px 0}
 .tbtip em{display:block;font-style:italic}.tbtip small{display:block;clear:both;opacity:.75;margin-top:4px}
 .tbean:hover .tbtip,.tbean:focus .tbtip,.tbean:focus-within .tbtip{display:block}
+
+/* ---------- smooth moves: a creature glides to its new place; the real one stays hidden there until it lands ---------- */
+.tflyer{position:fixed;left:0;top:0;z-index:1000;pointer-events:none;line-height:0;will-change:transform;filter:drop-shadow(0 6px 4px rgba(0,0,0,.55))}
+.tflyer>span{position:absolute;left:0;top:0;transform:translate(-50%,-50%)}
+.tflyer img,.tflyer svg{display:block;image-rendering:pixelated}
+.tspot.flying .who,.tspot.flying .tshadow,.tspot.flying .tbean{visibility:hidden}
+.tcard.flying .cspr,.tcard.flying .ew{visibility:hidden}
