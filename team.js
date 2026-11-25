@@ -29,7 +29,7 @@
          pick:null,      /* the creature that's picked: a team member (Send button over it) or a Collection card. Its full page shows in the Collection */
          spot:null,      /* an empty team spot that's picked (Add to team fills it) */
          placing:null,   /* a card being put on the team (dragged, or "Add to team" with a full team, then tap who it swaps with) */
-         seenForm:{}, seenEgg:{}, played:{}, titleMax:16, outSince:{}, revealing:null, live:null, liveAt:0, busy:false, dead:0};
+         seenForm:{}, seenEgg:{}, played:{}, titleMax:16, outSince:{}, helping:{}, noSide:false, revealing:null, live:null, liveAt:0, busy:false, dead:0};
   function M(id){ return S.byId[id]||null; }
   function onPad(k){ for(var i=0;i<S.members.length;i++) if(S.members[i].slot===k) return S.members[i]; return null; }
   function teamCount(){ return S.members.filter(function(m){ return m.slot!=null; }).length; }
@@ -73,11 +73,22 @@
     g.forEach(function(row,y){ row.split('').forEach(function(c,x){ if(c!=='.') r+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="'+(c==='k'?'#0b0706':'#fff3dc')+'"/>'; }); });
     return '<svg class="thand" viewBox="0 0 12 13" shape-rendering="crispEdges" aria-hidden="true">'+r+'</svg>'; })();
 
+  function pxIcon(g,pal,cls){ var r=''; g.forEach(function(row,y){ row.split('').forEach(function(c,x){ if(c!=='.') r+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="'+pal[c]+'"/>'; }); });
+    return '<svg class="tico '+cls+'" viewBox="0 0 '+g[0].length+' '+g.length+'" shape-rendering="crispEdges" aria-hidden="true">'+r+'</svg>'; }
+  var SWORD=pxIcon(['........kkk','.......kwwk','......kwwsk','.....kwwsk.','.k..kwwsk..','kgkkwwsk...','.kggwsk....','..kggk.....','.kbkggk....','kbbk.kgk...','kbk...k....','.k.........'],{k:'#0b0706',w:'#fff3dc',s:'#c9bfae',g:'#ffc23a',b:'#8a4a1c'},'sw');
+  var HEART=pxIcon(['.kkk...kkk.','kwwrk.krrrk','kwrrrkrrrrk','krrrrrrrrrk','krrrrrrrrdk','.krrrrrrdk.','..krrrrdk..','...krrdk...','....krk....','.....k.....'],{k:'#0b0706',w:'#fff3dc',r:'#ff4a5c',d:'#b81d3a'},'ht');
+
   /* ---------------------------------------------------------------- talking to the database (or the pretend one) */
   var api=DEMO?null:{
     state:function(){ return X.rpc('team_state',X.withTok({q_name:me()})); },
     set:function(id,k){ return X.rpc('team_set',X.withTok({q_name:me(),q_card:id,q_slot:k})); },
-    send:function(id){ return X.rpc('team_send',X.withTok({q_code:room(),q_name:me(),q_card:id})); },
+    /* side = 'attack' or 'help' (eggs send none: the hatchling picks for itself in the game). A database that doesn't know
+       sides yet still takes an attack the old way; a help is never quietly turned into an attack. */
+    send:function(id,side){ var old=function(){ return X.rpc('team_send',X.withTok({q_code:room(),q_name:me(),q_card:id})); };
+      if(!side||S.noSide) return old();
+      return X.rpc('team_send',X.withTok({q_code:room(),q_name:me(),q_card:id,q_side:side})).catch(function(e){
+        if(!/Could not find the function|schema cache|PGRST202/i.test(String(e&&e.message||''))) throw e;
+        S.noSide=true; if(side==='help') throw new Error('no side'); return old(); }); },
     name:function(id,t){ return X.rpc('team_name',X.withTok({q_name:me(),q_card:id,q_title:t})); },
     clear:function(id){ return X.rpc('claim_card',X.withTok({q_name:me(),q_card:id})); },
     live:function(){ return X.rpc('live_dungeons',{}); },
@@ -85,14 +96,14 @@
   };
   var ERR={'busy':'It can’t move while it’s fighting or resting.','bad slot':'That spot doesn’t exist.','no card':'That creature isn’t yours.',
     'room closed':'The stream is offline, so nothing can go in right now.','out':'It’s already in the fight.','resting':'It’s still resting.',
-    'not on team':'Put it on your team first, then send it.','too busy':'The stream is very busy. Try again in a moment.','slow down':'Slow down a little, then try again.','team off':'Teams aren’t switched on yet.','not ready':'That egg is still being made.','no account':'Make an account first.','not hatched':'It hasn’t hatched yet.','bad name':'That name isn’t allowed. Try another.'};
+    'not on team':'Put it on your team first, then send it.','too busy':'The stream is very busy. Try again in a moment.','slow down':'Slow down a little, then try again.','team off':'Teams aren’t switched on yet.','not ready':'That egg is still being made.','no account':'Make an account first.','not hatched':'It hasn’t hatched yet.','bad name':'That name isn’t allowed. Try another.','no side':'Helping isn’t switched on yet.','too many helpers':'There are enough helpers in there right now. Try again soon.'};
   function errText(e){ var m=String(e&&e.message||''); return ERR[m]||(!m||e instanceof TypeError?'Couldn’t reach the server. Try again.':'Server said: '+m.slice(0,100)); }
 
   function stateIn(j){ if(!j||typeof j!=='object'||!j.members) return false; var now=Date.now(), was=S.on;
     S.known=true; S.on=!!j.on; S.slots=(j.slots|0)||5; S.cooldown=(j.cooldown|0)||14400; S.got=now;
     var by={}, events=[];
     S.members=j.members.map(function(m){ m.id=+m.id; m.slot=m.slot==null?null:+m.slot; m.egg=!!m.egg; m.until=now+(m.left|0)*1000;
-      if(m.status==='out'){ if(!S.outSince[m.id]) S.outSince[m.id]=now; } else delete S.outSince[m.id];
+      if(m.status==='out'){ if(!S.outSince[m.id]) S.outSince[m.id]=now; } else { delete S.outSince[m.id]; delete S.helping[m.id]; }
       var f=S.seenForm[m.id];
       if(!m.egg&&((f!=null&&(m.form|0)>f)||(f==null&&m.evolved_ago!=null&&m.evolved_ago<12&&!S.played[m.id]))) events.push(['evolve',m,f]);
       if(!m.egg&&S.seenEgg[m.id]&&!m.fresh) events.push(['hatched',m]);
@@ -155,9 +166,11 @@
   /* ---------------------------------------------------------------- drawing the Team tab */
   var TIER={harmless:1,weak:1,normal:1,tough:1,deadly:1,god:1};
   function tcls(m){ return m.egg?'t-egg':'t-'+(TIER[m.danger]?m.danger:'normal'); }
+  function helping(m){ return !m.egg&&(m.side?m.side==='help':!!S.helping[m.id]); }
+  function outWord(m){ return helping(m)?'Helping':'Fighting'; }
   function lockOf(m){ return m&&(m.status==='out'||m.status==='resting'); }
   function stLine(m){ if(!m) return '<span class="tst none">Add someone</span>';
-    if(m.status==='out') return m.egg?'<span class="tst out">Hatching…</span>':'<span class="tst out">Fighting <b data-out="'+m.id+'" data-pre="">'+ms((Date.now()-(S.outSince[m.id]||Date.now()))/1000)+'</b></span>';
+    if(m.status==='out') return m.egg?'<span class="tst out">Hatching…</span>':'<span class="tst out">'+outWord(m)+' <b data-out="'+m.id+'" data-pre="">'+ms((Date.now()-(S.outSince[m.id]||Date.now()))/1000)+'</b></span>';
     if(m.status==='resting') return '<span class="tst rest">Resting <b data-left="'+m.id+'" data-pre="">'+hm(left(m))+'</b></span>';
     if(m.egg) return '<span class="tst egg">Ready to hatch</span>';
     if(m.changing) return '<span class="tst evo">Changing…</span>';
@@ -167,6 +180,9 @@
   /* the big button that appears over the one you picked */
   function sendTop(m){ if(m.status==='out'||m.status==='resting') return '';
     if(!roomOpen()) return '<span class="tsend gray">Stream is offline</span>';
+    if(!m.egg&&!S.noSide) return '<span class="tsend duo'+(m.evolve_ready?' evo':'')+'">'
+      +'<button type="button" class="tside atk" data-act="send" data-side="attack" data-id="'+m.id+'">'+SWORD+'Attack</button>'
+      +'<button type="button" class="tside help" data-act="send" data-side="help" data-id="'+m.id+'">'+HEART+'Help</button></span>';
     var what=m.egg?'Send to hatch!':m.evolve_ready?'Send to evolve!':'Send to dungeon!';
     return '<button type="button" class="tsend'+(m.evolve_ready&&!m.egg?' evo':'')+'" data-act="send" data-id="'+m.id+'">'+what+'</button>'; }
   /* every creature gets its own fun panel colour, picked from a fixed set by its id so it never changes */
@@ -181,7 +197,7 @@
       /* name above; under the creature its heart and XP, or the rest bar while it sleeps. No status badges: ready shows nothing extra. */
       name='<span class="tnm top">'+nm+'</span>';
       tag=m.changing?'<span class="tst evo">Changing…</span>':r?restBar(m):hpTag(m,'thp')+xpr;
-      if(out){ cls.push('locked','isout','gone'); lk='Fighting'; body='<span class="who">'+(m.egg?egg(m.hue,2,'',2):img(m,cs,''))+'</span>'; }
+      if(out){ cls.push('locked','isout','gone'); lk=outWord(m); body='<span class="who">'+(m.egg?egg(m.hue,2,'',2):img(m,cs,''))+'</span>'; }
       else if(m.egg){ cls.push(r?'locked':'full'); if(r) lk='Resting'; body='<span class="tshadow"></span><span class="who">'+egg(m.hue,2,'wob',2)+'</span>'; }
       else { cls.push(r?'locked':'full'); if(r){ cls.push('asleep'); lk='Resting'; } if(m.evolve_ready&&!r) cls.push('evo'); if(m.changing) cls.push('changing');
         body=bean(m)+'<span class="tshadow"></span><span class="who'+(r?'':' look')+'" style="animation-delay:-'+(k*1.3).toFixed(1)+'s">'+(r?dozy(m,cs,'','sleep'):img(m,cs,'alive'))+'</span>'+(r?'<span class="zz">z</span><span class="zz b">z</span>':''); }
@@ -247,7 +263,7 @@
   function getLive(){ if(!api||Date.now()-S.liveAt<60000) return; S.liveAt=Date.now(); api.live().then(function(l){ S.live=Array.isArray(l)?l:[]; drawCol(); },function(){}); }
   function smallCard(m){ var cls='mc tcard k-enemy '+(m.egg?'t-egg':'t-'+esc(m.danger||'normal'))+(S.pick===m.id?' sel':'')+(lockOf(m)?' cool':'')+(S.landed===m.id?' landed':'')+(fly[m.id]?' flying':'');
     var inner=m.egg?'<span class="nin">Egg</span><span class="ew">'+egg(m.hue,2,'wob',2)+'</span>':'<span class="nin">'+esc(lvl(m)+X.fitName(m.name))+'</span>'+(m.status==='resting'?dozy(m,96,'cspr','cspr'):img(m,96,'cspr'));
-    var chip=m.status==='out'?'<span class="tchip out">Fighting</span>':m.status==='resting'?'<span class="tchip rest" data-left="'+m.id+'" data-pre="">'+hm(left(m))+'</span>':'';
+    var chip=m.status==='out'?'<span class="tchip out">'+outWord(m)+'</span>':m.status==='resting'?'<span class="tchip rest" data-left="'+m.id+'" data-pre="">'+hm(left(m))+'</span>':'';
     return '<button type="button" class="'+cls+'" data-id="'+m.id+'" aria-label="'+esc(m.egg?'Egg':m.name)+'">'+inner+chip+(S.pick===m.id?HAND+'<span class="thint">drag me</span>':'')+'</button>'; }
   function forms(m){ var f=(m.forms_seen||[]).filter(function(x){ return x&&spriteOk(x.sprite); }), h='';
     if(m.egg||(!f.length&&!m.xp_next)) return '';
@@ -256,12 +272,12 @@
     return '<div class="tforms" aria-label="Its forms so far"><em>Forms</em>'+h+'</div>'; }
   function pinHtml(m){ var on=m.slot!=null, lock=lockOf(m), where=chan();
     var art='<div class="tart'+(m.status==='resting'?' dozing':'')+(m.changing?' changing':'')+'">'+bean(m,true)+'<span class="tglow"></span>'+(m.egg?egg(m.hue,2,'wob',2):m.status==='resting'?dozy(m,96,'','alive'):img(m,96,'alive'))+'</div>';
-    var state=m.status==='out'?(m.egg?'It’s in '+esc(m.out_where||where)+'’s dungeon. It hatches about 10 seconds after it lands, or sooner if the streamer hits it.':'Fighting in '+esc(m.out_where||where)+'’s stream right now.')
+    var state=m.status==='out'?(m.egg?'It’s in '+esc(m.out_where||where)+'’s dungeon. It hatches about 10 seconds after it lands, or sooner if the streamer hits it.':outWord(m)+' in '+esc(m.out_where||where)+'’s stream right now.')
       :m.status==='resting'?'Sleeping it off. It can fight or swap again when the bar is full.'
       :m.egg?'Nobody knows what’s inside. '+(on?'Send it into a stream and it hatches there, live.':'Put it on your team, then send it into a stream to hatch it.')
       :m.changing?'It ate a bean and is changing… Its new form shows up here in about half a minute.'
-      :m.final&&m.level?'Final form: it won\u2019t change again, but it keeps levelling up.'+(on?' Press <b>Send to dungeon!</b> above it to fight.':'')
-      :on?(m.evolve_ready?'It’s ready to evolve. Send it in and it changes on stream!':'Ready to fight. Press <b>Send to dungeon!</b> above it.'):'Ready. Add it to your team to send it into a stream.';
+      :m.final&&m.level?'Final form: it won\u2019t change again, but it keeps levelling up.'
+      :on?(m.evolve_ready?'It’s ready to evolve. Send it in and it changes on stream!':'Ready to go.'):'Ready. Add it to your team to send it into a stream.';
     var grow=m.tester&&!m.egg&&!m.final&&!m.changing&&!lock?'<button type="button" class="tbtn ghost sm" data-act="grow" title="Test accounts only">Grow (test)</button>':'';
     var acts=grow+(on?(lock?'':'<button type="button" class="tbtn ghost sm" data-act="off">Take off team</button>')
       :'<button type="button" class="tbtn" data-act="add">Add to team</button><span class="tdragtip">'+(phone()?'or hold and drag it up':'or drag its card onto your team')+'</span>');
@@ -307,7 +323,7 @@
   function showInfo(){ if(!phone()&&sideNow()!=='collection'&&!tabCol.hidden) X.sideTab('collection',true); }
   function onClick(e){ if(justDragged) return; var a=e.target.closest('[data-act]');
     if(a){ var act=a.getAttribute('data-act');
-      if(act==='send') send(+a.getAttribute('data-id'),a);
+      if(act==='send') send(+a.getAttribute('data-id'),a,a.getAttribute('data-side')||'');
       else if(act==='keep') nameDone(false); else if(act==='rename') nameDone(true);
       else if(act==='close'){ S.pick=null; S.spot=null; draw(); }
       else if(act==='add') addToTeam(S.pick);
@@ -327,12 +343,18 @@
   pane.addEventListener('keydown',function(e){ var p=e.target.closest&&e.target.closest('.tspot'); if(p&&e.target===p&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); p.click(); } });
   pane.addEventListener('submit',function(e){ e.preventDefault(); nameDone(true); });
 
-  function send(id,btn){ var m=M(id); if(!m) return;
-    if(!DEMO&&!account()){ X.needAccount(function(){ send(id); }); return; }
-    if(btn) btn.disabled=true;
-    (api?api.send(id):demo.send(id)).then(function(j){ if(j&&j.state&&j.state.members){ stateIn(j.state); m=M(id)||m; } m.status='out'; S.outSince[id]=Date.now(); lastCamp=''; draw();
-      toast(m.egg?'Your egg drops into '+chanS()+' dungeon. Watch it hatch!':m.evolve_ready?nameOf(m)+' jumps in. Watch it evolve on stream!':nameOf(m)+' jumps into '+chanS()+' dungeon!'); soon(1500); })
-    .catch(function(e){ if(btn) btn.disabled=false; toast(errText(e),true); soon(300); }); }
+  /* Attack or Help: the one you press swells while the other slides away, and both come back if the send fails */
+  function send(id,btn,side){ var m=M(id); if(!m) return;
+    if(!DEMO&&!account()){ X.needAccount(function(){ send(id,null,side); }); return; }
+    if(m.egg) side='';
+    var duo=btn&&btn.closest('.tsend.duo'), all=duo?$$('button',duo):btn?[btn]:[];
+    all.forEach(function(b){ b.disabled=true; }); if(duo){ duo.classList.add('went'); btn.classList.add('pick'); }
+    var help=side==='help';
+    var t0=Date.now(), held=function(v){ return new Promise(function(ok){ setTimeout(function(){ ok(v); },duo&&!still?Math.max(0,340-(Date.now()-t0)):0); }); };
+    (api?api.send(id,side):demo.send(id,side)).then(held).then(function(j){ if(j&&j.state&&j.state.members){ stateIn(j.state); m=M(id)||m; } m.status='out'; S.outSince[id]=Date.now(); if(help) S.helping[id]=1; else delete S.helping[id]; lastCamp=''; draw();
+      toast(m.egg?'Your egg drops into '+chanS()+' dungeon. Watch it hatch!':help?nameOf(m)+' jumps in to help '+(channel()||'the streamer')+'!':m.evolve_ready?nameOf(m)+' jumps in. Watch it evolve on stream!':nameOf(m)+' jumps into '+chanS()+' dungeon!'); soon(1500); })
+    .catch(function(e){ all.forEach(function(b){ b.disabled=false; }); if(duo){ duo.classList.remove('went'); btn.classList.remove('pick'); }
+      if(S.noSide){ lastCamp=''; draw(); } toast(errText(e),true); soon(300); }); }
 
   /* ---------------------------------------------------------------- joining the team: drag a card onto a spot, or Add to team.
      Add to team goes straight in when there's an empty spot; with a full team you pick who it swaps with. */
