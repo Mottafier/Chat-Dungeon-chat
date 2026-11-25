@@ -26,7 +26,7 @@ window.CDTEAM_DEMO=function(stateIn,X){
     return {on:true,slots:5,cooldown:14400,members:L.map(function(m){ var c={}; for(var k in m) if(k!=='evo'&&k!=='until') c[k]=m[k]; if(m.until) c.left=Math.max(0,Math.round((m.until-t)/1000)); return c; }),making:null}; }
   L.forEach(function(m){ if(m.left) m.until=now+m.left*1000; });
   var big=by(2); setTimeout(function(){ comeBack(big); },25000);
-  function comeBack(m){ m.status='resting'; m.until=Date.now()+14400000*.7;   /* came home with 30% of its health */ m.sends++; m.xp+=172; if(m.xp_next&&m.xp>=m.xp_next){ m.xp=m.xp_next; m.evolve_ready=true; }
+  function comeBack(m){ m.status='resting'; delete m.side; m.until=Date.now()+14400000*.7;   /* came home with 30% of its health */ m.sends++; m.xp+=172; if(m.xp_next&&m.xp>=m.xp_next){ m.xp=m.xp_next; m.evolve_ready=true; }
     m.last={channel:(typeof X.channel==='function'?X.channel():X.channel)||'mottafierr',alive_s:107,damage:162,ko:true,lines:[['Sent into a stream',60],['Alive 1:47',47],['Damage dealt',65],['First KO on '+((typeof X.channel==='function'?X.channel():X.channel)||'mottafierr')+' today',100]]}; push(); }
   function push(){ stateIn(out()); }
   function ok(){ return Promise.resolve(out()); }
@@ -35,8 +35,8 @@ window.CDTEAM_DEMO=function(stateIn,X){
   return {
     set:function(i,k){ var m=by(i); if(!m) return err('no card'); var o=k==null?null:L.filter(function(x){ return x.slot===k; })[0];
       if(m.status!=='home'||(o&&o.status!=='home')) return err('busy'); if(o&&o!==m) o.slot=m.slot; m.slot=k; return ok(); },
-    send:function(i){ var m=by(i); if(!m) return err('no card'); if(m.slot==null) return err('not on team'); if(m.status==='out') return err('out'); if(m.status==='resting') return err('resting');
-      m.status='out'; m.out_where=(typeof X.channel==='function'?X.channel():X.channel)||'mottafierr';
+    send:function(i,side){ var m=by(i); if(!m) return err('no card'); if(m.slot==null) return err('not on team'); if(m.status==='out') return err('out'); if(m.status==='resting') return err('resting');
+      m.status='out'; m.side=m.egg?null:side||null; m.out_where=(typeof X.channel==='function'?X.channel():X.channel)||'mottafierr';
       if(m.egg) setTimeout(function(){ var h=hatches[m.id]||hatches[4]; m.egg=false; m.fresh=true; m.name=h.name; m.danger=h.danger; m.sprite=h.sprite; m.form=1; m.forms_seen=[]; m.xp=60; m.xp_next=250; m.sends=1; m.kos=0; push(); },6000);
       else if(m.evolve_ready&&m.evo) setTimeout(function(){ m.forms_seen=(m.forms_seen||[]).concat([{name:m.name,sprite:m.sprite}]); m.sprite=m.evo[0]; m.name=m.evo[1]; m.danger=m.evo[2]; m.form++; m.xp=0; m.xp_next=m.form>=6?null:1400; m.evolve_ready=false; delete m.evo; push(); },5000);
       setTimeout(function(){ if(m.status==='out') comeBack(m); },m.egg?30000:20000);

@@ -794,9 +794,10 @@ main>section{position:relative;z-index:1}
         if(!r.ok){ var e2=new Error((j&&j.message)||('error '+r.status)); e2.status=r.status; throw e2; } return j; }); });
   }
   var TIERS=['harmless','weak','normal','tough','deadly','god'];
+  function tierName(d){ return d==='god'?'legendary':d; }   /* stored as 'god', shown as Legendary */
   function tierOf(d){ d=String(d||'').toLowerCase(); if(d==='minor') d='weak'; return TIERS.indexOf(d)>=0?d:''; }
   function tcol(d){ d=tierOf(d); return d?'var(--t-'+d+')':'var(--mortar)'; }
-  function tier(d){ d=tierOf(d); return d?'<span class="tier" style="color:var(--t-'+d+')">'+d.toUpperCase()+'</span>':''; }
+  function tier(d){ d=tierOf(d); return d?'<span class="tier" style="color:var(--t-'+d+')">'+tierName(d).toUpperCase()+'</span>':''; }
   function sprite(s,size,alt){ return typeof s==='string'&&s.length<60000&&/^[A-Za-z0-9+\/]+=*$/.test(s)?'<img class="sprite" width="'+size+'" height="'+size+'" alt="'+esc(alt||'')+'" src="data:image/png;base64,'+s+'">':pix('skull',Math.round(size*.8)); }
   function ago(s){ s=Math.max(0,s|0); return s<60?s+'s':s<3600?Math.floor(s/60)+'m':Math.floor(s/3600)+'h'; }
   var COLS=['#ffb23a','#5fcf4a','#9fe6ff','#ff8a9c','#c9a8ff','#f1c27d','#ff6a4a','#7fd0ff','#9be28a'];
@@ -835,7 +836,7 @@ main>section{position:relative;z-index:1}
     $('minis').innerHTML=h;
   }
   function evRow(e,i){ return '<div class="ev'+(i===0&&(e.ago|0)<60?' new':'')+'"><div class="ic" style="border-color:'+tcol(e.danger)+'">'+sprite(e.sprite,36,'')+'</div>'+
-    '<div class="t"><b>'+esc(e.name)+'</b><span>'+(tierOf(e.danger)?'<u style="color:'+tcol(e.danger)+'">'+tierOf(e.danger).toUpperCase()+'</u> · ':'')+(e.creator?'by '+esc(e.creator):'')+(e.twitch&&rooms.length>1?' · in '+esc(e.twitch):'')+'</span></div><span class="ago">'+ago(e.ago)+'</span></div>'; }
+    '<div class="t"><b>'+esc(e.name)+'</b><span>'+(tierOf(e.danger)?'<u style="color:'+tcol(e.danger)+'">'+tierName(tierOf(e.danger)).toUpperCase()+'</u> · ':'')+(e.creator?'by '+esc(e.creator):'')+(e.twitch&&rooms.length>1?' · in '+esc(e.twitch):'')+'</span></div><span class="ago">'+ago(e.ago)+'</span></div>'; }
   function lastLine(r){ return r.last_name?'<div class="big">'+tier(r.last_danger)+'<span class="tx">'+esc(r.last_name)+(r.last_by?' <i>by '+esc(r.last_by)+'</i>':'')+'</span></div>':'<div class="big"><span class="tx"><i>Waiting for chat\'s first monster</i></span></div>'; }
   function drawSpot(){
     var s=rooms[0], h;
