@@ -364,3 +364,34 @@
 .tflyer img,.tflyer svg{display:block;image-rendering:pixelated}
 .tspot.flying .who,.tspot.flying .tshadow,.tspot.flying .tbean{visibility:hidden}
 .tcard.flying .cspr,.tcard.flying .ew{visibility:hidden}
+
+/* ---------- "it goes here": no words. While a creature is held over a spot it can take, an arrow drops in over its head,
+   the spot lights up and a ring opens on the floor where it will stand. Two arrows = it trades places with whoever is there.
+   Picking a spot by clicking (full team, "Add to team") shows the same sign on the spot under the mouse. ---------- */
+.there{position:absolute;left:50%;top:5px;z-index:6;width:calc(var(--cs,96px)*.36);margin-left:calc(var(--cs,96px)*-.18);line-height:0;pointer-events:none;opacity:0;transform:translateY(-14px) scale(.4);transition:opacity .16s,transform .22s cubic-bezier(.3,1.6,.5,1)}
+.there i{display:block}
+.there svg{display:block;width:100%;height:auto;overflow:visible;filter:drop-shadow(0 3px 0 rgba(0,0,0,.45))}
+.there .h-in{color:#8cf07a;animation:therebob .7s ease-in-out infinite alternate}
+.there .h-sw{display:none;color:var(--flame);animation:theresw .9s ease-in-out infinite alternate}
+.tspot.can-swap .there .h-in,.tghost.sw .there .h-in{display:none}
+.tspot.can-swap .there .h-sw,.tghost.sw .there .h-sw{display:block}
+@keyframes therebob{from{transform:translateY(-3px)}to{transform:translateY(4px)}}
+@keyframes theresw{from{transform:scale(.9)}to{transform:scale(1.1)}}
+.tghost .there{left:52px;top:-50px}
+.tghost.spr .there{top:-38px}
+.tghost.here .there{opacity:1;transform:none}
+.tring{position:absolute;left:50%;bottom:calc(var(--lh) - var(--cs)*.04);z-index:1;width:calc(var(--cs)*.9);height:calc(var(--cs)*.24);margin-left:calc(var(--cs)*-.45);box-sizing:border-box;border-radius:50%;pointer-events:none;
+  border:3px solid #8cf07a;background:radial-gradient(ellipse,rgba(140,240,122,.38),transparent 70%);box-shadow:0 0 0 2px #000,0 0 14px rgba(140,240,122,.6);opacity:0;transform:scale(.3);transition:opacity .16s,transform .24s cubic-bezier(.3,1.6,.5,1)}
+.tspot.can-swap .tring{border-color:var(--flame);background:radial-gradient(ellipse,rgba(255,214,110,.38),transparent 70%);box-shadow:0 0 0 2px #000,0 0 14px rgba(255,190,60,.7)}
+.tplacing .tspot.hot:not(.no):not(.lifted) .tring{opacity:1;transform:none}
+.tplacing .tspot.hot:not(.no){z-index:4}
+.tplacing .tcamp.th-cols .tspot.hot:not(.no)::before{filter:brightness(1.3);box-shadow:inset 0 0 0 3px var(--flame),inset 0 -6px 0 var(--flame)}
+.tplacing .tcamp.th-cols .tspot.hot.can-add::before{box-shadow:inset 0 0 0 3px #8cf07a,inset 0 -6px 0 #8cf07a;background:linear-gradient(180deg,transparent 0,rgba(140,240,122,.16) 100%)}
+.tplacing .tspot.hot.can-add .tplus{opacity:0;transform:scale(.5)}
+.tplus{transition:transform .2s,border-color .2s,background .2s,opacity .2s}
+@media (hover:hover){
+  html.tplacing:not(.tdragging) .tspot:hover:not(.no) .there,html.tplacing:not(.tdragging) .tspot:hover:not(.no) .tring{opacity:1;transform:none}
+  html.tplacing:not(.tdragging) .tcamp.th-cols .tspot:hover:not(.no)::before{filter:brightness(1.3);box-shadow:inset 0 0 0 3px var(--flame),inset 0 -6px 0 var(--flame)}
+  html.tplacing:not(.tdragging) .tcamp:has(.tspot:first-child:hover) .tt1{visibility:hidden}
+}
+@media (prefers-reduced-motion:reduce){ .there .h-in,.there .h-sw{animation:none} }

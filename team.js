@@ -22,7 +22,7 @@
   function account(){ return typeof X.account==='function'?X.account():!!X.account; }
   var BASE=(function(){ var s=document.currentScript&&document.currentScript.src; return s?s.replace(/team\.js.*$/,''):'/'; })();
   var VER=(function(){ var s=document.currentScript&&document.currentScript.src, m=s&&s.match(/[?&]v=([\w.-]+)/); return m?m[1]:'1'; })();
-  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.8'; document.head.appendChild(l); })();
+  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.9'; document.head.appendChild(l); })();
 
   /* ---------------------------------------------------------------- state */
   var S={on:false,known:false,slots:5,cooldown:14400,members:[],byId:{},making:null,at:0,got:0,
@@ -168,6 +168,12 @@
   function funCol(m){ var t=String(m.id), h=2166136261, i; for(i=0;i<t.length;i++){ h^=t.charCodeAt(i); h=Math.imul(h,16777619); } h^=h>>>13; h=Math.imul(h,0x5bd1e995); h^=h>>>15; return (h>>>0)%FUN.length; }
   /* two team mates never share a colour: a later spot steps on to the next free one */
   function teamCol(k){ var used={}, j, m, c; for(j=0;j<=k;j++){ m=onPad(j); if(!m) continue; c=funCol(m); while(used[c]) c=(c+1)%FUN.length; used[c]=1; } return FUN[c]; }
+  /* the "it goes here" sign: no words, just a chunky arrow that drops in over the spot a held creature would land on
+     (two arrows when it would trade places with whoever stands there). Drawn from little pixel rows. */
+  function pix(rows){ var d='', y, x, r, a; for(y=0;y<rows.length;y++){ r=rows[y]; for(x=0;x<r.length;x++){ if(r[x]!=='X') continue; a=x; while(r[x+1]==='X') x++; d+='M'+a+' '+y+'h'+(x-a+1)+'v1h-'+(x-a+1)+'z'; } }
+    return '<svg viewBox="-1 -1 '+(rows[0].length+2)+' '+(rows.length+2)+'" shape-rendering="crispEdges"><path d="'+d+'" stroke="#000" stroke-width="2" stroke-linejoin="miter"/><path d="'+d+'" fill="currentColor"/></svg>'; }
+  var HERE='<span class="there" aria-hidden="true"><i class="h-in">'+pix(['...XXXXX...','...XXXXX...','...XXXXX...','...XXXXX...','XXXXXXXXXXX','.XXXXXXXXX.','..XXXXXXX..','...XXXXX...','....XXX....','.....X.....'])+'</i>'
+    +'<i class="h-sw">'+pix(['.......X...','.......XX..','XXXXXXXXXX.','XXXXXXXXXX.','.......XX..','.......X...','...........','...X.......','..XX.......','.XXXXXXXXXX','.XXXXXXXXXX','..XX.......','...X.......'])+'</i></span>', RING='<span class="tring" aria-hidden="true"></span>';
   function spotHtml(k,pos){ var m=onPad(k), cls=['tspot'], body='', lk='', tag='', top='', sel=m?S.pick===m.id:S.spot===k, cs=camp.cs;
     if(!m){ cls.push('empty'); body='<span class="tplus" aria-hidden="true"><i>+</i></span>'; tag='<span class="tnm dim">Empty spot</span>'; }
     else { cls.push(tcls(m)); var nm=m.egg?'Egg':esc(lvl(m)+(camp.sw<170?X.fitName(m.name):m.name)), bar=m.egg?'':'<span class="txp'+(m.xp_next?'':' max')+(m.evolve_ready?' full':'')+'"><b style="width:'+Math.round(xpPct(m))+'%"></b></span>';
@@ -181,7 +187,7 @@
       else if(!top) top='<span class="thov">Mystery egg</span>'; }
     if(sel) cls.push('sel'); if(m&&S.landed===m.id) cls.push('landed'); if(m&&S.lift===m.id) cls.push('lifted'); if(m&&fly[m.id]) cls.push('flying'); if(pos.e) cls.push(pos.e);
     return '<div class="'+cls.join(' ')+'" data-k="'+k+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" aria-label="'+(m?esc(m.egg?'Egg':m.name):'Empty spot')+'" style="left:'+pos.x+'%;top:'+pos.y+'px;height:'+pos.h+'px'+(m?';--cc:'+teamCol(k):'')+'">'
-      +'<span class="tglow"></span><span class="mark"></span>'+(lk?'<span class="lk">'+lk+'</span>':'')+top+body+'<span class="tlbl">'+tag+stLine(m)+'</span></div>'; }
+      +'<span class="tglow"></span><span class="mark"></span>'+HERE+RING+(lk?'<span class="lk">'+lk+'</span>':'')+top+body+'<span class="tlbl">'+tag+stLine(m)+'</span></div>'; }
   /* what's compared to decide on a redraw: the HTML without its running clocks (the 1 s tick keeps those going) */
   function sig(h){ return h.replace(/(data-(?:out|left)="\d+" data-pre="[^"]*">)[^<]*/g,'$1'); }
   var campEl=null, lastCamp='', camp={cs:96,lh:40,two:false,h:216,sw:200};
@@ -410,7 +416,7 @@
 
   var drag=null, justDragged=false, press=null, lp=null;
   function ghost(m,el){ var g=document.createElement('div'); g.className='tghost';
-    g.innerHTML='<div class="gcard">'+el.outerHTML.replace(/<svg class="thand"[\s\S]*?<\/svg>|<span class="thint">.*?<\/span>/g,'')+'</div><span class="gc">'+(m.egg?egg(m.hue,2,'',2):img(m,96))+'</span>';
+    g.innerHTML='<div class="gcard">'+el.outerHTML.replace(/<svg class="thand"[\s\S]*?<\/svg>|<span class="thint">.*?<\/span>/g,'')+'</div><span class="gc">'+(m.egg?egg(m.hue,2,'',2):img(m,96))+'</span>'+HERE;
     document.body.appendChild(g); return g; }
   /* A drag starts on a Collection card or on a team member.
      Card -> a team spot: joins (or swaps in).   Card -> another card: moves it there in the Collection.
@@ -419,7 +425,7 @@
     var team=m.slot!=null, r=el.getBoundingClientRect(), g;
     if(team&&lockOf(m)){ toast(busyWhy(m,false),true); return; }
     S.pick=id;
-    if(team){ g=document.createElement('div'); g.className='tghost spr'; g.innerHTML='<span class="gc">'+(m.egg?egg(m.hue,2,'',2):img(m,96))+'</span>'; document.body.appendChild(g); }
+    if(team){ g=document.createElement('div'); g.className='tghost spr'; g.innerHTML='<span class="gc">'+(m.egg?egg(m.hue,2,'',2):img(m,96))+'</span>'+HERE; document.body.appendChild(g); }
     else g=ghost(m,el);
     drag={id:id,el:el,team:team,ox:team?52:x-r.left,oy:team?60:y-r.top,home:r,hot:null,col:false,card:null,after:false,g:g}; el.classList.add('lifted');
     document.documentElement.classList.add('tdragging');
@@ -432,6 +438,8 @@
     var hit=document.elementFromPoint(x,y), p=hit&&hit.closest&&hit.closest('#tcamp .tspot');
     if(p!==drag.hot){ if(drag.hot) drag.hot.classList.remove('hot'); drag.hot=p; if(p) p.classList.add('hot'); }
     drag.g.classList.toggle('over',!!(p&&!p.classList.contains('no')));
+    /* the sign over its head: an arrow where it can land, two arrows where it would trade places; nothing over its own spot */
+    var ok=!!(p&&!p.classList.contains('no')&&!p.classList.contains('lifted')); drag.g.classList.toggle('here',ok); if(ok) drag.g.classList.toggle('sw',p.classList.contains('can-swap'));
     /* a team member over the Collection: it would come off the team */
     var col=drag.team&&!p&&colZone(hit); if(col!==drag.col){ drag.col=col; colEl.classList.toggle('tdrop',col); }
     /* a card over another card: it would move there */
@@ -451,7 +459,7 @@
     else if(d.team&&d.col){ stopPlacing(); done(); bench(d.id,from); return; }
     else if(!d.team&&d.card){ stopPlacing(); done(); reorder(d.id,+d.card.getAttribute('data-id'),d.after,from); return; }
     stopPlacing();
-    requestAnimationFrame(function(){ var r=d.el.isConnected&&d.el.offsetParent?d.el.getBoundingClientRect():d.home; d.g.classList.add('back'); d.g.classList.remove('over'); d.g.style.transform='translate('+(d.team?r.left+r.width/2-52:r.left)+'px,'+(d.team?r.top+r.height/2-60:r.top)+'px)'; });
+    requestAnimationFrame(function(){ var r=d.el.isConnected&&d.el.offsetParent?d.el.getBoundingClientRect():d.home; d.g.classList.add('back'); d.g.classList.remove('over','here'); d.g.style.transform='translate('+(d.team?r.left+r.width/2-52:r.left)+'px,'+(d.team?r.top+r.height/2-60:r.top)+'px)'; });
     setTimeout(function(){ done(); colEl.querySelector('#tgrid')._h=''; lastCamp=''; draw(); },320); }
   /* what can be picked up under this point: a Collection card, or a team member standing on its spot */
   function grab(t){ if(!t||!t.closest||S.placing!=null&&!drag) return null; var el=t.closest('#tgrid .tcard'); if(el) return {id:+el.getAttribute('data-id'),el:el};
