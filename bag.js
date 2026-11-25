@@ -260,7 +260,9 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
     for(var i=0,j=0;i<W*H;i++,j+=4){ var c=G.p[i]; if(c){ var v=rgb(c); d[j]=v[0]; d[j+1]=v[1]; d[j+2]=v[2]; d[j+3]=255; } else d[j+3]=0; }
     ctx.putImageData(img,0,0); }
 
-  var X=window.CDX, DEMO=/[?&]bag=demo\b/.test(location.search);
+  var X=window.CDX, URLDEMO=/[?&]bag=demo\b/.test(location.search), TESTERS={mottatester:1};
+  /* pretend beans: with ?bag=demo, or when signed in as a test name. Nothing is saved and nothing calls the database. */
+  function demoOn(){ return URLDEMO||TESTERS[String(X.me||'').toLowerCase()]===1; }
   var view=document.querySelector('.sview[data-view="bag"]'), tab=document.querySelector('.stabs [data-side="bag"]');
   if(!view||!tab) return;
   var esc=X.esc;
@@ -268,10 +270,10 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
   function phone(){ return typeof X.phone==='function'?X.phone():false; }
   var S={on:false,items:[],sel:null,step:null,target:null,busy:false,msg:'',note:'',seen:{}};
   try{ S.seen=JSON.parse(localStorage.getItem('cdBagSeen')||'{}')||{}; }catch(e){}
-  var demoItems=['b01','b04','b03','b02','b07','b09','b12'].map(function(k,i){ return {id:'d'+i,kind:'bean',look:k}; });
+  var demoItems=['b01','b04','b03','b02','b07','b09','b12','b05','b06','b08','b10','b11','b13'].map(function(k,i){ return {id:'d'+i,kind:'bean',look:k}; });
   var api={
-    state:function(){ return DEMO?Promise.resolve({on:true,items:demoItems.slice()}):X.rpc('bag_state',X.withTok({q_name:me()})); },
-    use:function(item,card){ if(DEMO){ demoItems=demoItems.filter(function(x){ return x.id!==item; }); return new Promise(function(ok){ setTimeout(function(){ ok({ok:true}); },700); }); }
+    state:function(){ return demoOn()?Promise.resolve({on:true,items:demoItems.slice()}):X.rpc('bag_state',X.withTok({q_name:me()})); },
+    use:function(item,card){ if(demoOn()){ demoItems=demoItems.filter(function(x){ return x.id!==item; }); return new Promise(function(ok){ setTimeout(function(){ ok({ok:true}); },700); }); }
       return X.rpc('bag_use',X.withTok({q_name:me(),q_item:item,q_card:card})); }
   };
   var ERR={'no item':'That item isn’t in your bag any more.','no card':'That creature isn’t yours.','busy':'It can’t eat while it’s in the dungeon.','not hatched':'It hasn’t hatched yet.','final':'It has already reached its final form.','no account':'Make an account first.'};
@@ -304,7 +306,7 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
       if(S.step==='confirm'){ var m=who(S.target), nm=m?(m.name||'this creature'):'this creature';
         h+='<div class="bag-ask"><p><b>Feed this bean to '+esc(nm)+'?</b></p><p class="dim">'+esc(nm)+' changes right away and the bean is used up. This can’t be undone.</p><div class="bag-row"><button type="button" class="bag-btn" data-b="go"'+(S.busy?' disabled':'')+'>'+(S.busy?'Feeding…':'Feed it')+'</button><button type="button" class="bag-btn ghost" data-b="pick"'+(S.busy?' disabled':'')+'>Back</button></div>'+(S.msg?'<p class="bag-err">'+esc(S.msg)+'</p>':'')+'</div>'; } }
     if(S.step!=='pick'&&S.step!=='confirm'){
-      h+='<h3>Your bag</h3>';
+      h+='<h3>Your bag</h3>'; if(demoOn()) h+='<p class="dim">Test beans. Feeding one is pretend and nothing is saved.</p>';
       if(!S.items.length) h+='<div class="bag-empty">'+X.pix('bag',48)+'<p class="dim">Nothing in here yet. Rare finds from the dungeon land in your bag.</p></div>';
       else { h+='<div class="bag-grid">'; S.items.forEach(function(x){ h+='<button type="button" class="bag-it'+(x.id===S.sel?' on':'')+'" data-it="'+esc(String(x.id))+'" aria-label="Bean" aria-pressed="'+(x.id===S.sel)+'"><canvas width="40" height="40" data-look="'+x.look+'"></canvas></button>'; });
         for(var k=S.items.length;k<12;k++) h+='<span class="bag-it none"></span>';
@@ -375,5 +377,7 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
   function watch(){ if(drag) return; if(open()){ seeAll(); draw(); poll(); if(!timer&&!still) timer=setInterval(tick,100); } else if(timer){ clearInterval(timer); timer=null; } }
   if(window.MutationObserver) new MutationObserver(watch).observe(view,{attributes:true,attributeFilter:['hidden']});
   window.CDBAG={S:S,poll:poll,stateIn:stateIn,draw:draw};
-  poll(); setInterval(function(){ if(!document.hidden) poll(); },DEMO?600000:open()?15000:90000);
+  var wasDemo=demoOn(); poll(); setInterval(function(){ if(!document.hidden) poll(); },90000);
+  /* signing in or out as a test name shows or hides the pretend beans straight away */
+  setInterval(function(){ var d=demoOn(); if(d!==wasDemo){ wasDemo=d; if(!d) stateIn({on:false,items:[]}); poll(); } },3000);
 })();
