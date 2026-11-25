@@ -1,7 +1,7 @@
 /* Chat Dungeon: the Bag (side tab beside Chat). Holds the rare items a viewer wins in the dungeon; for now that means
    evolver beans. Loaded by the streamer page (404.html), which hands over its helpers as window.CDX.
    Nothing shows until the database answers bag_state with on:true, or the page is opened with ?bag=demo (pretend items, no calls).
-   Database (not built yet): bag_state(q_name,q_token) -> {on, items:[{id, kind:'bean', look:'b01'}]}, bag_use(q_name,q_token,q_item,q_card).
+   Database: bag_state(q_name,q_token) -> {on, items:[{id, kind:'bean', look:'b01'}]}, bag_use(q_name,q_token,q_item,q_card).
    The bean pictures are drawn in code: one 40x40 pixel sprite per look, animated. Design page: /mnt/project-files/evolver-beans. */
 (function(){
   'use strict';
@@ -260,7 +260,7 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
     for(var i=0,j=0;i<W*H;i++,j+=4){ var c=G.p[i]; if(c){ var v=rgb(c); d[j]=v[0]; d[j+1]=v[1]; d[j+2]=v[2]; d[j+3]=255; } else d[j+3]=0; }
     ctx.putImageData(img,0,0); }
 
-  var X=window.CDX, URLDEMO=/[?&]bag=demo\b/.test(location.search), TESTERS={mottatester:1};
+  var X=window.CDX, URLDEMO=/[?&]bag=demo\b/.test(location.search), TESTERS={};   /* no pretend names any more: the test account's beans are real ones from the database, so feeding is saved and steers its next change */
   /* pretend beans: with ?bag=demo, or when signed in as a test name. Nothing is saved and nothing calls the database. */
   function demoOn(){ return URLDEMO||TESTERS[String(X.me||'').toLowerCase()]===1; }
   var view=document.querySelector('.sview[data-view="bag"]'), tab=document.querySelector('.stabs [data-side="bag"]');
