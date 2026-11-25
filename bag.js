@@ -274,7 +274,7 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
   var api={
     state:function(){ return demoOn()?Promise.resolve({on:true,items:demoItems.slice()}):X.rpc('bag_state',X.withTok({q_name:me()})); },
     use:function(item,card){ if(demoOn()){ demoItems=demoItems.filter(function(x){ return x.id!==item; }); return new Promise(function(ok){ setTimeout(function(){ ok({ok:true}); },700); }); }
-      return X.rpc('bag_use',X.withTok({q_name:me(),q_item:item,q_card:card})); }
+      var bi=bagItem(item), c=who(card); return X.rpc('bag_use',X.withTok({q_name:me(),q_item:bi?bi.rid:item,q_card:c?c.id:card})); }
   };
   var ERR={'no item':'That item isn’t in your bag any more.','no card':'That creature isn’t yours.','busy':'It can’t eat while it’s in the dungeon.','not hatched':'It hasn’t hatched yet.','final':'Final form: it won’t change again.','already fed':'It already has a bean. It uses it the next time it changes.','no account':'Make an account first.'};
   function errText(e){ var m=String(e&&e.message||''); return ERR[m]||(!m||e instanceof TypeError?'Couldn’t reach the server. Try again.':'Server said: '+m.slice(0,100)); }
@@ -285,6 +285,8 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
 
   function stateIn(d){ if(Array.isArray(d)) d=d[0]; if(d&&d.bag_state&&typeof d.bag_state==='object') d=d.bag_state;   /* the database may hand the answer back as a row */
     var was=S.on; S.on=!!(d&&d.on); S.items=(d&&d.items||[]).filter(function(x){ return x&&LOOKS[x.look]; });
+    /* the database numbers its beans, the page reads ids back from the buttons as text: keep them as text here, and the real one for sending */
+    S.items.forEach(function(x){ if(x.rid===undefined) x.rid=x.id; x.id=String(x.id); });
     if(S.sel&&!bagItem(S.sel)){ S.sel=null; if(S.step!=='done') S.step=null; }
     tab.hidden=!S.on; if(!S.on&&X.sideNow==='bag') X.sideTab('chat');
     dot(); if(!drag&&(open()||was!==S.on)) draw(); }
@@ -298,14 +300,14 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
     if(S.step==='done'){ h+='<div class="bag-card done"><p class="bag-big">Gulp.</p><p class="bag-line">'+esc(S.msg)+'</p><button type="button" class="bag-btn ghost" data-b="back">Back to the bag</button></div>'; }
     else if(it){ var L=LOOKS[it.look];
       h+='<div class="bag-card"><canvas class="bag-hero" width="40" height="40" data-look="'+it.look+'" role="img" aria-label="A bean"></canvas><div class="bag-info"><p class="bag-name">Bean</p><p class="bag-line">“'+esc(L[1])+'”</p>';
-      if(!S.step) h+='<p class="bag-what">Feed it to a creature and it changes on the spot. What it turns into depends on the bean.</p><button type="button" class="bag-btn" data-b="feed">Feed to a creature</button>';
+      if(!S.step) h+='<p class="bag-what">Feed it to a creature. The next time that creature changes, this bean shapes what it becomes.</p><button type="button" class="bag-btn" data-b="feed">Feed to a creature</button>';
       h+='</div></div>';
       if(S.step==='pick'){ var T=team(); h+='<h3>Who eats it?</h3>';
         if(!T.length) h+='<p class="dim">You need a hatched creature on your team first.</p>';
         else { h+='<div class="bag-team">'; T.forEach(function(m){ var w=why(m); h+='<button type="button" class="bag-who" data-who="'+esc(String(m.id))+'"'+(w?' disabled':'')+'>'+spr(m)+'<b>'+esc(m.egg?'Egg':(m.name||'Creature'))+'</b>'+(w?'<i>'+w+'</i>':'')+'</button>'; }); h+='</div>'; }
         h+='<button type="button" class="bag-btn ghost" data-b="cancel">Not now</button>'; }
       if(S.step==='confirm'){ var m=who(S.target), nm=m?(m.name||'this creature'):'this creature';
-        h+='<div class="bag-ask"><p><b>Feed this bean to '+esc(nm)+'?</b></p><p class="dim">'+esc(nm)+' changes right away and the bean is used up. This can’t be undone.</p><div class="bag-row"><button type="button" class="bag-btn" data-b="go"'+(S.busy?' disabled':'')+'>'+(S.busy?'Feeding…':'Feed it')+'</button><button type="button" class="bag-btn ghost" data-b="pick"'+(S.busy?' disabled':'')+'>Back</button></div>'+(S.msg?'<p class="bag-err">'+esc(S.msg)+'</p>':'')+'</div>'; } }
+        h+='<div class="bag-ask"><p><b>Feed this bean to '+esc(nm)+'?</b></p><p class="dim">'+esc(nm)+' keeps the bean until its next change, and the bean shapes what it becomes. This can’t be undone.</p><div class="bag-row"><button type="button" class="bag-btn" data-b="go"'+(S.busy?' disabled':'')+'>'+(S.busy?'Feeding…':'Feed it')+'</button><button type="button" class="bag-btn ghost" data-b="pick"'+(S.busy?' disabled':'')+'>Back</button></div>'+(S.msg?'<p class="bag-err">'+esc(S.msg)+'</p>':'')+'</div>'; } }
     if(S.step!=='pick'&&S.step!=='confirm'){
       h+='<h3>Your bag</h3>'; if(demoOn()) h+='<p class="dim">Test beans. Feeding one is pretend and nothing is saved.</p>';
       if(!S.items.length) h+='<div class="bag-empty">'+X.pix('bag',48)+'<p class="dim">Nothing in here yet. Rare finds from the dungeon land in your bag.</p></div>';
