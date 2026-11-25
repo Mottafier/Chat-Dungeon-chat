@@ -283,7 +283,8 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
   function spr(m){ return typeof m.sprite==='string'&&/^[A-Za-z0-9+\/]+=*$/.test(m.sprite)&&m.sprite.length<60000?'<img class="bag-spr" alt="" width="48" height="48" src="data:image/png;base64,'+m.sprite+'">':'<span class="bag-spr">'+X.pix(m.egg?'cards':'enemy',40)+'</span>'; }
   function why(m){ return m.egg?'Not hatched yet':m.final?'Final form: won’t change again':m.fed?'Already ate a bean':''; }
 
-  function stateIn(d){ var was=S.on; S.on=!!(d&&d.on); S.items=(d&&d.items||[]).filter(function(x){ return x&&LOOKS[x.look]; });
+  function stateIn(d){ if(Array.isArray(d)) d=d[0]; if(d&&d.bag_state&&typeof d.bag_state==='object') d=d.bag_state;   /* the database may hand the answer back as a row */
+    var was=S.on; S.on=!!(d&&d.on); S.items=(d&&d.items||[]).filter(function(x){ return x&&LOOKS[x.look]; });
     if(S.sel&&!bagItem(S.sel)){ S.sel=null; if(S.step!=='done') S.step=null; }
     tab.hidden=!S.on; if(!S.on&&X.sideNow==='bag') X.sideTab('chat');
     dot(); if(!drag&&(open()||was!==S.on)) draw(); }
@@ -381,4 +382,6 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
   var wasDemo=demoOn(); poll(); setInterval(function(){ if(!document.hidden) poll(); },90000);
   /* signing in or out as a test name shows or hides the pretend beans straight away */
   setInterval(function(){ var d=demoOn(); if(d!==wasDemo){ wasDemo=d; if(!d) stateIn({on:false,items:[]}); poll(); } },3000);
+  /* signing in, out, or as someone else: ask for that name's bag straight away (and keep asking a little while the page settles) */
+  var wasMe=me(), early=0; setInterval(function(){ var n=me(); if(n!==wasMe){ wasMe=n; early=0; if(!demoOn()){ stateIn({on:false,items:[]}); poll(); } } else if(n&&!S.on&&early<6&&!document.hidden){ early++; poll(); } },5000);
 })();
