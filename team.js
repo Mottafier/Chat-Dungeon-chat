@@ -35,6 +35,14 @@
   function teamCount(){ return S.members.filter(function(m){ return m.slot!=null; }).length; }
   function cap(s){ s=String(s||''); return s.charAt(0).toUpperCase()+s.slice(1); }
   function nameOf(m){ return m.egg?'Your egg':(m.name||'It'); }
+  /* egg creatures carry a level (1-99): shown as "Lv 12 Name" */
+  function lvl(m){ return !m.egg&&m.level?'Lv '+(m.level|0)+' ':''; }
+  /* a fed creature carries its bean until its next change: a small badge; hover (or tap) shows the bean and its line */
+  function beanLine(look){ var B=window.CDBAG; return B&&B.line?B.line(look):''; }
+  function bean(m,big){ if(!m||m.egg||!m.fed||!m.fed.look) return ''; var lk=esc(m.fed.look);
+    return '<span class="tbean'+(big?' big':'')+'" tabindex="0" aria-label="It ate a bean"><canvas width="40" height="40" data-blook="'+lk+'"></canvas>'
+      +'<span class="tbtip" role="tooltip"><canvas width="40" height="40" data-blook="'+lk+'"></canvas><em>'+esc(beanLine(m.fed.look))+'</em><small>Its next change will be shaped by this bean.</small></span></span>'; }
+  function paintBeans(){ var B=window.CDBAG; if(!B||!B.paint) return; $$('canvas[data-blook]').forEach(function(cv){ B.paint(cv,cv.getAttribute('data-blook'),0); }); }
   function hm(s){ s=Math.max(0,s|0); var h=Math.floor(s/3600), m=Math.floor(s%3600/60); return h?h+'h '+(m<10?'0':'')+m+'m':m?m+'m':Math.max(1,s)+'s'; }
   function ms(s){ s=Math.max(0,s|0); return Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60; }
   function chan(){ return channel()||'the'; }
@@ -66,7 +74,8 @@
     send:function(id){ return X.rpc('team_send',X.withTok({q_code:room(),q_name:me(),q_card:id})); },
     name:function(id,t){ return X.rpc('team_name',X.withTok({q_name:me(),q_card:id,q_title:t})); },
     clear:function(id){ return X.rpc('claim_card',X.withTok({q_name:me(),q_card:id})); },
-    live:function(){ return X.rpc('live_dungeons',{}); }
+    live:function(){ return X.rpc('live_dungeons',{}); },
+    grow:function(id){ return X.rpc('test_grow',X.withTok({q_name:me(),q_card:id})); }
   };
   var ERR={'busy':'It can’t move while it’s fighting or resting.','bad slot':'That spot doesn’t exist.','no card':'That creature isn’t yours.',
     'room closed':'The stream is offline, so nothing can go in right now.','out':'It’s already in the fight.','resting':'It’s still resting.',
@@ -145,6 +154,7 @@
     if(m.status==='out') return m.egg?'<span class="tst out">Hatching…</span>':'<span class="tst out">Fighting <b data-out="'+m.id+'" data-pre="">'+ms((Date.now()-(S.outSince[m.id]||Date.now()))/1000)+'</b></span>';
     if(m.status==='resting') return '<span class="tst rest">Resting <b data-left="'+m.id+'" data-pre="">'+hm(left(m))+'</b></span>';
     if(m.egg) return '<span class="tst egg">Ready to hatch</span>';
+    if(m.changing) return '<span class="tst evo">Changing…</span>';
     if(m.evolve_ready) return '<span class="tst evo">Ready to evolve!</span>';
     return '<span class="tst ok">Ready</span>'; }
   function xpPct(m){ var a=m.xp_from|0, b=m.xp_next; if(!b) return 100; return Math.max(0,Math.min(100,100*((m.xp|0)-a)/Math.max(1,b-a))); }
@@ -160,14 +170,14 @@
   function teamCol(k){ var used={}, j, m, c; for(j=0;j<=k;j++){ m=onPad(j); if(!m) continue; c=funCol(m); while(used[c]) c=(c+1)%FUN.length; used[c]=1; } return FUN[c]; }
   function spotHtml(k,pos){ var m=onPad(k), cls=['tspot'], body='', lk='', tag='', top='', sel=m?S.pick===m.id:S.spot===k, cs=camp.cs;
     if(!m){ cls.push('empty'); body='<span class="tplus" aria-hidden="true"><i>+</i></span>'; tag='<span class="tnm dim">Empty spot</span>'; }
-    else { cls.push(tcls(m)); var nm=m.egg?'Egg':esc(camp.sw<170?X.fitName(m.name):m.name), bar=m.egg?'':'<span class="txp'+(m.xp_next?'':' max')+(m.evolve_ready?' full':'')+'"><b style="width:'+Math.round(xpPct(m))+'%"></b></span>';
+    else { cls.push(tcls(m)); var nm=m.egg?'Egg':esc(lvl(m)+(camp.sw<170?X.fitName(m.name):m.name)), bar=m.egg?'':'<span class="txp'+(m.xp_next?'':' max')+(m.evolve_ready?' full':'')+'"><b style="width:'+Math.round(xpPct(m))+'%"></b></span>';
       tag='<span class="tnm">'+nm+'</span>'+bar;
       if(m.status==='out'){ cls.push('locked','isout'); body='<span class="portal"></span>'; lk='Fighting'; }
       else if(m.egg){ var re=m.status==='resting'; cls.push(re?'locked':'full'); if(re) lk='Resting'; body='<span class="tshadow"></span><span class="who">'+egg(m.hue,2,'wob',2)+'</span>'; }
-      else { var r=m.status==='resting'; cls.push(r?'locked':'full'); if(r){ cls.push('asleep'); lk='Resting'; } if(m.evolve_ready&&!r) cls.push('evo');
-        body='<span class="tshadow"></span><span class="who'+(r?'':' look')+'" style="animation-delay:-'+(k*1.3).toFixed(1)+'s">'+img(m,cs,r?'sleep':'alive')+'</span>'+(r?'<span class="zz">z</span><span class="zz b">z</span>':''); }
+      else { var r=m.status==='resting'; cls.push(r?'locked':'full'); if(r){ cls.push('asleep'); lk='Resting'; } if(m.evolve_ready&&!r) cls.push('evo'); if(m.changing) cls.push('changing');
+        body=bean(m)+'<span class="tshadow"></span><span class="who'+(r?'':' look')+'" style="animation-delay:-'+(k*1.3).toFixed(1)+'s">'+img(m,cs,r?'sleep':'alive')+'</span>'+(r?'<span class="zz">z</span><span class="zz b">z</span>':''); }
       if(sel) top=sendTop(m);
-      if(!top&&!m.egg) top='<span class="thov">'+cap(m.danger||'normal')+' · Form '+((m.form|0)||1)+'</span>';
+      if(!top&&!m.egg) top='<span class="thov">'+(m.changing?'Changing…':cap(m.danger||'normal')+(m.level?' · Lv '+(m.level|0):' · Form '+((m.form|0)||1)))+'</span>';
       else if(!top) top='<span class="thov">Mystery egg</span>'; }
     if(sel) cls.push('sel'); if(m&&S.landed===m.id) cls.push('landed'); if(m&&S.lift===m.id) cls.push('lifted'); if(pos.e) cls.push(pos.e);
     return '<div class="'+cls.join(' ')+'" data-k="'+k+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" aria-label="'+(m?esc(m.egg?'Egg':m.name):'Empty spot')+'" style="left:'+pos.x+'%;top:'+pos.y+'px;height:'+pos.h+'px'+(m?';--cc:'+teamCol(k):'')+'">'
@@ -217,6 +227,7 @@
   function xpBlock(m){ if(m.egg) return '';
     if(!m.xp_next) return '<div class="txpbar max"><b style="width:calc(100% - 4px)"></b></div><div class="txpl"><span>XP '+(m.xp|0)+'</span><span>Final form</span></div>';
     var pct=xpPct(m);
+    if(m.level) return '<div class="txpbar"><b style="width:calc('+pct.toFixed(1)+'% - 4px)"></b></div><div class="txpl"><span>XP '+(m.xp|0)+' / '+m.xp_next+'</span><span>'+(m.xp_next-(m.xp|0))+' to Lv '+((m.level|0)+1)+'</span></div>';
     return '<div class="txpbar'+(m.evolve_ready?' full':'')+'"><b style="width:calc('+pct.toFixed(1)+'% - 4px)"></b></div><div class="txpl"><span>XP '+(m.xp|0)+' / '+m.xp_next+'</span><span>'+(m.evolve_ready?'Evolves on its next send!':(m.xp_next-(m.xp|0))+' to evolve')+'</span></div>'; }
   function report(m){ var l=m.last; if(!l||m.egg) return ''; var lines=(l.lines||[]).map(function(x){ return '<li'+(x[2]?' class="grey"':'')+'><span>'+esc(x[0])+'</span><b>+'+(x[1]|0)+'</b></li>'; }).join('');
     var tot=l.xp!=null?(l.xp|0):(l.lines||[]).reduce(function(a,x){ return a+(x[2]?0:(x[1]|0)); },0);
@@ -226,7 +237,7 @@
     if(!l.length) return ''; return '<div class="tlive"><h4>Your other creatures can fight here</h4>'+l.map(function(r){ return '<a href="/live/'+encodeURIComponent(r.twitch)+'"><span class="dotl"></span><b>'+esc(r.twitch)+'</b><small>'+(r.spawns_hour|0)+' spawns this hour</small></a>'; }).join('')+'</div>'; }
   function getLive(){ if(!api||Date.now()-S.liveAt<60000) return; S.liveAt=Date.now(); api.live().then(function(l){ S.live=Array.isArray(l)?l:[]; drawCol(); },function(){}); }
   function smallCard(m){ var cls='mc tcard k-enemy '+(m.egg?'t-egg':'t-'+esc(m.danger||'normal'))+(S.pick===m.id?' sel':'')+(lockOf(m)?' cool':'')+(S.landed===m.id?' landed':'');
-    var inner=m.egg?'<span class="nin">Egg</span><span class="ew">'+egg(m.hue,2,'wob',2)+'</span>':'<span class="nin">'+esc(X.fitName(m.name))+'</span>'+img(m,96,'cspr');
+    var inner=m.egg?'<span class="nin">Egg</span><span class="ew">'+egg(m.hue,2,'wob',2)+'</span>':'<span class="nin">'+esc(lvl(m)+X.fitName(m.name))+'</span>'+img(m,96,'cspr');
     var chip=m.status==='out'?'<span class="tchip out">Fighting</span>':m.status==='resting'?'<span class="tchip rest" data-left="'+m.id+'" data-pre="">'+hm(left(m))+'</span>':'';
     return '<button type="button" class="'+cls+'" data-id="'+m.id+'" aria-label="'+esc(m.egg?'Egg':m.name)+'">'+inner+chip+(S.pick===m.id?HAND+'<span class="thint">drag me</span>':'')+'</button>'; }
   function forms(m){ var f=(m.forms_seen||[]).filter(function(x){ return x&&spriteOk(x.sprite); }), h='';
@@ -235,14 +246,17 @@
     h+='<span class="tf now">'+img(m,48)+'</span>'; if(m.xp_next) h+='<i>›</i><span class="tf q">?</span>';
     return '<div class="tforms" aria-label="Its forms so far"><em>Forms</em>'+h+'</div>'; }
   function pinHtml(m){ var on=m.slot!=null, lock=lockOf(m), where=chan();
-    var art='<div class="tart'+(m.status==='resting'?' dozing':'')+'"><span class="tglow"></span>'+(m.egg?egg(m.hue,2,'wob',2):img(m,96,'alive'))+'</div>';
+    var art='<div class="tart'+(m.status==='resting'?' dozing':'')+(m.changing?' changing':'')+'">'+bean(m,true)+'<span class="tglow"></span>'+(m.egg?egg(m.hue,2,'wob',2):img(m,96,'alive'))+'</div>';
     var state=m.status==='out'?(m.egg?'It’s in '+esc(m.out_where||where)+'’s dungeon. It hatches about 10 seconds after it lands, or sooner if the streamer hits it.':'Fighting in '+esc(m.out_where||where)+'’s stream right now.')
       :m.status==='resting'?'Resting. It can fight or swap again in <b data-left="'+m.id+'" data-pre="">'+hm(left(m))+'</b>.'
       :m.egg?'Nobody knows what’s inside. '+(on?'Send it into a stream and it hatches there, live.':'Put it on your team, then send it into a stream to hatch it.')
+      :m.changing?'It ate a bean and is changing… Its new form shows up here in about half a minute.'
+      :m.final&&m.level?'Final form: it won\u2019t change again, but it keeps levelling up.'+(on?' Press <b>Send to dungeon!</b> above it to fight.':'')
       :on?(m.evolve_ready?'It’s ready to evolve. Send it in and it changes on stream!':'Ready to fight. Press <b>Send to dungeon!</b> above it.'):'Ready. Add it to your team to send it into a stream.';
-    var acts=on?(lock?'':'<button type="button" class="tbtn ghost sm" data-act="off">Take off team</button>')
-      :'<button type="button" class="tbtn" data-act="add">Add to team</button><span class="tdragtip">'+(phone()?'or hold and drag it up':'or drag its card onto your team')+'</span>';
-    return '<div class="tpin '+tcls(m)+(on?' onteam':'')+'"><div class="tptop">'+art+'<div class="tpi"><span class="twhere'+(on?' on':'')+'">'+(on?'On your team':'In your collection')+'</span><span class="tname">'+(m.egg?'Mystery egg':esc(m.name))+'</span>'
+    var grow=m.tester&&!m.egg&&!m.final&&!m.changing&&!lock?'<button type="button" class="tbtn ghost sm" data-act="grow" title="Test accounts only">Grow (test)</button>':'';
+    var acts=grow+(on?(lock?'':'<button type="button" class="tbtn ghost sm" data-act="off">Take off team</button>')
+      :'<button type="button" class="tbtn" data-act="add">Add to team</button><span class="tdragtip">'+(phone()?'or hold and drag it up':'or drag its card onto your team')+'</span>');
+    return '<div class="tpin '+tcls(m)+(on?' onteam':'')+'"><div class="tptop">'+art+'<div class="tpi"><span class="twhere'+(on?' on':'')+'">'+(on?'On your team':'In your collection')+'</span><span class="tname">'+(m.egg?'Mystery egg':esc(lvl(m)+m.name))+'</span>'
       +'<span class="trowi">'+tierTag(m)+(m.egg?'':'<span class="tform">Form '+((m.form|0)||1)+'</span>')+'</span>'+xpBlock(m)+(m.egg?'':'<div class="tstats"><span>Streams <b>'+(m.sends|0)+'</b></span><span>KOs <b>'+(m.kos|0)+'</b></span></div>')+'</div></div>'
       +forms(m)+'<p class="tmuted">'+state+'</p>'+(acts?'<div class="tacts">'+acts+'</div>':'')+report(m)+(m.status==='resting'?liveList():'')
       +'<button type="button" class="tx" data-act="close" aria-label="Close">×</button></div>'; }
@@ -266,15 +280,20 @@
     var m=S.pick!=null&&M(S.pick), pv=colEl.querySelector('#tprev'), ph=m?pinHtml(m):S.spot!=null&&!onPad(S.spot)?spotHint():'';
     var ps=sig(ph); if(pv._h!==ps){ var op=pv.querySelector('details'); if(op) S.repOpen=op.open; pv._h=ps; if(ph) colEl.querySelector('#tprevin').innerHTML=ph; } pv.classList.toggle('open',!!ph);
     if(m&&m.status==='resting') getLive(); }
-  function draw(){ if(!S.on) return; drawTeam(); drawCol(); }
+  function draw(){ if(!S.on) return; drawTeam(); drawCol(); paintBeans(); }
 
   /* ---------------------------------------------------------------- the 1 s tick: timers count down without redrawing everything */
   setInterval(function(){ if(!S.on||document.hidden) return; var now=Date.now();
     $$('[data-left]').forEach(function(el){ var m=M(+el.getAttribute('data-left')); if(!m) return; var pre=el.getAttribute('data-pre'); el.textContent=(pre==null?'Resting ':pre)+hm(left(m)); });
     $$('[data-out]').forEach(function(el){ var m=M(+el.getAttribute('data-out')); if(!m||m.egg) return; var pre=el.getAttribute('data-pre'); el.textContent=(pre==null?'Fighting ':pre)+ms((now-(S.outSince[m.id]||now))/1000); });
-    if(S.members.some(function(m){ return m.status==='resting'&&left(m)===0; })) soon(1500); },1000);
+    if(S.members.some(function(m){ return m.status==='resting'&&left(m)===0; })) soon(1500);
+    if(S.members.some(function(m){ return m.changing; })) soon(4000); },1000);
 
   /* ---------------------------------------------------------------- clicks (the camp, and the Collection wherever it sits) */
+  /* a tester's Grow: straight to its next change (shaped by its bean, if it ate one); the new form shows up in about a minute */
+  function grow(id){ var m=M(id); if(!m||!api) return; m.changing=true; draw();
+    api.grow(id).then(function(j){ if(j&&j.state) stateIn(j.state); toast(nameOf(m)+' is growing. Its new form shows up in about a minute.'); soon(3000); },
+      function(e){ m.changing=false; draw(); toast(ERR[String(e&&e.message||'')]||'Couldn\u2019t grow it: '+String(e&&e.message||'try again')); }); }
   function showInfo(){ if(!phone()&&sideNow()!=='collection'&&!tabCol.hidden) X.sideTab('collection',true); }
   function onClick(e){ if(justDragged) return; var a=e.target.closest('[data-act]');
     if(a){ var act=a.getAttribute('data-act');
@@ -284,6 +303,7 @@
       else if(act==='close'){ S.pick=null; S.spot=null; draw(); }
       else if(act==='add') addToTeam(S.pick);
       else if(act==='off') bench(S.pick);
+      else if(act==='grow') grow(S.pick);
       else if(act==='make') X.pTab('make');
       return; }
     var c=e.target.closest('.tcard');

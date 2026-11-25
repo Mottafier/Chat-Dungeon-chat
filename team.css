@@ -351,3 +351,17 @@
 /* a card held over another card: the gold bar shows where it lands */
 .tcard.ins-l{filter:drop-shadow(-5px 0 0 var(--flame));transform:translateX(5px)}
 .tcard.ins-r{filter:drop-shadow(5px 0 0 var(--flame));transform:translateX(-5px)}
+
+/* A creature fed a bean while its next form is being made (team.js: m.changing): it shakes and flickers in place */
+.tspot.changing .who,.tart.changing img{animation:tchg .45s steps(2) infinite;filter:brightness(1.25) saturate(1.3)}
+@keyframes tchg{0%{transform:translate(-1px,0) rotate(-2deg)}50%{transform:translate(1px,-1px) rotate(2deg)}100%{transform:translate(-1px,0) rotate(-2deg)}}
+@media (prefers-reduced-motion:reduce){.tspot.changing .who,.tart.changing img{animation:none}}
+
+/* A fed creature's bean (team.js bean()): a small badge; hover or tap shows the bean and its line */
+.tbean{position:absolute;right:6%;top:6%;z-index:3;width:22px;height:22px;border-radius:50%;background:#1d1a14;box-shadow:0 0 0 2px #f2c531;display:grid;place-items:center;cursor:help}
+.tbean canvas{width:20px;height:20px;image-rendering:pixelated}
+.tbean.big{right:4px;top:4px;width:28px;height:28px}.tbean.big canvas{width:26px;height:26px}
+.tbtip{display:none;position:absolute;right:0;top:calc(100% + 6px);width:190px;padding:8px;border-radius:8px;background:#1d1a14;color:#f4ead2;box-shadow:0 6px 18px rgba(0,0,0,.45);text-align:left;font-size:12px;line-height:1.35}
+.tbtip canvas{width:48px;height:48px;image-rendering:pixelated;float:left;margin:0 8px 4px 0}
+.tbtip em{display:block;font-style:italic}.tbtip small{display:block;clear:both;opacity:.75;margin-top:4px}
+.tbean:hover .tbtip,.tbean:focus .tbtip,.tbean:focus-within .tbtip{display:block}
