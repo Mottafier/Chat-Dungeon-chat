@@ -1150,9 +1150,6 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .jc.tick b{color:#fff}
 .jy{display:none;position:absolute;right:-4px;top:-10px;z-index:4;padding:0 4px 1px;font-family:var(--display);font-size:11px;line-height:15px;color:#130d07;background:#ffc93a;box-shadow:0 0 0 2px #000}
 .act.mine .jy{display:block}
-.jcd{position:absolute;left:2px;right:2px;bottom:2px;height:3px;z-index:2;background:#fff3c4;transform-origin:0 50%;transform:scaleX(0);pointer-events:none}
-.act.cd .jcd{animation:jcd 1s linear}
-@keyframes jcd{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .act.jar.poor .jf{filter:saturate(.25)}
 .act.jar.poor .jw{filter:saturate(.25)}
 /* full: it spawns */
@@ -1177,7 +1174,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 @keyframes jcred{0%{opacity:0}3%{opacity:1}90%{opacity:1}100%{opacity:0}}
 .sview.rewv .pacts.jars{row-gap:16px}
 .sview.rewv .jst{font-size:20px}
-@media (prefers-reduced-motion:reduce){ .jw,.jb,.jf,.act.slosh,.act.spawned,.jst,.jc.tick,.jcd{animation:none!important;transition:none!important} }
+@media (prefers-reduced-motion:reduce){ .jw,.jb,.jf,.act.slosh,.act.spawned,.jst,.jc.tick{animation:none!important;transition:none!important} }
 
 /* cards are colored by what they are; an enemy's danger is a small tag in the corner of its picture */
 .mc.k-enemy{--tc:#ef4a4a;--tg:#6e0a1f}.mc.k-weapon{--tc:#ffc93a;--tg:#6b4a12}.mc.k-item{--tc:#5fcf4a;--tg:#235a1e}.mc.k-event{--tc:#4aa3ff;--tg:#1e3f7a}
@@ -2778,8 +2775,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     var l=document.createElement('span'); l.className='jl'; l.innerHTML='<span class="jf"><span class="jw w1">'+W+'</span><span class="jw w2">'+W+'</span><em class="jb"></em><em class="jb"></em><em class="jb"></em><em class="jg"></em></span>';
     var c=document.createElement('span'); c.className='jc'; c.innerHTML='<b>0</b>/<em>0</em>';
     var y=document.createElement('span'); y.className='jy'; y.textContent='YOU';
-    var cd=document.createElement('span'); cd.className='jcd';
-    b.insertBefore(l,b.firstChild); b.appendChild(c); b.appendChild(y); b.appendChild(cd); b.classList.add('jar');
+    b.insertBefore(l,b.firstChild); b.appendChild(c); b.appendChild(y); b.classList.add('jar');
     return b._jar={l:l,f:l.firstChild,c:c,y:y}; }
   function meterDraw(){ var on=meters.ok; $('pacts').classList.toggle('jars',on); $('ppass').hidden=!(on&&pts.account&&roomOpen!==false); $('ppass').querySelector('b').textContent=meters.passive;
     if(!on) return;
@@ -2804,19 +2800,35 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   function meterShown(){ return ptNow==='spawn'&&!!$('pacts').offsetParent; }
   function meterPoll(){ clearTimeout(meters.t); var next=function(s){ meters.t=setTimeout(meterPoll,s*1000); };
     if(!ON||!code||document.hidden||adUp){ next(5); return; }
-    if(meters.busy){ next(1); return; } meters.busy=true;
-    rpc('meter_status',withTok({q_code:code,q_name:me||''})).then(function(j){ meters.busy=false; if(Date.now()>=meters.hold) meterIn(j); next(meterShown()?meters.poll:20); })
+    if(meters.busy){ next(1); return; } meters.busy=true; var st0=meters.stamp;
+    rpc('meter_status',withTok({q_code:code,q_name:me||''})).then(function(j){ meters.busy=false; if(!meters.out&&!meterWaiting()&&st0===meters.stamp) meterIn(j);   /* (an answer from before a click would show the jar without it) */ next(meterShown()?meters.poll:20); })
     .catch(function(){ meters.busy=false; meters.tries++; if(meters.ok&&meters.tries>3){ meters.ok=false; drawPoints(); meterDraw(); } next(meters.ok?meters.poll*2:300); }); }
-  meters.hold=0; meters.credit=0;
+  meters.credit=0;
+  /* A click on a jar counts at once and never waits (Mott 2026-11-25). The first click goes straight out; clicks made
+     while that call is away ride together in the next one (q_n), so fast clicking is a few calls, not one per click. */
+  meters.q={}; meters.out=null; meters.old=false; meters.stamp=0;
+  function meterWaiting(){ var n=0, a; for(a in meters.q) n+=meters.q[a]; return n; }
+  /* (an answer shows the jars as the server has them: the clicks still waiting to go are put back on top) */
+  function meterPending(){ var a, m, n; for(a in meters.q){ m=meters.m[a]; n=meters.q[a]*meters.chip; if(m&&n){ m.pool+=n; m.you+=n; pts.n=Math.max(0,pts.n-n); } } }
+  function meterFlush(){ if(meters.out) return; var a=null, k; for(k in meters.q) if(meters.q[k]>0){ a=k; break; } if(!a) return;
+    var n=meters.old?1:Math.min(20,meters.q[a]), b=actBtn(a), args={q_code:code,q_name:me,q_action:a}; meters.q[a]-=n; if(!meters.old) args.q_n=n; meters.out={a:a,n:n};
+    var again=function(ms){ meters.out=null; meters.q[a]=(meters.q[a]||0)+n; setTimeout(meterFlush,ms); };
+    rpc('meter_chip',withTok(args)).then(function(r){ meters.out=null; meters.stamp++; meterIn(r,true);
+      /* (a jar that filled mid-burst takes only what it had room for: the rest of the clicks go into its next round) */
+      var left=r&&r.took!=null?Math.min(n-(r.took|0),Math.floor((r.points|0)/meters.chip)):0; if(left>0) meters.q[a]=(meters.q[a]||0)+left;
+      if(meterWaiting()){ meterPending(); drawPoints(); meterDraw(); } setTimeout(meterFlush,meters.old?850:0); })
+    .catch(function(err){ var e=String(err&&err.message||'');
+      if(e==='slow down'){ again(meters.old?850:200); return; }
+      if(!meters.old&&/q_n|schema cache|Could not find/i.test(e)){ meters.old=true; again(0); return; }   /* (the database from before this change: one click a call) */
+      meters.out=null; meters.q={}; if(b) once(b,'no',450); pmsg(e==='not enough points'?'You\'re out of Power. More comes every minute you watch.':SPEND_ERR[e]||srvErr(err),'bad');
+      if(e==='no account') openAccount(); meterPoll(); myPoints(); }); }
   function meterChip(a,b){ var m=meters.m[a], now=Date.now(); if(!m) return;
-    if(now<meters.cool) return;
     if(pts.n<meters.chip){ once(b,'no',450); once($('dpmeter'),'shake',450); pmsg('You\'re out of Power. More comes every minute you watch.','bad'); return; }
-    meters.cool=now+1000; meters.hold=now+1500;   /* (a status answer already on its way would show the jar from before this click) */
+    meters.q[a]=(meters.q[a]||0)+1; meters.stamp++;
     pts.n-=meters.chip; m.pool+=meters.chip; m.you+=meters.chip; drawPoints(); meterDraw(); if(now>meters.credit) pmsg('');
-    var j=jarDom(b); once(b,'slosh',750); once(b,'cd',1000); once(j.c,'tick',400);
+    var j=jarDom(b); once(b,'slosh',750); once(j.c,'tick',400);
     if(!still){ if(phoneMq.matches) burst(SUN_SVG,b,3); else fly(SUN_SVG,$('dpico'),b,3); var d=document.createElement('em'); d.className='jdrop'; d.style.left=(20+Math.random()*60)+'%'; j.l.appendChild(d); setTimeout(function(){ d.remove(); },700); }
-    rpc('meter_chip',withTok({q_code:code,q_name:me,q_action:a})).then(function(r){ meters.hold=0; meterIn(r,true); })
-    .catch(function(err){ meters.hold=0; var e=String(err&&err.message||''); if(e!=='slow down'){ once(b,'no',450); pmsg(e==='not enough points'?'You\'re out of Power. More comes every minute you watch.':SPEND_ERR[e]||srvErr(err),'bad'); } if(e==='no account') openAccount(); meterPoll(); myPoints(); }); }
+    meterFlush(); }
   /* a streamer's page lives at /live/<name>: links that mean "this page" keep that path (the page has <base href="/">) */
   (function(){ if(location.pathname.indexOf('/live/')!==0) return; var here=location.pathname;
     [].forEach.call(document.querySelectorAll('a[href="?recharge"]'),function(x){ x.setAttribute('href',here+'?recharge'); });
