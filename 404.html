@@ -1394,8 +1394,9 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
           <div class="stabs" role="tablist" aria-label="Side panel">
             <button type="button" role="tab" data-side="chat" aria-selected="true"><span data-px="chat:24"></span>Chat</button>
             <button type="button" role="tab" data-side="rewards" aria-selected="false"><span data-px="suns:24"></span>Rewards</button>
-            <button type="button" role="tab" data-side="shop" aria-selected="false"><span data-px="bag:24"></span>Shop</button>
+            <button type="button" role="tab" data-side="shop" aria-selected="false"><span data-px="cart:24"></span>Shop</button>
             <button type="button" role="tab" data-side="collection" aria-selected="false" hidden><span data-px="cards:24"></span>Collection</button>
+            <button type="button" role="tab" data-side="bag" aria-selected="false" title="Bag" hidden><span data-px="bag:24"></span>Bag</button>
             <button type="button" role="tab" data-side="avatar" aria-selected="false"><span data-px="face:24"></span>Avatar</button>
             <button type="button" role="tab" data-side="account" aria-selected="false" class="ic" title="Account and settings" aria-label="Account and settings"><span data-px="gear:24"></span></button>
           </div>
@@ -1427,6 +1428,7 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
             </div>
           </div>
           <div class="sview collv" data-view="collection" hidden></div>
+          <div class="sview bagv" data-view="bag" hidden></div>
           <div class="sview cardv" data-view="cards" hidden>
             <div class="cvhead"><h3><span data-px="cards:24"></span>All cards</h3><button type="button" class="plaque" id="cvback">Back</button></div>
             <p class="dim" id="cvnote"></p>
@@ -1702,6 +1704,18 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
       '..aaaAAAAA',
       '...aa',
       '...a'],
+    cart:[12,
+      '',
+      '.ww',
+      '...w',
+      '...wyyyyyy',
+      '...wyYyYyy',
+      '....wyyyyy',
+      '....wyYyY',
+      '.....wwwww',
+      '....ww',
+      '....ss..ss',
+      '....ss..ss'],
     bag:[12,
       '',
       '....mmmm',
@@ -3126,5 +3140,6 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
 })();
 </script>
 <script defer src="/team.js?v=1"></script>
+<script defer src="/bag.js?v=1"></script>
 </body>
 </html>

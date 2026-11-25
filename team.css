@@ -78,16 +78,17 @@
 /* the creatures themselves */
 .alive{animation:tbreathe 1.6s ease-in-out infinite}
 .tspot .who.look{animation:tlook 4.6s steps(1) infinite,thop 5.3s steps(1) infinite}
-.sleep{filter:grayscale(.7) brightness(.55);animation:tbreathe 3.2s ease-in-out infinite}
+/* resting: flat on its back in full colour, breathing slowly (never greyed out) */
+.sleep{rotate:-90deg;animation:tbreathe 3.2s ease-in-out infinite}
 .wob{animation:twob 2.6s steps(1) infinite;transform-origin:50% 92%}
 @keyframes tbreathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.03,.96)}}
 @keyframes tshad{0%,100%{scale:1}50%{scale:1.07}}
 @keyframes thop{0%,88%,100%{translate:0 0}90%{translate:0 -6px}92%{translate:0 -9px}94%{translate:0 -6px}96%{translate:0 0}}
 @keyframes tlook{0%,60%,100%{scale:1 1}62%,80%{scale:-1 1}}
 @keyframes twob{0%,70%,100%{transform:rotate(0)}74%{transform:rotate(-8deg)}78%{transform:rotate(7deg)}82%{transform:rotate(-5deg)}86%{transform:rotate(3deg)}90%{transform:rotate(0)}}
-.zz{position:absolute;bottom:calc(var(--lh) + var(--cs)*.78);left:calc(50% + var(--cs)*.22);z-index:3;font:400 16px var(--display);color:#c9d6ff;text-shadow:0 2px 0 #000;animation:tzz 2.4s linear infinite;opacity:0}
+.zz{position:absolute;bottom:calc(var(--lh) + var(--cs)*.62);left:calc(50% - var(--cs)*.34);z-index:3;font:400 22px/1 var(--display);color:#fff;text-shadow:0 2px 0 #000,2px 0 0 #000,-2px 0 0 #000,0 -2px 0 #000;animation:tzz 2.4s linear infinite;opacity:0}
 .zz.b{animation-delay:1.2s}
-@keyframes tzz{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(10px,-26px)}}
+@keyframes tzz{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(-8px,-26px)}}
 .portal{position:absolute;bottom:calc(var(--lh) + 2px);width:calc(var(--cs)*.64);height:calc(var(--cs)*.84);border-radius:50%;background:radial-gradient(ellipse,#f6e8ff 0 12%,#cf96ff 12% 30%,#9648ea 30% 50%,#4f179a 50% 66%,transparent 67%);animation:tswirl 1.2s steps(6) infinite;filter:drop-shadow(0 0 10px rgba(168,90,240,.75))}
 @keyframes tswirl{50%{filter:brightness(1.35) drop-shadow(0 0 14px rgba(168,90,240,.95));transform:scale(1.06,.96)}}
 .arrive{animation:tarrive .55s cubic-bezier(.2,1.5,.4,1)}
@@ -184,7 +185,7 @@
 .tcard .nospr .px{width:100%;height:100%}
 .tcard.sel{transform:translateY(-3px);box-shadow:inset 0 0 0 2px var(--flame),inset 0 0 0 4px #0b0706,0 0 0 3px var(--flame),0 0 18px rgba(255,200,60,.8)}
 .tcard.sel .nin{background:var(--flame)}
-.tcard.cool .cspr,.tcard.cool .tspr{filter:grayscale(1) brightness(.45)}
+.tcard.cool .cspr,.tcard.cool .tspr{rotate:-90deg}
 .tcard.lifted{opacity:.25;transform:scale(.94)}
 .tcard.landed{animation:tdrop .7s cubic-bezier(.3,1.4,.5,1)}
 .tchip{position:absolute;right:4px;bottom:4px;z-index:2;font:400 13px/1 var(--display);padding:3px 5px;box-shadow:0 0 0 2px #000;color:#fff}
@@ -211,7 +212,7 @@
 .tart{position:relative;flex:none;width:112px;height:112px;display:flex;align-items:center;justify-content:center;overflow:hidden;line-height:0;
   background:radial-gradient(circle at 50% 60%,color-mix(in srgb,var(--tc) 46%,#130d07),#130d07 84%);box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 4px #0b0706}
 .tart .tglow{display:none}
-.tart.dozing img{filter:grayscale(.7) brightness(.6)}
+.tart.dozing img{rotate:-90deg}
 .tpi{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
 .twhere{align-self:flex-start;padding:1px 6px 2px;font:400 12px/1.1 var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--parch-dim);background:#120d08;box-shadow:0 0 0 2px #000}
 .twhere.on{color:#e3e9ff;background:#2a3a8a}
@@ -334,3 +335,19 @@
 }
 .tcamp.th-cols.two .tspot:nth-child(4){width:50%;left:25%!important}
 .tcamp.th-cols.two .tspot:nth-child(5){width:50%;left:75%!important}
+
+/* ---------- drag and drop both ways: team members can be picked up too ---------- */
+.tdragging iframe{pointer-events:none}  /* or the stream would swallow the drag */
+.tdragging,.tdragging *{cursor:grabbing!important}
+.tspot{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.tspot.lifted .who,.tspot.lifted .tshadow{opacity:.2}
+.tghost.spr .gc{left:52px;top:60px;opacity:1;transform:translate(-50%,-50%) rotate(-5deg) scale(1.05);transition:transform .18s}
+.tghost.spr.over .gc{transform:translate(-50%,-55%) scale(1)}
+/* a team member held over the Collection: it would come off the team */
+.tcol.tdrop{box-shadow:inset 0 0 0 2px var(--flame);background:rgba(255,178,58,.08)}
+.tcol.tdrop h3::before{content:"Drop to take it off the team";order:3;font:400 12px var(--body);color:var(--flame)}
+.tfromteam .tcol{outline:2px dashed #6b5a3c;outline-offset:2px}
+.tfromteam .tcol.tdrop{outline-color:transparent}
+/* a card held over another card: the gold bar shows where it lands */
+.tcard.ins-l{filter:drop-shadow(-5px 0 0 var(--flame));transform:translateX(5px)}
+.tcard.ins-r{filter:drop-shadow(5px 0 0 var(--flame));transform:translateX(-5px)}
