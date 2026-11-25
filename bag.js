@@ -266,7 +266,7 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
   var esc=X.esc;
   function me(){ return X.me||''; }
   function phone(){ return typeof X.phone==='function'?X.phone():false; }
-  var S={on:false,items:[],sel:null,step:null,target:null,busy:false,msg:'',seen:{}};
+  var S={on:false,items:[],sel:null,step:null,target:null,busy:false,msg:'',note:'',seen:{}};
   try{ S.seen=JSON.parse(localStorage.getItem('cdBagSeen')||'{}')||{}; }catch(e){}
   var demoItems=['b01','b04','b03','b02','b07','b09','b12'].map(function(k,i){ return {id:'d'+i,kind:'bean',look:k}; });
   var api={
@@ -279,12 +279,12 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
   function bagItem(id){ for(var i=0;i<S.items.length;i++) if(S.items[i].id===id) return S.items[i]; return null; }
   function team(){ var T=window.CDTEAM&&window.CDTEAM.S; return T&&T.members?T.members.filter(function(m){ return m.slot!=null; }).sort(function(a,b){ return a.slot-b.slot; }):[]; }
   function spr(m){ return typeof m.sprite==='string'&&/^[A-Za-z0-9+\/]+=*$/.test(m.sprite)&&m.sprite.length<60000?'<img class="bag-spr" alt="" width="48" height="48" src="data:image/png;base64,'+m.sprite+'">':'<span class="bag-spr">'+X.pix(m.egg?'cards':'enemy',40)+'</span>'; }
-  function why(m){ return m.egg?'Not hatched yet':m.out?'In the dungeon':''; }
+  function why(m){ return m.egg?'Not hatched yet':(m.out||m.status==='out')?'In the dungeon':''; }
 
   function stateIn(d){ var was=S.on; S.on=!!(d&&d.on); S.items=(d&&d.items||[]).filter(function(x){ return x&&LOOKS[x.look]; });
     if(S.sel&&!bagItem(S.sel)){ S.sel=null; if(S.step!=='done') S.step=null; }
     tab.hidden=!S.on; if(!S.on&&X.sideNow==='bag') X.sideTab('chat');
-    dot(); if(open()||was!==S.on) draw(); }
+    dot(); if(!drag&&(open()||was!==S.on)) draw(); }
   function dot(){ var n=S.items.filter(function(x){ return !S.seen[x.id]; }).length, el=tab.querySelector('.dot'); if(n&&!open()){ if(!el){ el=document.createElement('i'); el.className='dot'; tab.appendChild(el); } } else if(el) el.remove(); }
   function open(){ return !view.hidden; }
   function seeAll(){ var ch=false; S.items.forEach(function(x){ if(!S.seen[x.id]){ S.seen[x.id]=1; ch=true; } }); if(ch){ try{ localStorage.setItem('cdBagSeen',JSON.stringify(S.seen)); }catch(e){} } dot(); }
@@ -308,11 +308,11 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
       if(!S.items.length) h+='<div class="bag-empty">'+X.pix('bag',48)+'<p class="dim">Nothing in here yet. Rare finds from the dungeon land in your bag.</p></div>';
       else { h+='<div class="bag-grid">'; S.items.forEach(function(x){ h+='<button type="button" class="bag-it'+(x.id===S.sel?' on':'')+'" data-it="'+esc(String(x.id))+'" aria-label="Bean" aria-pressed="'+(x.id===S.sel)+'"><canvas width="40" height="40" data-look="'+x.look+'"></canvas></button>'; });
         for(var k=S.items.length;k<12;k++) h+='<span class="bag-it none"></span>';
-        h+='</div>'; if(!it&&S.step!=='done') h+='<p class="dim">Tap a bean for a closer look.</p>'; } }
+        h+='</div>'; if(S.note) h+='<p class="bag-err">'+esc(S.note)+'</p>'; if(S.step!=='done') h+='<p class="dim">'+(teamOn()?(phone()?'Tap a bean for a closer look. Hold one and drag it onto a creature to feed it.':'Click a bean for a closer look. Drag one onto a creature on your team to feed it.'):'Tap a bean for a closer look.')+'</p>'; } }
     view.innerHTML=h; frame(); }
   function who(id){ var T=team(); for(var i=0;i<T.length;i++) if(String(T[i].id)===String(id)) return T[i]; return null; }
 
-  view.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('button'); if(!b||b.disabled) return;
+  view.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('button'); if(!b||b.disabled||justDragged) return;
     var it=b.getAttribute('data-it'), w=b.getAttribute('data-who'), a=b.getAttribute('data-b');
     if(it!=null){ S.sel=S.sel===it?null:it; S.step=null; S.msg=''; draw(); if(S.sel) view.scrollTop=0; return; }
     if(w!=null){ S.target=w; S.step='confirm'; S.msg=''; draw(); return; }
@@ -324,11 +324,55 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
       api.use(S.sel,S.target).then(function(){ S.busy=false; S.items=S.items.filter(function(x){ return x.id!==S.sel; }); S.sel=null; S.step='done'; S.msg=nm+' ate the bean and is starting to change. Watch the Team tab.'; draw(); setTimeout(poll,1500); if(window.CDTEAM&&window.CDTEAM.poll){ try{ window.CDTEAM.poll(); }catch(e2){} } },
         function(err){ S.busy=false; S.msg=errText(err); draw(); }); } });
 
+  /* ---------------------------------------------------------------- drag a bean onto a creature (same feel as dragging a Collection card onto the team):
+     a mouse drags after a small move, a finger presses and holds. The page shows the Team while the bean is in the air; letting go
+     over a creature opens the "Feed this bean to ...?" question, anywhere else puts the bean back. */
+  var drag=null, press=null, lp=null, justDragged=false;
+  function teamOn(){ var T=window.CDTEAM&&window.CDTEAM.S; return !!(T&&T.on); }
+  function onSpot(k){ var T=team(); for(var i=0;i<T.length;i++) if(T[i].slot===k) return T[i]; return null; }
+  function spots(){ return [].slice.call(document.querySelectorAll('#tcamp .tspot')); }
+  function markSpots(){ spots().forEach(function(p){ var m=onSpot(+p.getAttribute('data-k')), ok=!!(m&&!why(m)); p.classList.toggle('bag-ok',ok); p.classList.toggle('bag-no',!ok); }); }
+  function clearSpots(){ document.documentElement.classList.remove('bagdrag'); spots().forEach(function(p){ p.classList.remove('bag-ok','bag-no','bag-hot'); }); }
+  function showTeam(){ try{ if(phone()&&X.sideNow!=='rewards') X.sideTab('rewards'); if(X.ptNow!=='team') X.pTab('team'); }catch(e){}
+    var camp=document.getElementById('tcamp'); if(camp&&!phone()){ var r=camp.getBoundingClientRect(); if(r.top<0||r.bottom>innerHeight) camp.scrollIntoView({block:'nearest',behavior:still?'auto':'smooth'}); } }
+  function beginDrag(id,el,x,y){ var it=bagItem(id); if(!it||S.busy||!teamOn()) return;
+    var g=document.createElement('div'); g.className='bag-ghost'; g.innerHTML='<canvas width="40" height="40"></canvas>'; document.body.appendChild(g); paint(g.firstChild,it.look,0);
+    drag={id:id,el:el,g:g,hot:null,home:el.getBoundingClientRect()}; el.classList.add('lifted'); S.sel=id; S.step=null; S.msg='';
+    if(navigator.vibrate) try{ navigator.vibrate(15); }catch(e){}
+    document.documentElement.classList.add('bagdrag'); showTeam(); markSpots(); moveDrag(x,y); setTimeout(function(){ if(drag) markSpots(); },120); }
+  function moveDrag(x,y){ if(!drag) return; drag.g.style.transform='translate('+(x-40)+'px,'+(y-48)+'px)'; markSpots();
+    var hit=document.elementFromPoint(x,y), p=hit&&hit.closest&&hit.closest('#tcamp .tspot');
+    if(p!==drag.hot){ if(drag.hot) drag.hot.classList.remove('bag-hot'); drag.hot=p; if(p) p.classList.add('bag-hot'); }
+    drag.g.classList.toggle('over',!!(p&&p.classList.contains('bag-ok'))); }
+  function endDrag(){ var d=drag; drag=null; justDragged=true; setTimeout(function(){ justDragged=false; },60);
+    var m=d.hot?onSpot(+d.hot.getAttribute('data-k')):null, ok=!!(m&&!why(m)); clearSpots(); d.el.classList.remove('lifted');
+    if(ok){ d.g.remove(); S.sel=d.id; S.target=String(m.id); S.step='confirm'; S.msg=''; X.sideTab('bag',true); draw(); return; }
+    S.note=m?(m.egg?'An egg can’t eat a bean. Hatch it first.':(m.name||'It')+' is in the dungeon. Feed it when it’s back.'):(d.hot?'There’s nobody on that spot.':'');
+    if(phone()||S.note) X.sideTab('bag'); draw(); S.note='';
+    requestAnimationFrame(function(){ var el=view.querySelector('.bag-it[data-it="'+d.id+'"]'), r=el&&el.offsetParent?el.getBoundingClientRect():d.home; d.g.classList.add('back'); d.g.classList.remove('over'); d.g.style.transform='translate('+r.left+'px,'+r.top+'px)'; });
+    setTimeout(function(){ d.g.remove(); },300); }
+  function grab(e){ var el=e.target.closest&&e.target.closest('.bagv .bag-it[data-it], .bagv .bag-hero'); if(!el||S.step==='confirm'||S.step==='pick') return null;
+    var id=el.getAttribute('data-it')||S.sel; return id&&teamOn()?{id:id,el:el}:null; }
+  document.addEventListener('pointerdown',function(e){ if(e.pointerType==='touch'||e.button!==0||!S.on) return; var g=grab(e); if(g){ g.x=e.clientX; g.y=e.clientY; press=g; } });
+  document.addEventListener('pointermove',function(e){ if(e.pointerType==='touch') return;
+    if(press&&!drag&&Math.abs(e.clientX-press.x)+Math.abs(e.clientY-press.y)>7){ var p=press; press=null; beginDrag(p.id,p.el,e.clientX,e.clientY); }
+    if(drag){ e.preventDefault(); moveDrag(e.clientX,e.clientY); } });
+  document.addEventListener('pointerup',function(e){ if(e.pointerType==='touch') return; press=null; if(drag) endDrag(); });
+  document.addEventListener('touchstart',function(e){ if(!S.on) return; var g=grab(e); if(!g) return; var t=e.touches[0];
+    lp={x:t.clientX,y:t.clientY,timer:setTimeout(function(){ var l=lp; lp=null; if(l) beginDrag(g.id,g.el,l.x,l.y); },280)}; },{passive:true});
+  document.addEventListener('touchmove',function(e){ var t=e.touches[0];
+    if(lp){ if(Math.abs(t.clientX-lp.x)+Math.abs(t.clientY-lp.y)>10){ clearTimeout(lp.timer); lp=null; } else { lp.x=t.clientX; lp.y=t.clientY; } }
+    if(drag){ e.preventDefault(); moveDrag(t.clientX,t.clientY); } },{passive:false});
+  document.addEventListener('touchend',function(e){ if(lp){ clearTimeout(lp.timer); lp=null; } if(drag){ e.preventDefault(); endDrag(); } },{passive:false});
+  document.addEventListener('touchcancel',function(){ if(lp){ clearTimeout(lp.timer); lp=null; } if(drag) endDrag(); });
+  document.addEventListener('contextmenu',function(e){ if(e.target.closest&&e.target.closest('.bagv .bag-it')) e.preventDefault(); });
+  document.addEventListener('dragstart',function(e){ if(e.target.closest&&e.target.closest('.bagv')) e.preventDefault(); });
+
   /* the beans only move while the bag is open */
   var t0=Date.now(), timer=null;
   function frame(){ var t=still?0:(Date.now()-t0)/1000, cs=view.querySelectorAll('canvas[data-look]'); for(var i=0;i<cs.length;i++) paint(cs[i],cs[i].getAttribute('data-look'),t); }
   function tick(){ if(open()&&S.on&&!document.hidden) frame(); }
-  function watch(){ if(open()){ seeAll(); draw(); poll(); if(!timer&&!still) timer=setInterval(tick,100); } else if(timer){ clearInterval(timer); timer=null; } }
+  function watch(){ if(drag) return; if(open()){ seeAll(); draw(); poll(); if(!timer&&!still) timer=setInterval(tick,100); } else if(timer){ clearInterval(timer); timer=null; } }
   if(window.MutationObserver) new MutationObserver(watch).observe(view,{attributes:true,attributeFilter:['hidden']});
   window.CDBAG={S:S,poll:poll,stateIn:stateIn,draw:draw};
   poll(); setInterval(function(){ if(!document.hidden) poll(); },DEMO?600000:open()?15000:90000);

@@ -31,7 +31,7 @@ window.CDTEAM_DEMO=function(stateIn,X){
   setTimeout(push,50); setInterval(push,5000);
   return {
     set:function(i,k){ var m=by(i); if(!m) return err('no card'); var o=k==null?null:L.filter(function(x){ return x.slot===k; })[0];
-      if(m.status!=='home'||(o&&o.status!=='home')) return err('busy'); if(o&&o!==m) o.slot=null; m.slot=k; return ok(); },
+      if(m.status!=='home'||(o&&o.status!=='home')) return err('busy'); if(o&&o!==m) o.slot=m.slot; m.slot=k; return ok(); },
     send:function(i){ var m=by(i); if(!m) return err('no card'); if(m.slot==null) return err('not on team'); if(m.status==='out') return err('out'); if(m.status==='resting') return err('resting');
       m.status='out'; m.out_where=(typeof X.channel==='function'?X.channel():X.channel)||'mottafierr';
       if(m.egg) setTimeout(function(){ var h=hatches[m.id]||hatches[4]; m.egg=false; m.fresh=true; m.name=h.name; m.danger=h.danger; m.sprite=h.sprite; m.form=1; m.forms_seen=[]; m.xp=60; m.xp_next=250; m.sends=1; m.kos=0; push(); },6000);

@@ -334,3 +334,19 @@
 }
 .tcamp.th-cols.two .tspot:nth-child(4){width:50%;left:25%!important}
 .tcamp.th-cols.two .tspot:nth-child(5){width:50%;left:75%!important}
+
+/* ---------- drag and drop both ways: team members can be picked up too ---------- */
+.tdragging iframe{pointer-events:none}  /* or the stream would swallow the drag */
+.tdragging,.tdragging *{cursor:grabbing!important}
+.tspot{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.tspot.lifted .who,.tspot.lifted .tshadow{opacity:.2}
+.tghost.spr .gc{left:52px;top:60px;opacity:1;transform:translate(-50%,-50%) rotate(-5deg) scale(1.05);transition:transform .18s}
+.tghost.spr.over .gc{transform:translate(-50%,-55%) scale(1)}
+/* a team member held over the Collection: it would come off the team */
+.tcol.tdrop{box-shadow:inset 0 0 0 2px var(--flame);background:rgba(255,178,58,.08)}
+.tcol.tdrop h3::before{content:"Drop to take it off the team";order:3;font:400 12px var(--body);color:var(--flame)}
+.tfromteam .tcol{outline:2px dashed #6b5a3c;outline-offset:2px}
+.tfromteam .tcol.tdrop{outline-color:transparent}
+/* a card held over another card: the gold bar shows where it lands */
+.tcard.ins-l{filter:drop-shadow(-5px 0 0 var(--flame));transform:translateX(5px)}
+.tcard.ins-r{filter:drop-shadow(5px 0 0 var(--flame));transform:translateX(-5px)}

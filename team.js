@@ -22,7 +22,7 @@
   function account(){ return typeof X.account==='function'?X.account():!!X.account; }
   var BASE=(function(){ var s=document.currentScript&&document.currentScript.src; return s?s.replace(/team\.js.*$/,''):'/'; })();
   var VER=(function(){ var s=document.currentScript&&document.currentScript.src, m=s&&s.match(/[?&]v=([\w.-]+)/); return m?m[1]:'1'; })();
-  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.4'; document.head.appendChild(l); })();
+  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.5'; document.head.appendChild(l); })();
 
   /* ---------------------------------------------------------------- state */
   var S={on:false,known:false,slots:5,cooldown:14400,members:[],byId:{},making:null,at:0,got:0,
@@ -169,7 +169,7 @@
       if(sel) top=sendTop(m);
       if(!top&&!m.egg) top='<span class="thov">'+cap(m.danger||'normal')+' · Form '+((m.form|0)||1)+'</span>';
       else if(!top) top='<span class="thov">Mystery egg</span>'; }
-    if(sel) cls.push('sel'); if(m&&S.landed===m.id) cls.push('landed'); if(pos.e) cls.push(pos.e);
+    if(sel) cls.push('sel'); if(m&&S.landed===m.id) cls.push('landed'); if(m&&S.lift===m.id) cls.push('lifted'); if(pos.e) cls.push(pos.e);
     return '<div class="'+cls.join(' ')+'" data-k="'+k+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" aria-label="'+(m?esc(m.egg?'Egg':m.name):'Empty spot')+'" style="left:'+pos.x+'%;top:'+pos.y+'px;height:'+pos.h+'px'+(m?';--cc:'+teamCol(k):'')+'">'
       +'<span class="tglow"></span><span class="mark"></span><span class="swapi">'+(m?'⇄ Swap':'+ Here')+'</span>'+(lk?'<span class="lk">'+lk+'</span>':'')+top+body+'<span class="tlbl">'+tag+stLine(m)+'</span></div>'; }
   /* what's compared to decide on a redraw: the HTML without its running clocks (the 1 s tick keeps those going) */
@@ -250,11 +250,18 @@
     return '<div class="tpin t-none"><div class="tpi"><span class="twhere on">Empty spot</span><span class="tname">Who goes here?</span><p class="tmuted">'
       +(any?(phone()?'Tap a creature below, then <b>Add to team</b>. Or hold one and drag it up.':'Click a creature below, then <b>Add to team</b>. Or just drag its card onto the spot.'):'Everyone you have is already on your team. Make a new egg to fill this spot.')
       +'</p>'+(any?'':'<div class="tacts"><button type="button" class="tbtn sm" data-act="make">Make an egg</button></div>')+'</div><button type="button" class="tx" data-act="close" aria-label="Close">×</button></div>'; }
+  /* the Collection's order is the viewer's own (drag a card onto another to move it); it's kept in this browser.
+     Anyone not placed yet comes first, newest first. */
+  var colOrder=[]; try{ colOrder=JSON.parse(localStorage.getItem('cdColOrder')||'[]')||[]; }catch(e){ colOrder=[]; }
+  function colList(){ return S.members.filter(function(m){ return m.slot==null; }).sort(function(a,b){ var i=colOrder.indexOf(a.id), j=colOrder.indexOf(b.id); return i<0&&j<0?b.id-a.id:i<0?-1:j<0?1:i-j; }); }
+  function reorder(id,target,after){ var ids=colList().map(function(m){ return m.id; }).filter(function(x){ return x!==id; }), at=target==null?ids.length:ids.indexOf(target);
+    if(at<0) at=ids.length; else if(after&&target!=null) at++; ids.splice(at,0,id); colOrder=ids; try{ localStorage.setItem('cdColOrder',JSON.stringify(ids)); }catch(e){}
+    S.landed=id; setTimeout(function(){ S.landed=null; },900); colEl.querySelector('#tgrid')._h=''; drawCol(); }
   function drawCol(){ if(!S.on) return; mount();
-    var list=S.members.filter(function(m){ return m.slot==null; }).sort(function(a,b){ return b.id-a.id; });
+    var list=colList();
     colEl.querySelector('.tcount').textContent=list.length?list.length+' waiting':'';
     var g=list.map(smallCard).join(''), gs=sig(g), grid=colEl.querySelector('#tgrid'); if(grid._h!==gs&&!drag){ grid._h=gs; grid.innerHTML=g; }
-    colEl.querySelector('#tcolnote').textContent=list.length?(phone()?'Tap one to look. Hold and drag it onto your team.':'Click one to look. Drag it onto your team to swap it in.')
+    colEl.querySelector('#tcolnote').textContent=list.length?(phone()?'Tap one to look. Hold and drag it onto your team, or onto another card to reorder.':'Click one to look. Drag it onto your team, or onto another card to reorder.')
       :S.members.length?'Everyone is on your team. Make another egg in the Make tab.':'Nothing here yet. Make something in the Make tab and it comes out as an egg.';
     var m=S.pick!=null&&M(S.pick), pv=colEl.querySelector('#tprev'), ph=m?pinHtml(m):S.spot!=null&&!onPad(S.spot)?spotHint():'';
     var ps=sig(ph); if(pv._h!==ps){ var op=pv.querySelector('details'); if(op) S.repOpen=op.open; pv._h=ps; if(ph) colEl.querySelector('#tprevin').innerHTML=ph; } pv.classList.toggle('open',!!ph);
@@ -323,7 +330,7 @@
     if(lockOf(m)) toast(busyWhy(m,true),true);
     else if(!dragging) toast(phone()?'Your team is full. Tap who it should swap with.':'Your team is full. Click who it should swap with.');
     return true; }
-  function stopPlacing(){ S.placing=null; document.documentElement.classList.remove('tplacing'); $$('.tspot.hot').forEach(function(p){ p.classList.remove('hot'); }); }
+  function stopPlacing(){ S.placing=null; document.documentElement.classList.remove('tplacing','tfromteam'); $$('.tspot.hot').forEach(function(p){ p.classList.remove('hot'); }); }
   function shake(el){ if(!el) return; el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
   function tryDrop(k){ var id=S.placing, src=M(id), old=onPad(k), pad=campEl&&campEl.querySelector('.tspot[data-k="'+k+'"]');
     if(!src) { stopPlacing(); return false; }
@@ -331,9 +338,10 @@
     if(lockOf(old)){ shake(pad); toast(busyWhy(old,false),true); return false; }
     /* looks done at once; the database has the last word */
     var who=pad&&pad.querySelector('.who'); if(who) who.classList.add('leave');
-    var was=src.slot; if(old) old.slot=null; src.slot=k; S.pick=id; S.spot=null; stopPlacing();
+    if(old===src){ stopPlacing(); return true; }
+    var was=src.slot; if(old) old.slot=was; src.slot=k; S.pick=id; S.spot=null; stopPlacing();
     setTimeout(function(){ lastCamp=''; draw(); var w=campEl.querySelector('.tspot[data-k="'+k+'"] .who')||campEl.querySelector('.tspot[data-k="'+k+'"]'); if(w){ w.classList.add('arrive'); } },who?240:0);
-    toast(old?nameOf(src)+' joined your team. '+(old.egg?'The egg':old.name)+' went back to your Collection.':nameOf(src)+' joined your team.');
+    toast(was!=null?(old?nameOf(src)+' and '+(old.egg?'the egg':old.name)+' swapped places.':nameOf(src)+' moved over.'):old?nameOf(src)+' joined your team. '+(old.egg?'The egg':old.name)+' went back to your Collection.':nameOf(src)+' joined your team.');
     (api?api.set(id,k):demo.set(id,k)).then(function(j){ if(j&&j.members) stateIn(j); else soon(200); })
     .catch(function(e){ src.slot=was; if(old) old.slot=k; lastCamp=''; draw(); toast(errText(e),true); soon(200); });
     return true; }
@@ -342,42 +350,72 @@
   function ghost(m,el){ var g=document.createElement('div'); g.className='tghost';
     g.innerHTML='<div class="gcard">'+el.outerHTML.replace(/<svg class="thand"[\s\S]*?<\/svg>|<span class="thint">.*?<\/span>/g,'')+'</div><span class="gc">'+(m.egg?egg(m.hue,2,'',2):img(m,96))+'</span>';
     document.body.appendChild(g); return g; }
+  /* A drag starts on a Collection card or on a team member.
+     Card -> a team spot: joins (or swaps in).   Card -> another card: moves it there in the Collection.
+     Team member -> another spot: moves or swaps places.   Team member -> the Collection: comes off the team. */
   function beginDrag(id,el,x,y){ var m=M(id); if(!m) return;
-    if(m.slot!=null){ toast(nameOf(m)+' is already on your team.'); return; }
-    var r=el.getBoundingClientRect(); S.pick=id;
-    drag={id:id,el:el,ox:x-r.left,oy:y-r.top,home:r,hot:null,g:ghost(m,el)}; el.classList.add('lifted');
+    var team=m.slot!=null, r=el.getBoundingClientRect(), g;
+    if(team&&lockOf(m)){ toast(busyWhy(m,false),true); return; }
+    S.pick=id;
+    if(team){ g=document.createElement('div'); g.className='tghost spr'; g.innerHTML='<span class="gc">'+(m.egg?egg(m.hue,2,'',2):img(m,96))+'</span>'; document.body.appendChild(g); }
+    else g=ghost(m,el);
+    drag={id:id,el:el,team:team,ox:team?52:x-r.left,oy:team?60:y-r.top,home:r,hot:null,col:false,card:null,after:false,g:g}; el.classList.add('lifted');
+    document.documentElement.classList.add('tdragging');
     if(navigator.vibrate) try{ navigator.vibrate(15); }catch(e){}
-    startPlacing(id,true); moveDrag(x,y); }
+    if(team){ S.lift=id; S.placing=id; document.documentElement.classList.add('tplacing','tfromteam'); if(!phone()&&!tabCol.hidden&&sideNow()!=='collection') X.sideTab('collection'); lastCamp=''; drawTeam(); markPads(); }
+    else startPlacing(id,true);
+    moveDrag(x,y); }
+  function colZone(hit){ return !!(hit&&hit.closest&&(hit.closest('.tcol')||hit.closest('.sview[data-view="collection"]'))); }
   function moveDrag(x,y){ if(!drag) return; drag.g.style.transform='translate('+(x-drag.ox)+'px,'+(y-drag.oy)+'px)';
     var hit=document.elementFromPoint(x,y), p=hit&&hit.closest&&hit.closest('#tcamp .tspot');
     if(p!==drag.hot){ if(drag.hot) drag.hot.classList.remove('hot'); drag.hot=p; if(p) p.classList.add('hot'); }
     drag.g.classList.toggle('over',!!(p&&!p.classList.contains('no')));
+    /* a team member over the Collection: it would come off the team */
+    var col=drag.team&&!p&&colZone(hit); if(col!==drag.col){ drag.col=col; colEl.classList.toggle('tdrop',col); }
+    /* a card over another card: it would move there */
+    var c=!drag.team&&!p&&hit&&hit.closest?hit.closest('#tgrid .tcard'):null, after=false; if(c&&+c.getAttribute('data-id')===drag.id) c=null;
+    if(c){ var cr=c.getBoundingClientRect(); after=x>cr.left+cr.width/2; }
+    if(c!==drag.card||after!==drag.after){ if(drag.card) drag.card.classList.remove('ins-l','ins-r'); drag.card=c; drag.after=after; if(c) c.classList.add(after?'ins-r':'ins-l'); }
     /* near the edge of the list (phones) or the screen: scroll, so a camp that's out of view can be reached */
     var sv=pane.closest('.sview'), box=sv&&sv.scrollHeight>sv.clientHeight+4?sv.getBoundingClientRect():{top:0,bottom:innerHeight}, ed=56, dy=y<box.top+ed?-12:y>box.bottom-ed?12:0;
     if(dy){ if(sv&&box.top) sv.scrollTop+=dy; else scrollBy(0,dy); } }
   function endDrag(){ var d=drag; drag=null; justDragged=true; setTimeout(function(){ justDragged=false; },60);
-    var ok=d.hot?tryDrop(+d.hot.getAttribute('data-k')):false;
-    if(ok){ d.g.remove(); d.el.classList.remove('lifted'); return; }
+    document.documentElement.classList.remove('tdragging'); colEl.classList.remove('tdrop'); if(d.card) d.card.classList.remove('ins-l','ins-r'); S.lift=null;
+    function done(){ d.g.remove(); d.el.classList.remove('lifted'); }
+    if(d.hot){ if(tryDrop(+d.hot.getAttribute('data-k'))){ done(); lastCamp=''; drawTeam(); return; } }
+    else if(d.team&&d.col){ stopPlacing(); done(); bench(d.id); return; }
+    else if(!d.team&&d.card){ stopPlacing(); done(); reorder(d.id,+d.card.getAttribute('data-id'),d.after); return; }
     stopPlacing();
-    requestAnimationFrame(function(){ var r=d.el.isConnected&&d.el.offsetParent?d.el.getBoundingClientRect():d.home; d.g.classList.add('back'); d.g.classList.remove('over'); d.g.style.transform='translate('+r.left+'px,'+r.top+'px)'; });
-    setTimeout(function(){ d.g.remove(); d.el.classList.remove('lifted'); colEl.querySelector('#tgrid')._h=''; drawCol(); },320); }
+    requestAnimationFrame(function(){ var r=d.el.isConnected&&d.el.offsetParent?d.el.getBoundingClientRect():d.home; d.g.classList.add('back'); d.g.classList.remove('over'); d.g.style.transform='translate('+(d.team?r.left+r.width/2-52:r.left)+'px,'+(d.team?r.top+r.height/2-60:r.top)+'px)'; });
+    setTimeout(function(){ done(); colEl.querySelector('#tgrid')._h=''; lastCamp=''; draw(); },320); }
+  /* what can be picked up under this point: a Collection card, or a team member standing on its spot */
+  function grab(t){ if(!t||!t.closest||S.placing!=null&&!drag) return null; var el=t.closest('#tgrid .tcard'); if(el) return {id:+el.getAttribute('data-id'),el:el};
+    if(t.closest('[data-act]')) return null; el=t.closest('#tcamp .tspot'); var m=el&&onPad(+el.getAttribute('data-k')); return m?{id:m.id,el:el}:null; }
   /* mouse and pen: drag after a small move */
-  document.addEventListener('pointerdown',function(e){ if(e.pointerType==='touch'||e.button!==0||!S.on) return; var el=e.target.closest&&e.target.closest('#tgrid .tcard'); if(!el) return;
-    press={id:+el.getAttribute('data-id'),el:el,x:e.clientX,y:e.clientY}; });
+  document.addEventListener('pointerdown',function(e){ if(e.pointerType==='touch'||e.button!==0||!S.on) return; var g=grab(e.target); if(!g) return;
+    press={id:g.id,el:g.el,x:e.clientX,y:e.clientY}; });
   document.addEventListener('pointermove',function(e){ if(e.pointerType==='touch') return;
     if(press&&!drag&&Math.abs(e.clientX-press.x)+Math.abs(e.clientY-press.y)>7){ var p=press; press=null; beginDrag(p.id,p.el,e.clientX,e.clientY); }
     if(drag){ e.preventDefault(); moveDrag(e.clientX,e.clientY); } });
   document.addEventListener('pointerup',function(e){ if(e.pointerType==='touch') return; press=null; if(drag) endDrag(); });
-  document.addEventListener('dragstart',function(e){ if(e.target.closest&&e.target.closest('#tgrid')) e.preventDefault(); });
+  document.addEventListener('dragstart',function(e){ if(e.target.closest&&(e.target.closest('#tgrid')||e.target.closest('#tcamp'))) e.preventDefault(); });
   /* touch: press and hold, then drag (a quick swipe still scrolls) */
-  document.addEventListener('touchstart',function(e){ if(!S.on) return; var el=e.target.closest&&e.target.closest('#tgrid .tcard'); if(!el) return; var t=e.touches[0];
-    lp={el:el,x:t.clientX,y:t.clientY,timer:setTimeout(function(){ var l=lp; lp=null; if(l) beginDrag(+l.el.getAttribute('data-id'),l.el,l.x,l.y); },280)}; },{passive:true});
-  document.addEventListener('touchmove',function(e){ var t=e.touches[0];
-    if(lp){ if(Math.abs(t.clientX-lp.x)+Math.abs(t.clientY-lp.y)>10){ clearTimeout(lp.timer); lp=null; } else { lp.x=t.clientX; lp.y=t.clientY; } }
-    if(drag){ e.preventDefault(); moveDrag(t.clientX,t.clientY); } },{passive:false});
-  document.addEventListener('touchend',function(e){ if(lp){ clearTimeout(lp.timer); lp=null; } if(drag){ e.preventDefault(); endDrag(); } },{passive:false});
-  document.addEventListener('touchcancel',function(){ if(lp){ clearTimeout(lp.timer); lp=null; } if(drag) endDrag(); });
-  document.addEventListener('contextmenu',function(e){ if(e.target.closest&&e.target.closest('#tgrid .tcard')) e.preventDefault(); });
+  /* A touch keeps sending its events to the element it started on, even after a redraw has taken that element off the page
+     (then they no longer reach the document). So the same handlers also listen on that element until the finger lifts. */
+  var touchEl=null, tOpt={passive:false};
+  function tBind(el){ tFree(); touchEl=el; el.addEventListener('touchmove',tMove,tOpt); el.addEventListener('touchend',tEnd,tOpt); el.addEventListener('touchcancel',tCancel,tOpt); }
+  function tFree(){ if(!touchEl) return; touchEl.removeEventListener('touchmove',tMove,tOpt); touchEl.removeEventListener('touchend',tEnd,tOpt); touchEl.removeEventListener('touchcancel',tCancel,tOpt); touchEl=null; }
+  function tMove(e){ if(e._cd) return; e._cd=1; var t=e.touches[0]; if(!t) return;
+    if(lp){ if(Math.abs(t.clientX-lp.x)+Math.abs(t.clientY-lp.y)>10){ clearTimeout(lp.timer); lp=null; tFree(); } else { lp.x=t.clientX; lp.y=t.clientY; } }
+    if(drag){ e.preventDefault(); moveDrag(t.clientX,t.clientY); } }
+  function tEnd(e){ if(e._cd) return; e._cd=1; tFree(); if(lp){ clearTimeout(lp.timer); lp=null; } if(drag){ e.preventDefault(); endDrag(); } }
+  function tCancel(e){ if(e._cd) return; e._cd=1; tFree(); if(lp){ clearTimeout(lp.timer); lp=null; } if(drag) endDrag(); }
+  document.addEventListener('touchstart',function(e){ if(!S.on||drag) return; var g=grab(e.target); if(!g) return; var t=e.touches[0]; tBind(e.target);
+    lp={el:g.el,x:t.clientX,y:t.clientY,timer:setTimeout(function(){ var l=lp; lp=null; if(l) beginDrag(g.id,l.el,l.x,l.y); },280)}; },{passive:true});
+  document.addEventListener('touchmove',tMove,tOpt);
+  document.addEventListener('touchend',tEnd,tOpt);
+  document.addEventListener('touchcancel',tCancel);
+  document.addEventListener('contextmenu',function(e){ if(e.target.closest&&(e.target.closest('#tgrid .tcard')||e.target.closest('#tcamp .tspot'))) e.preventDefault(); });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&S.placing!=null&&!drag){ stopPlacing(); toast('Cancelled.'); } });
 
   /* ---------------------------------------------------------------- hatching (the site shows it the moment the game reports it) */
@@ -412,6 +450,6 @@
   /* ---------------------------------------------------------------- start */
   var demo=null;
   window.CDTEAM={S:S,draw:draw,stateIn:stateIn,poll:poll,api:api,setDemo:function(d){ demo=d; }};
-  if(DEMO){ var s=document.createElement('script'); s.src=BASE+'team-demo.js?v='+VER+'.4'; s.onload=function(){ if(window.CDTEAM_DEMO){ demo=window.CDTEAM_DEMO(stateIn,X); } }; document.head.appendChild(s); }
+  if(DEMO){ var s=document.createElement('script'); s.src=BASE+'team-demo.js?v='+VER+'.5'; s.onload=function(){ if(window.CDTEAM_DEMO){ demo=window.CDTEAM_DEMO(stateIn,X); } }; document.head.appendChild(s); }
   else { var wait=function(){ if(me()) poll(); else setTimeout(wait,1500); }; setTimeout(wait,800); }
 })();
