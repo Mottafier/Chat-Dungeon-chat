@@ -276,12 +276,12 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
     use:function(item,card){ if(demoOn()){ demoItems=demoItems.filter(function(x){ return x.id!==item; }); return new Promise(function(ok){ setTimeout(function(){ ok({ok:true}); },700); }); }
       return X.rpc('bag_use',X.withTok({q_name:me(),q_item:item,q_card:card})); }
   };
-  var ERR={'no item':'That item isn’t in your bag any more.','no card':'That creature isn’t yours.','busy':'It can’t eat while it’s in the dungeon.','not hatched':'It hasn’t hatched yet.','final':'It has already reached its final form.','too soon':'It needs more levels before it can eat another bean.','no account':'Make an account first.'};
+  var ERR={'no item':'That item isn’t in your bag any more.','no card':'That creature isn’t yours.','busy':'It can’t eat while it’s in the dungeon.','not hatched':'It hasn’t hatched yet.','final':'Final form: it won’t change again.','already fed':'It already has a bean. It uses it the next time it changes.','no account':'Make an account first.'};
   function errText(e){ var m=String(e&&e.message||''); return ERR[m]||(!m||e instanceof TypeError?'Couldn’t reach the server. Try again.':'Server said: '+m.slice(0,100)); }
   function bagItem(id){ for(var i=0;i<S.items.length;i++) if(S.items[i].id===id) return S.items[i]; return null; }
   function team(){ var T=window.CDTEAM&&window.CDTEAM.S; return T&&T.members?T.members.filter(function(m){ return m.slot!=null; }).sort(function(a,b){ return a.slot-b.slot; }):[]; }
   function spr(m){ return typeof m.sprite==='string'&&/^[A-Za-z0-9+\/]+=*$/.test(m.sprite)&&m.sprite.length<60000?'<img class="bag-spr" alt="" width="48" height="48" src="data:image/png;base64,'+m.sprite+'">':'<span class="bag-spr">'+X.pix(m.egg?'cards':'enemy',40)+'</span>'; }
-  function why(m){ return m.egg?'Not hatched yet':(m.out||m.status==='out')?'In the dungeon':''; }
+  function why(m){ return m.egg?'Not hatched yet':m.final?'Final form: won’t change again':m.fed?'Already ate a bean':''; }
 
   function stateIn(d){ var was=S.on; S.on=!!(d&&d.on); S.items=(d&&d.items||[]).filter(function(x){ return x&&LOOKS[x.look]; });
     if(S.sel&&!bagItem(S.sel)){ S.sel=null; if(S.step!=='done') S.step=null; }
@@ -323,8 +323,8 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
     else if(a==='cancel'){ S.step=null; draw(); }
     else if(a==='back'){ S.step=null; S.msg=''; draw(); }
     else if(a==='go'){ var m=who(S.target), nm=m?(m.name||'Your creature'):'Your creature'; S.busy=true; S.msg=''; draw();
-      api.use(S.sel,S.target).then(function(){ S.busy=false; S.items=S.items.filter(function(x){ return x.id!==S.sel; }); S.sel=null; S.step='done'; S.msg=nm+' ate the bean and is starting to change. Watch the Team tab.'; draw(); setTimeout(poll,1500); if(window.CDTEAM&&window.CDTEAM.poll){ try{ window.CDTEAM.poll(); }catch(e2){} } },
-        function(err){ S.busy=false; S.msg=String(err&&err.message||'')==='too soon'&&m&&m.eat_at_level?'Not yet: '+nm+' can eat a bean at Lv '+(m.eat_at_level|0)+'. It levels up in the dungeon.':errText(err); draw(); }); } });
+      api.use(S.sel,S.target).then(function(){ S.busy=false; S.items=S.items.filter(function(x){ return x.id!==S.sel; }); S.sel=null; S.step='done'; S.msg=nm+' ate the bean. The next time it changes, the bean shapes what it becomes.'; draw(); setTimeout(poll,1500); if(window.CDTEAM&&window.CDTEAM.poll){ try{ window.CDTEAM.poll(); }catch(e2){} } },
+        function(err){ S.busy=false; S.msg=errText(err); draw(); }); } });
 
   /* ---------------------------------------------------------------- drag a bean onto a creature (same feel as dragging a Collection card onto the team):
      a mouse drags after a small move, a finger presses and holds. The page shows the Team while the bean is in the air; letting go
@@ -376,7 +376,8 @@ function umbrella(G,t,F){var tr=F===TREAT,cx=20,cy=tr?28:27,fr=Math.floor(t*10);
   function tick(){ if(open()&&S.on&&!document.hidden) frame(); }
   function watch(){ if(drag) return; if(open()){ seeAll(); draw(); poll(); if(!timer&&!still) timer=setInterval(tick,100); } else if(timer){ clearInterval(timer); timer=null; } }
   if(window.MutationObserver) new MutationObserver(watch).observe(view,{attributes:true,attributeFilter:['hidden']});
-  window.CDBAG={S:S,poll:poll,stateIn:stateIn,draw:draw};
+  window.CDBAG={S:S,poll:poll,stateIn:stateIn,draw:draw,paint:paint,line:function(look){ var L=LOOKS[look]; return L?L[1]:''; }};
+  if(window.CDTEAM&&window.CDTEAM.draw){ try{ window.CDTEAM.draw(); }catch(e){} }
   var wasDemo=demoOn(); poll(); setInterval(function(){ if(!document.hidden) poll(); },90000);
   /* signing in or out as a test name shows or hides the pretend beans straight away */
   setInterval(function(){ var d=demoOn(); if(d!==wasDemo){ wasDemo=d; if(!d) stateIn({on:false,items:[]}); poll(); } },3000);
