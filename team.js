@@ -644,7 +644,7 @@
   function giftDrop(){ S.members=S.members.filter(function(m){ return m.id!==GIFT; }); delete S.byId[GIFT]; }
   function giftSync(){ if(G.busy) return;
     if(!giftCan()){ if(G.on){ G.on=false; giftDrop(); giftClose(); redraw(); } return; }
-    if(!G.on){ if(U.path&&U.site<GIFT_AT) return; G.on=true; if(U.path) uWant('pets'); giftMember(); S.landed=GIFT; setTimeout(function(){ if(S.landed===GIFT) S.landed=null; },1200); redraw(); }
+    if(!G.on){ if(U.path&&U.site<GIFT_AT&&!U.have.pets) return; G.on=true; if(U.path&&!U.have.pets){ tell('pets'); uWant('pets'); } giftMember(); S.landed=GIFT; setTimeout(function(){ if(S.landed===GIFT) S.landed=null; },1200); redraw(); }
     giftAsk(); }
   /* a new visitor is asked as soon as the Pets tab is on show; anyone else clicks the egg when they like */
   function giftAsk(){ if(!G.on||G.open||G.asked||!U.path) return;
