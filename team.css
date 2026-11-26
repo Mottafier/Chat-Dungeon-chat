@@ -428,39 +428,30 @@
 @keyframes tnewdot{50%{transform:scale(1.35)}}
 .tcamp.tback{animation:tfadein .3s ease}
 
-/* ---- the present beside the Chat tab: it glows and wiggles until it's opened ---- */
-.stabs button.tgift{flex:0 0 46px;padding:0;color:var(--flame);background:#2a1a05;border-color:#ffb23a;box-shadow:inset 0 0 0 2px #ffb23a,0 0 12px rgba(255,190,60,.5);animation:tglit 1.5s ease-in-out infinite;z-index:2}
-.stabs button.tgift .tgi{display:flex;transform-origin:50% 90%;animation:tgwig 2.2s ease-in-out infinite}
-.stabs button.tgift .dot{animation:tnewdot 1.2s ease-in-out infinite}
-.stabs button.tgift .tgl{display:none}.stabs button.tgift[aria-selected="true"] .tgl{display:inline}
-.stabs button.tgift[aria-selected="true"]{flex:1 1 0;gap:6px;background:var(--panel);box-shadow:inset 0 3px 0 var(--flame);border-bottom-color:var(--panel)}
-.stabs button.tgift.seen{animation:none}.stabs button.tgift.seen .tgi{animation:none}.stabs button.tgift.seen .dot{display:none}
-@keyframes tglit{50%{box-shadow:inset 0 0 0 2px #ffe9a6,0 0 22px rgba(255,214,110,.95);background:#4a2f0a}}
-@keyframes tgwig{0%,62%,100%{transform:rotate(0) translateY(0)}68%{transform:rotate(-14deg) translateY(-3px)}76%{transform:rotate(12deg) translateY(-3px)}84%{transform:rotate(-7deg)}92%{transform:rotate(4deg)}}
-.sview.tgiftv{align-items:center;justify-content:center;padding:18px 16px;overflow-x:hidden;background:radial-gradient(ellipse 90% 55% at 50% 32%,rgba(255,178,58,.2),transparent 70%)}
-.tgbox{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:330px;text-align:center}
-.tgart{position:relative;width:190px;height:170px;flex:none}
-.tgart .rays{position:absolute;left:50%;top:50%;width:420px;height:420px;margin:-210px 0 0 -210px;border-radius:50%;background:repeating-conic-gradient(rgba(255,210,120,.2) 0 10deg,transparent 10deg 22deg);-webkit-mask:radial-gradient(circle,#000 20%,transparent 62%);mask:radial-gradient(circle,#000 20%,transparent 62%);animation:trays 16s linear infinite,tfadein .6s .75s backwards;pointer-events:none}
-.tgpres,.tgegg{position:absolute;left:50%;top:50%;line-height:0}
-.tgpres{margin:-48px 0 0 -48px;animation:tgopen 1s cubic-bezier(.4,0,.6,1) forwards}
-.tgpres .px,.tgpres svg{width:96px;height:96px;display:block}
-.tgegg{margin:-50px 0 0 -40px;animation:tgrise .7s .72s cubic-bezier(.2,1.5,.4,1) backwards}
-.tgegg svg{display:block;width:80px;height:100px}
-@keyframes tgopen{0%{transform:rotate(0)}10%{transform:rotate(-9deg)}22%{transform:rotate(9deg)}34%{transform:rotate(-7deg)}46%{transform:rotate(7deg)}58%{transform:rotate(0) scale(1)}72%{transform:scale(1.28,.8);opacity:1}100%{transform:scale(.3) translateY(60px);opacity:0}}
-@keyframes tgrise{from{transform:translateY(46px) scale(.15);opacity:0}}
-.tgh{margin:0;white-space:nowrap;font:400 28px/1 var(--display);color:var(--flame);text-shadow:0 3px 0 #000;animation:tgup .45s 1s backwards}
-.tgf{display:flex;flex-direction:column;gap:9px;width:100%;animation:tgup .45s 1.12s backwards}
-.tgf label{font:400 20px/1.1 var(--display);color:var(--parch);text-shadow:0 2px 0 #000}
+/* ---- the free egg: it stands in the Pets tab and asks what it should hatch into (no present, no tab of its own) ---- */
+.tspot.gift .who{filter:drop-shadow(0 0 10px rgba(255,214,110,.85))}
+.tspot.gift .tglow{opacity:1}
+.tgv .tgbox{flex-direction:row;align-items:center;gap:16px;width:min(520px,100%);padding:12px 18px;text-align:left}
+.tgegg{flex:none;line-height:0;animation:tgrise .6s cubic-bezier(.2,1.5,.4,1) backwards}
+.tgegg svg{display:block}
+@keyframes tgrise{from{transform:translateY(30px) scale(.3);opacity:0}}
+.tgf{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:6px}
+.tgf .trvh{white-space:nowrap}
+.tgf label{font:400 19px/1.1 var(--display);color:var(--parch);text-shadow:0 2px 0 #000}
 .tgrow{display:flex;gap:9px;align-items:center}
-.tgrow input{flex:1 1 auto;min-width:0;height:46px;min-height:0;padding:0 10px;font:400 21px var(--display);color:#fff3dc;background:#0b0706;border:3px solid #000;box-shadow:inset 0 0 0 2px #8a5a2b;border-radius:0;text-align:center;transition:box-shadow .15s}
+.tgrow input{flex:1 1 auto;min-width:0;height:40px;min-height:0;padding:0 10px;font:400 20px var(--display);color:#fff3dc;background:#0b0706;border:3px solid #000;box-shadow:inset 0 0 0 2px #8a5a2b;border-radius:0;transition:box-shadow .15s}
 .tgrow input:focus{outline:0;box-shadow:inset 0 0 0 2px var(--flame),0 0 14px rgba(255,190,60,.45)}
-.tgrow .tbtn{flex:none;min-height:46px;min-width:64px}
+.tgrow .tbtn{flex:none;min-height:40px;min-width:60px}
 .tgrow.shake{animation:tshake .35s}
-@keyframes tgup{from{opacity:0;transform:translateY(12px)}}
-.tgiftv.busy .tgegg svg{animation:twob .5s ease-in-out infinite}
-.tgiftv.sent .tgegg{visibility:hidden}
-.tgiftv.sent .tgbox>*{transition:opacity .35s ease,transform .35s ease;opacity:0;transform:translateY(8px)}
-.tgiftv.sent .tgart{opacity:1;transform:none}.tgiftv.sent .tgart .rays{transition:opacity .5s;opacity:0}
+.tgf .trverr{min-height:0}.tgf .trverr:empty{display:none}
+.tgbox .tx{right:2px;top:2px}
+.pteam.tgbusy .tgegg svg{animation:twob .5s ease-in-out infinite}
+.pteam:not(.fixed) .tgv .tgbox{flex-direction:column;text-align:center;gap:8px}
+.pteam:not(.fixed) .tgv .tgf{align-items:stretch;width:100%}
+/* a new creature is shown with the name the designer gave it: a click (or a few seconds) and it's back to the strip */
+.trvnew{cursor:pointer;flex-direction:row;gap:16px;width:auto;max-width:100%;padding:10px 22px}
+.trvnew .trvt{display:flex;flex-direction:column;gap:6px;text-align:left}
+.trvn{margin:0;font:400 24px/1 var(--display);color:#fff;text-shadow:0 2px 0 #000}
 
 /* ---- a pick is waiting: a "!" on the creature ---- */
 .tpkb{position:absolute;z-index:6;left:calc(50% + var(--cs)*.28);bottom:calc(var(--lh) + var(--cs)*.72);width:26px;height:26px;padding:0;border:0;border-radius:50%;cursor:pointer;
@@ -540,7 +531,7 @@
 .tmoves b i{font:400 11px/1 var(--display);font-style:normal;letter-spacing:.1em;text-transform:uppercase;color:#2fd0c0}
 .tmoves li.sig b i{color:#ffd23a}
 .tmoves span{font-size:12.5px;line-height:1.3;color:var(--parch-dim)}
-@media (prefers-reduced-motion:reduce){ .stabs button.tgift,.stabs button.tgift .tgi,.tpkb,.tgpres,.tgegg,.tgh,.tgf{animation:none} .tgpres{display:none} }
+@media (prefers-reduced-motion:reduce){ .tpkb,.tgegg{animation:none} }
 
 .tpg{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
 .tpk.narrow .tpkrow.done{display:none}

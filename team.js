@@ -26,14 +26,14 @@
   function account(){ return typeof X.account==='function'?X.account():!!X.account; }
   var BASE=(function(){ var s=document.currentScript&&document.currentScript.src; return s?s.replace(/team\.js.*$/,''):'/'; })();
   var VER=(function(){ var s=document.currentScript&&document.currentScript.src, m=s&&s.match(/[?&]v=([\w.-]+)/); return m?m[1]:'1'; })();
-  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.1'; document.head.appendChild(l); })();
+  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.2'; document.head.appendChild(l); })();
 
   /* ---------------------------------------------------------------- state */
   var S={on:false,known:false,slots:5,cooldown:14400,members:[],byId:{},making:null,at:0,got:0,
          pick:null,      /* the creature that's picked: a team member (Send button over it) or a Collection card. Its full page shows in the Collection */
          spot:null,      /* an empty team spot that's picked (Add to team fills it) */
          placing:null,   /* a card being put on the team (dragged, or "Add to team" with a full team, then tap who it swaps with) */
-         free:null, fails:0, seenForm:{}, seenEgg:{}, played:{}, titleMax:16, outSince:{}, helping:{}, noSide:false, revealing:null, live:null, liveAt:0, busy:false, dead:0};
+         free:null, fails:0, shownNew:{}, seenForm:{}, seenEgg:{}, played:{}, titleMax:16, outSince:{}, helping:{}, noSide:false, revealing:null, live:null, liveAt:0, busy:false, dead:0};
   function M(id){ return S.byId[id]||null; }
   function onPad(k){ for(var i=0;i<S.members.length;i++) if(S.members[i].slot===k) return S.members[i]; return null; }
   function teamCount(){ return S.members.filter(function(m){ return m.slot!=null; }).length; }
@@ -123,13 +123,13 @@
       if(!m.egg&&S.seenEgg[m.id]&&!m.fresh) events.push(['hatched',m]);
       if(!m.egg) S.seenForm[m.id]=m.form|0; S.seenEgg[m.id]=m.egg;
       by[m.id]=m; return m; });
-    S.byId=by; S.making=j.making||null; if(j.title_max) S.titleMax=j.title_max|0; S.free=j.free_egg||null;
+    S.byId=by; giftMember(); S.making=j.making||null; if(j.title_max) S.titleMax=j.title_max|0; S.free=j.free_egg||null;
     if(S.pick!=null&&!by[S.pick]) S.pick=null;
     if(S.on!==was) modeChanged();
     uSync(j);
     draw(); events.forEach(function(e){ if(e[0]==='evolve') evolved(e[1],e[2]); });
-    var fresh=S.members.filter(function(m){ return m.fresh&&!m.egg; })[0];
-    if(fresh&&S.revealing!==fresh.id) hatchShow(fresh);
+    var fresh=S.members.filter(function(m){ return m.fresh&&!m.egg&&!S.shownNew[m.id]; })[0];
+    if(fresh&&S.revealing!==fresh.id){ S.shownNew[fresh.id]=1; hatchShow(fresh); }
     giftSync(); pickSync();
     return true; }
 
@@ -167,10 +167,10 @@
     if(X.layout) X.layout(); }
   function shown(){ return (!pane.hidden&&!!pane.offsetParent)||(!colv.hidden&&!!colv.offsetParent); }
   X.onTab=function(t){ if(t==='spawn'&&lk('power')&&S.on&&!lk('pets')&&X.cards&&X.cards.ok){ X.pTab('team'); return; }
-    ptCur=t; pane.hidden=t!=='team'; if(t==='team'){ tabDot(false); draw(); if(S.on) soon(150); pickSync(); } else clearDot(document.querySelector('#ptabs [data-pt="'+t+'"]')); };
-  X.onSide=function(t){ sideCur=t; clearDot(document.querySelector('.stabs [data-side="'+t+'"]')); giftSide(t);
+    ptCur=t; pane.hidden=t!=='team'; if(t==='team'){ tabDot(false); draw(); if(S.on) soon(150); giftAsk(); pickSync(); } else clearDot(document.querySelector('#ptabs [data-pt="'+t+'"]')); };
+  X.onSide=function(t){ sideCur=t; clearDot(document.querySelector('.stabs [data-side="'+t+'"]'));
     if(t==='collection'){ drawCol(); if(S.on) soon(150); } else if(S.placing!=null&&!drag&&!phone()&&t!=='rewards') stopPlacing();
-    if(t==='rewards'&&lk('power')&&S.on&&ptNow()!=='team') X.pTab('team'); if(t==='rewards') setTimeout(pickSync,50); };
+    if(t==='rewards'&&lk('power')&&S.on&&ptNow()!=='team') X.pTab('team'); if(t==='rewards') setTimeout(function(){ giftAsk(); pickSync(); },50); };
   X.teamOn=function(){ return S.on; };
 
   /* ---------------------------------------------------------------- an egg that was ordered before the Make tab went away: it lands by itself */
@@ -190,7 +190,7 @@
   function tcls(m){ return m.egg?'t-egg':'t-'+(TIER[m.danger]?m.danger:'normal'); }
   function helping(m){ return !m.egg&&(m.side?m.side==='help':!!S.helping[m.id]); }
   function outWord(m){ return helping(m)?'Helping':'Fighting'; }
-  function lockOf(m){ return m&&(m.status==='out'||m.status==='resting'); }
+  function lockOf(m){ return m&&(m.status==='out'||m.status==='resting'||!!m.gift); }
   function stLine(m){ if(!m) return '<span class="tst none">Add someone</span>';
     if(m.status==='out') return m.egg?'<span class="tst out">Hatching…</span>':'<span class="tst out">'+outWord(m)+' <b data-out="'+m.id+'" data-pre="">'+ms((Date.now()-(S.outSince[m.id]||Date.now()))/1000)+'</b></span>';
     if(m.status==='resting') return '<span class="tst rest">Resting <b data-left="'+m.id+'" data-pre="">'+hm(left(m))+'</b></span>';
@@ -221,9 +221,10 @@
       name='<span class="tnm top">'+nm+'</span>';
       tag=m.changing?'<span class="tst evo">Changing…</span>':r?restBar(m):hpTag(m,'thp')+xpr;
       if(out){ cls.push('locked','isout','gone'); lk=outWord(m); body='<span class="who">'+(m.egg?egg(m.hue,2,'',2):img(m,cs,''))+'</span>'; }
-      else if(m.egg){ cls.push(r?'locked':'full'); if(r) lk='Resting'; body='<span class="tshadow"></span><span class="who">'+egg(m.hue,2,'wob',2)+'</span>'; }
+      else if(m.egg){ cls.push(r?'locked':'full'); if(m.gift) cls.push('gift'); if(r) lk='Resting'; body='<span class="tshadow"></span><span class="who">'+egg(m.hue,2,'wob',2)+'</span>'; }
       else { cls.push(r?'locked':'full'); if(r){ cls.push('asleep'); lk='Resting'; } if(m.evolve_ready&&!r) cls.push('evo'); if(m.changing) cls.push('changing');
         body=bean(m)+'<span class="tshadow"></span><span class="who'+(r?'':' look')+'" style="animation-delay:-'+(k*1.3).toFixed(1)+'s">'+(r?dozy(m,cs,'','sleep'):img(m,cs,'alive'))+'</span>'+(r?'<span class="zz">z</span><span class="zz b">z</span>':''); }
+      if(m.gift) body+='<button type="button" class="tpkb" data-act="gift" aria-label="Your free egg">!</button>';
       if(pickOf(m)&&!out) body+='<button type="button" class="tpkb" data-act="pick" data-id="'+m.id+'" aria-label="'+esc(m.name)+' is learning something new">!</button>';
       if(sel) top=sendTop(m);
       if(!top&&!m.egg) top='<span class="thov">'+(m.changing?'Changing…':tierName(m.danger)+(m.level?' · Lv '+(m.level|0):' · Form '+((m.form|0)||1)))+'</span>';
@@ -243,7 +244,7 @@
   function buildPane(){ if(campEl) return;
     pane.innerHTML='<div class="tstage"><div class="tcamp th-cols" id="tcamp">'
       +'<div class="ttitle"><span class="tt1"></span></div><div class="tspots"></div></div>'
-      +'<div class="trv" id="trv" hidden></div><div class="tpk" id="tpk" hidden></div></div><div class="tcolhost" id="tcolhost"></div>';
+      +'<div class="trv" id="trv" hidden></div><div class="trv tgv" id="tgv" hidden></div><div class="tpk" id="tpk" hidden></div></div><div class="tcolhost" id="tcolhost"></div>';
     campEl=$('tcamp'); }
   function drawTeam(){ if(!S.on) return; buildPane(); mount();
     /* on a PC the store under the stream has a fixed height: the camp fills all of it, one row of five.
@@ -345,29 +346,33 @@
     api.grow(id).then(function(j){ if(j&&j.state) stateIn(j.state); toast(nameOf(m)+' is growing. Its new form shows up in about a minute.'); soon(3000); },
       function(e){ m.changing=false; draw(); toast(ERR[String(e&&e.message||'')]||'Couldn\u2019t grow it: '+String(e&&e.message||'try again')); }); }
   function colOpen(){ return !tabCol.hidden&&!lk('col'); }
-  function showInfo(){ if(!phone()&&sideNow()!=='collection'&&colOpen()&&sideNow()!=='gift') X.sideTab('collection',true); }
+  function showInfo(){ if(!phone()&&sideNow()!=='collection'&&colOpen()) X.sideTab('collection',true); }
   function onClick(e){ if(justDragged) return; var a=e.target.closest('[data-act]');
     if(a){ var act=a.getAttribute('data-act');
       if(act==='send') send(+a.getAttribute('data-id'),a,a.getAttribute('data-side')||'');
-      else if(act==='keep') nameDone(false); else if(act==='rename') nameDone(true);
+      else if(act==='keep') nameDone();
       else if(act==='close'){ S.pick=null; S.spot=null; draw(); }
       else if(act==='add') addToTeam(S.pick);
       else if(act==='off') bench(S.pick);
       else if(act==='grow') grow(S.pick);
+      else if(act==='gift') giftOpen(); else if(act==='giftclose') giftClose();
       else if(act==='pick') pickOpen(a.getAttribute('data-id')?+a.getAttribute('data-id'):S.pick);
       else if(/^pk/.test(act)) pickAct(act,a);
       return; }
     var c=e.target.closest('.tcard');
+    if(c&&+c.getAttribute('data-id')===GIFT){ giftOpen(); return; }
     if(c){ var id=+c.getAttribute('data-id'); if(S.placing!=null) stopPlacing(); S.pick=S.pick===id?null:id; draw(); return; }
     var p=e.target.closest('.tspot');
     if(p){ var k=+p.getAttribute('data-k'), m=onPad(k);
+      if(m&&m.gift&&S.placing==null){ giftOpen(); return; }
       if(S.placing!=null&&!drag){ tryDrop(k); return; }
       if(m){ S.pick=m.id; S.spot=null; } else { S.spot=k; var cur=S.pick!=null&&M(S.pick); if(cur&&cur.slot!=null) S.pick=null; }
       showInfo(); draw(); return; }
     if(e.target.closest('.tcamp')&&!e.target.closest('.trv')){ var pk=S.pick!=null&&M(S.pick); if(pk&&pk.slot!=null) S.pick=null; S.spot=null; if(S.placing!=null) stopPlacing(); draw(); } }
   pane.addEventListener('click',onClick); colv.addEventListener('click',onClick);
   pane.addEventListener('keydown',function(e){ var p=e.target.closest&&e.target.closest('.tspot'); if(p&&e.target===p&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); p.click(); } });
-  pane.addEventListener('submit',function(e){ e.preventDefault(); nameDone(true); });
+  pane.addEventListener('submit',function(e){ e.preventDefault(); if(e.target.closest('#tgv')) giftSend(); });
+  pane.addEventListener('input',function(e){ if(e.target.id==='tgword'){ var er=$('tgerr'); if(er) er.textContent=''; } });
 
   /* Attack or Help: the one you press swells while the other slides away, and both come back if the send fails */
   function send(id,btn,side){ var m=M(id); if(!m) return;
@@ -386,7 +391,7 @@
      Add to team goes straight in when there's an empty spot; with a full team you pick who it swaps with. */
   function goTeam(){ var ph=phone(); if(ph&&sideNow()!=='rewards') X.sideTab('rewards'); if(ptNow()!=='team') X.pTab('team');
     if(campEl&&!ph){ var r=campEl.getBoundingClientRect(); if(r.top<0||r.bottom>innerHeight) campEl.scrollIntoView({block:'nearest',behavior:still?'auto':'smooth'}); } }
-  function busyWhy(m,join){ return m.status==='out'?nameOf(m)+' is fighting. '+(join?'It can join when it’s back.':'Wait until it’s back to swap it.'):nameOf(m)+' is resting. '+(join?'It can join in ':'You can swap it in ')+hm(left(m))+'.'; }
+  function busyWhy(m,join){ return m.gift?'Tell your egg what to hatch into first.':m.status==='out'?nameOf(m)+' is fighting. '+(join?'It can join when it’s back.':'Wait until it’s back to swap it.'):nameOf(m)+' is resting. '+(join?'It can join in ':'You can swap it in ')+hm(left(m))+'.'; }
   function addToTeam(id){ var m=M(id); if(!m||m.slot!=null) return;
     if(lockOf(m)){ toast(busyWhy(m,true),true); return; }
     var k=-1; if(S.spot!=null&&!onPad(S.spot)) k=S.spot; else for(var i=0;i<S.slots;i++) if(!onPad(i)){ k=i; break; }
@@ -512,8 +517,8 @@
     requestAnimationFrame(function(){ var r=d.el.isConnected&&d.el.offsetParent?d.el.getBoundingClientRect():d.home; d.g.classList.add('back'); d.g.classList.remove('over'); d.g.style.transform='translate('+(d.team?r.left+r.width/2-52:r.left)+'px,'+(d.team?r.top+r.height/2-60:r.top)+'px)'; });
     setTimeout(function(){ done(); colEl.querySelector('#tgrid')._h=''; lastCamp=''; draw(); },320); }
   /* what can be picked up under this point: a Collection card, or a team member standing on its spot */
-  function grab(t){ if(!t||!t.closest||S.placing!=null&&!drag) return null; var el=t.closest('#tgrid .tcard'); if(el) return {id:+el.getAttribute('data-id'),el:el};
-    if(t.closest('[data-act]')) return null; el=t.closest('#tcamp .tspot'); var m=el&&onPad(+el.getAttribute('data-k')); return m?{id:m.id,el:el}:null; }
+  function grab(t){ if(!t||!t.closest||S.placing!=null&&!drag) return null; var el=t.closest('#tgrid .tcard'); if(el) return +el.getAttribute('data-id')===GIFT?null:{id:+el.getAttribute('data-id'),el:el};
+    if(t.closest('[data-act]')) return null; el=t.closest('#tcamp .tspot'); var m=el&&onPad(+el.getAttribute('data-k')); return m&&!m.gift?{id:m.id,el:el}:null; }
   /* mouse and pen: drag after a small move */
   document.addEventListener('pointerdown',function(e){ if(e.pointerType==='touch'||e.button!==0||!S.on) return; var g=grab(e.target); if(!g) return;
     press={id:g.id,el:g.el,x:e.clientX,y:e.clientY}; });
@@ -543,18 +548,17 @@
 
   /* ---------------------------------------------------------------- hatching (the site shows it the moment the game reports it) */
   function tabDot(on){ var d=$('tmdot'); if(d) d.hidden=!on; }
-  function hatchShow(m){ S.revealing=m.id; var o=$('trv'); if(!o) { drawTeam(); o=$('trv'); } if(!o) return;
-    var max=S.titleMax||16;
-    o.innerHTML='<div class="trvbox"><span class="rays" aria-hidden="true"></span><div class="mc tbig k-enemy t-'+esc(m.danger||'normal')+'"><span class="nin">'+esc(X.fitName(m.name))+'</span>'+img(m,112,'cspr')+'</div>'
-      +'<div class="trvt"><p class="trvh">Your egg hatched!</p><p class="tmuted">It\u2019s a <b>'+esc(m.name)+'</b>. Give it a name, or keep this one.</p><form class="trvf"><label class="vh" for="trvname">Name</label><input id="trvname" maxlength="'+max+'" autocomplete="off" value="'+esc(String(m.name||'').slice(0,max))+'" enterkeyhint="done">'
-      +'<button type="submit" class="tbtn sm">Name it</button><button type="button" class="tbtn ghost sm" data-act="keep">Keep</button></form><p class="trverr" id="trverr" role="status"></p></div></div>';
-    o.hidden=false; pane.classList.add('rvon');
+  /* (a creature's name comes from the designer and changes when it evolves: players don't name or rename it) */
+  var rvT=0;
+  function hatchShow(m){ S.revealing=m.id; if(G.open) giftClose(); var o=$('trv'); if(!o) { drawTeam(); o=$('trv'); } if(!o) return;
+    o.innerHTML='<div class="trvbox trvnew" data-act="keep" role="button" tabindex="0"><span class="rays" aria-hidden="true"></span><div class="mc tbig k-enemy t-'+esc(m.danger||'normal')+'"><span class="nin">'+esc(X.fitName(m.name))+'</span>'+img(m,112,'cspr')+'</div>'
+      +'<div class="trvt"><p class="trvh">Your egg hatched!</p><p class="trvn">'+esc(m.name)+'</p></div></div>';
+    o.hidden=false; pane.classList.add('rvon'); clearTimeout(rvT); rvT=setTimeout(function(){ if(S.revealing===m.id) nameDone(); },6000);
     if(ptNow()!=='team'||!pane.offsetParent){ tabDot(true); toast('Your egg hatched! Open '+PETS+' to meet it.'); } }
-  function nameDone(typed){ var id=S.revealing, m=M(id), inp=$('trvname'); if(!m){ hatchClose(); return; }
-    var t=typed&&inp?inp.value.replace(/\s+/g,' ').trim():''; if(t===m.name) t='';
-    var b=$$('#trv button'); b.forEach(function(x){ x.disabled=true; });
-    (api?api.name(id,t):demo.name(id,t)).then(function(j){ m.fresh=false; if(t) m.name=t; hatchClose(); if(j&&j.members) stateIn(j); else soon(200); })
-    .catch(function(e){ b.forEach(function(x){ x.disabled=false; }); $('trverr').textContent=errText(e); }); }
+  /* seen: the "just hatched" mark comes off (team_name with no name keeps the designer's) */
+  function nameDone(){ var id=S.revealing, m=M(id); clearTimeout(rvT); if(!m){ hatchClose(); return; }
+    m.fresh=false; hatchClose();
+    (api?api.name(id,''):demo.name(id,'')).then(function(j){ if(j&&j.members) stateIn(j); else soon(200); },function(){ soon(2000); }); }
   function hatchClose(){ var o=$('trv'); if(o){ o.hidden=true; o.innerHTML=''; } pane.classList.remove('rvon'); S.revealing=null; lastCamp=''; draw(); setTimeout(pickSync,400); }
 
   /* ---------------------------------------------------------------- evolving: shown on the site while the stream shows it */
@@ -621,87 +625,59 @@
   function uLocal(){ if(U.open||!S.on||!U.have.pets) return; var ms=S.members, pts=X.pts||{};
     if(!U.have.power){ if(U.site>=300){ tell('power'); uWant('power'); } else if(ms.some(function(m){ return !m.egg&&(m.sends|0)>=1&&m.status!=='out'; })) uWant('power'); }
     if(!U.have.shop){ if(U.site>=1200){ tell('shop'); uWant('shop'); } else if((pts.rubies|0)>0) uWant('shop'); }
-    if(!U.have.col){ if(U.visits>=2){ tell('collection'); uWant('col'); } else if(ms.length>=2||ms.some(function(m){ return (m.form|0)>1; })) uWant('col'); } }
+    if(!U.have.col){ if(U.visits>=2){ tell('collection'); uWant('col'); } else if(ms.filter(function(m){ return !m.gift; }).length>=2||ms.some(function(m){ return (m.form|0)>1; })) uWant('col'); } }
   /* time on the site: counted while the page is on show */
   setInterval(function(){ if(document.hidden) return; U.site++; if(U.site%5===0&&!DEMO){ lsSet('cdSite',String(U.site)); lsSet('cdSeenAt',String(Date.now())); } if(U.site%5===0) uLocal(); giftSync();
     if(S.on&&!lk('pets')&&lk('power')&&ptNow()==='spawn'&&X.cards&&X.cards.ok) X.pTab('team'); },1000);
 
-  /* ---------------------------------------------------------------- the free egg: a present that lights up
-     About a minute into a first visit a present lights up beside the Chat tab (a player from before gets theirs straight
-     away). Opening it asks one thing: "What should it hatch into?" (20 letters). The egg then flies out of the present
-     into the Pets tab, which appears at that moment. It all happens in the side panel: nothing covers the stream. */
-  var GIFT_AT=(function(){ var m=DEMO&&location.search.match(/[?&]gift=(\d+)/); return m?+m[1]:60; })(), WORD_MAX=20;
-  var G={st:'off',btn:null,view:null,busy:false};
+  /* ---------------------------------------------------------------- the free egg: it just turns up in the Pets tab
+     About a minute into a first visit the Pets tab appears with an egg already standing on the first spot (a player
+     from before finds theirs on a free spot, or in the Collection when the team is full). The egg asks one thing:
+     "What should it hatch into?" (20 letters). Until it's answered the egg is only on this page (id -1); once it is,
+     the real egg takes its place. No present, no tab of its own, nothing over the stream. */
+  var GIFT_AT=(function(){ var m=DEMO&&location.search.match(/[?&]gift=(\d+)/); return m?+m[1]:60; })(), WORD_MAX=20, GIFT=-1;
+  var G={on:false,open:false,busy:false,asked:false};
   function giftCan(){ return !!(S.on&&S.free&&S.free.available&&!S.free.claimed); }
-  function giftSync(){ if(G.busy||G.st==='fly') return;
-    if(!giftCan()){ if(G.st!=='off') giftGone(); return; }
-    if(G.st==='off'&&(!U.path||U.site>=GIFT_AT)) giftLight(); }
-  function giftLight(){ var chat=document.querySelector('.stabs [data-side="chat"]'), side=$('side'); if(!chat||!side) return;
-    if(!G.btn){ var b=document.createElement('button'); b.type='button'; b.setAttribute('role','tab'); b.setAttribute('data-side','gift'); b.setAttribute('aria-selected','false'); b.className='ic tgift';
-      b.title='A present for you'; b.setAttribute('aria-label','A present for you'); b.innerHTML='<span class="tgi">'+X.pix('gift',24)+'</span><span class="tgl">Free egg</span><i class="dot"></i>';
-      b.addEventListener('click',function(){ X.sideTab('gift'); }); G.btn=b;
-      var v=document.createElement('div'); v.className='sview tgiftv'; v.setAttribute('data-view','gift'); v.hidden=true; G.view=v; side.appendChild(v);
-      v.addEventListener('submit',function(e){ e.preventDefault(); giftSend(); });
-      v.addEventListener('input',function(){ var er=$('tgerr'); if(er) er.textContent=''; }); }
-    if(!G.btn.parentNode) chat.parentNode.insertBefore(G.btn,chat.nextSibling);
-    G.st='lit'; growIn(G.btn); }
-  function giftSide(t){ if(G.st==='off'||G.st==='fly') return;
-    if(t==='gift'){ if(G.st!=='open') giftOpen(); }
-    else if(G.st==='open'&&!G.busy){ G.st='lit'; if(G.btn) G.btn.classList.remove('seen'); } }
-  function giftOpen(){ var v=G.view; G.st='open'; G.btn.classList.add('seen');
-    if(!v.firstChild){ v.innerHTML='<div class="tgbox"><div class="tgart"><span class="rays" aria-hidden="true"></span><span class="tgpres">'+X.pix('gift',96)+'</span><span class="tgegg" id="tgegg">'+egg(38,5,'wob',2)+'</span></div>'
-        +'<p class="tgh">You got a free egg!</p>'
-        +'<form class="tgf" autocomplete="off"><label for="tgword">What should it hatch into?</label>'
-        +'<div class="tgrow"><input id="tgword" maxlength="'+WORD_MAX+'" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><button type="submit" class="tbtn" id="tggo">OK</button></div></form>'
-        +'<p class="trverr" id="tgerr" role="status"></p></div>';
-      if(!phone()) setTimeout(function(){ var i=$('tgword'); if(i&&G.st==='open') try{ i.focus({preventScroll:true}); }catch(e){} },still?0:1100); } }
+  /* the unnamed egg stands with the others: the first empty spot, else the Collection */
+  function giftMember(){ if(!G.on||S.byId[GIFT]) return; var k=null, i; for(i=0;i<S.slots;i++) if(!onPad(i)){ k=i; break; }
+    var m={id:GIFT,slot:k,egg:true,gift:true,hue:38,status:'home',until:0}; S.members.push(m); S.byId[GIFT]=m; }
+  function giftDrop(){ S.members=S.members.filter(function(m){ return m.id!==GIFT; }); delete S.byId[GIFT]; }
+  function giftSync(){ if(G.busy) return;
+    if(!giftCan()){ if(G.on){ G.on=false; giftDrop(); giftClose(); redraw(); } return; }
+    if(!G.on){ if(U.path&&U.site<GIFT_AT) return; G.on=true; if(U.path) uWant('pets'); giftMember(); S.landed=GIFT; setTimeout(function(){ if(S.landed===GIFT) S.landed=null; },1200); redraw(); }
+    giftAsk(); }
+  /* a new visitor is asked as soon as the Pets tab is on show; anyone else clicks the egg when they like */
+  function giftAsk(){ if(!G.on||G.open||G.asked||!U.path) return;
+    if(paneSeen()){ G.asked=true; setTimeout(giftOpen,still?0:700); }
+    else { if(ptNow()!=='team'&&!lk('power')) tabDot(true); if(phone()&&sideNow()!=='rewards') addDot(tabRew,true); } }
+  function giftOpen(){ if(!G.on||G.open||S.revealing!=null||PK.id!=null||drag) return; var m=M(GIFT); if(!m) return;
+    if(phone()&&sideNow()!=='rewards') X.sideTab('rewards'); if(ptNow()!=='team') X.pTab('team');
+    var o=$('tgv'); if(!o){ drawTeam(); o=$('tgv'); } if(!o) return; G.open=true; G.asked=true;
+    var others=S.members.some(function(x){ return x.id!==GIFT; });
+    o.innerHTML='<div class="trvbox tgbox"><span class="rays" aria-hidden="true"></span><span class="tgegg" id="tgegg">'+egg(38,2,'wob',2)+'</span>'
+      +'<form class="tgf" autocomplete="off"><p class="trvh">You got a free egg!</p><label for="tgword">What should it hatch into?</label>'
+      +'<div class="tgrow"><input id="tgword" maxlength="'+WORD_MAX+'" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><button type="submit" class="tbtn sm" id="tggo">OK</button></div>'
+      +'<p class="trverr" id="tgerr" role="status"></p></form>'+(others?'<button type="button" class="tx" data-act="giftclose" aria-label="Close">×</button>':'')+'</div>';
+    o.hidden=false; pane.classList.add('rvon');
+    if(!phone()) setTimeout(function(){ var i=$('tgword'); if(i&&G.open) try{ i.focus({preventScroll:true}); }catch(e){} },still?0:450); }
+  function giftClose(){ var o=$('tgv'); G.open=false; if(o&&!o.hidden){ o.hidden=true; o.innerHTML=''; pane.classList.remove('rvon'); if(campEl) once2(campEl,'tback'); lastCamp=''; draw(); setTimeout(pickSync,400); } }
   function giftSend(){ var inp=$('tgword'), b=$('tggo'), er=$('tgerr'); if(!inp||G.busy) return;
     var t=inp.value.replace(/\s+/g,' ').trim().slice(0,WORD_MAX);
     if(!t){ shake(inp.parentNode); inp.focus(); return; }
     if(!DEMO&&!account()){ X.needAccount(giftSend); return; }
-    G.busy=true; b.disabled=true; inp.readOnly=true; er.textContent=''; G.view.classList.add('busy');
+    G.busy=true; b.disabled=true; inp.readOnly=true; er.textContent=''; pane.classList.add('tgbusy');
     var had={}; S.members.forEach(function(m){ had[m.id]=1; });
     (api?api.claim(t):demo.claim(t)).then(function(j){ var st=j&&j.state&&j.state.members?j.state:j, id=j&&j.card!=null?+j.card:null;
       if(!st||!st.members) throw new Error('');
       eggsIn(st);
       if(id==null){ var nw=st.members.filter(function(m){ return !had[+m.id]; }); nw.sort(function(a,b){ return (b.making?1:0)-(a.making?1:0)||b.id-a.id; }); id=nw.length?+nw[0].id:null; }
-      giftFly(st,id);
-    }).catch(function(e){ G.busy=false; b.disabled=false; inp.readOnly=false; G.view.classList.remove('busy'); var m=String(e&&e.message||'');
+      /* the real egg takes the place of the one that was asked about: a hop, its own colour, and it's picked */
+      G.busy=false; G.on=false; S.free={available:false,claimed:true}; pane.classList.remove('tgbusy'); giftDrop(); uWant('pets'); stateIn(st);
+      if(id!=null&&M(id)){ S.pick=M(id).slot!=null?id:null; S.spot=null; S.landed=id; setTimeout(function(){ if(S.landed===id) S.landed=null; },1200); }
+      giftClose(); redraw(); soon(1500);
+    }).catch(function(e){ G.busy=false; b.disabled=false; inp.readOnly=false; pane.classList.remove('tgbusy'); var m=String(e&&e.message||'');
       er.textContent=errText(e); shake(inp.parentNode); if(m==='claimed'){ soon(200); } else if(m==='no account'){ X.needAccount(giftSend); } else inp.focus(); }); }
-  /* something flies from a to wherever target() says it is right now (it may still be sliding into place).
-     corner = it goes down first and then across (on a PC that keeps it off the stream: down the side panel, then along under the stream) */
-  function flight(inner,a,target,dur,lift,corner,done){ var g=document.createElement('div'); g.className='tflyer'; g.innerHTML='<span>'+inner+'</span>'; document.body.appendChild(g);
-    var nat=g.firstChild.getBoundingClientRect().width||96, t0=0, last=null;
-    function put(x,y,w,r){ g.style.transform='translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px) scale('+(w/nat).toFixed(3)+') rotate('+r.toFixed(1)+'deg)'; }
-    put(a.x,a.y,a.w,0);
-    function step(now){ if(!t0) t0=now; var t=Math.min(1,(now-t0)/dur), e=ease(t), b=target()||last; if(!b){ g.remove(); done(); return; } last=b;
-      var u=1-e, x=corner?u*u*a.x+2*u*e*a.x+e*e*b.x:a.x+(b.x-a.x)*e, y=corner?u*u*a.y+2*u*e*b.y+e*e*b.y:a.y+(b.y-a.y)*e-Math.sin(Math.PI*e)*lift;
-      put(x,y,a.w+(b.w-a.w)*e,Math.sin(Math.PI*e)*-14);
-      if(t<1) requestAnimationFrame(step); else { g.remove(); done(); } }
-    requestAnimationFrame(step); }
-  function giftFly(st,id){ var art=$('tgegg'), r=art?art.getBoundingClientRect():null, ph=phone();
-    G.st='fly'; G.busy=false; S.free={available:false,claimed:true};
-    var from=r&&r.width?{x:r.left+r.width/2,y:r.top+r.height/2,w:r.width}:null;
-    if(from&&id!=null) fly[id]=-1;                       /* (hidden on its spot until it lands there) */
-    uWant('pets'); stateIn(st); var m=id!=null?M(id):null;
-    if(m){ S.pick=id; S.spot=null; }
-    if(X.cards&&X.cards.ok&&ptNow()!=='team') X.pTab('team'); lastCamp=''; draw();
-    var land=function(){ if(id!=null){ unhide(id); S.landed=id; setTimeout(function(){ if(S.landed===id){ S.landed=null; } },1200); }
-      if(ph){ X.sideTab('rewards'); if(ptNow()!=='team') X.pTab('team'); once2(tabRew,'tbump'); } else { X.sideTab('chat'); once2(tabTeam,'tbump'); }
-      giftGone(); lastCamp=''; draw(); soon(1500); };
-    if(!m||!from||still||document.hidden){ land(); return; }
-    G.view.classList.add('sent');
-    flight(egg(m.hue,2,'',2),from,function(){ if(ph){ var tr=tabRew&&tabRew.offsetParent?tabRew.getBoundingClientRect():null; return tr&&tr.width?{x:tr.left+tr.width/2,y:tr.top+tr.height/2,w:22}:null; } var q=at(id); if(q) q.w=64; return q; },ph?800:1000,ph?46:0,!ph,land); }
   function once2(el,cls){ if(!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(function(){ el.classList.remove(cls); },700); }
-  /* the present is gone (opened, or claimed somewhere else): its tab shrinks away */
-  function giftGone(){ var b=G.btn, v=G.view; G.st='off'; G.busy=false;
-    if(sideNow()==='gift') X.sideTab('chat');
-    if(v){ v.innerHTML=''; v.classList.remove('sent','busy'); }
-    if(!b||!b.parentNode) return; b.classList.remove('seen');
-    if(still||!b.animate||!b.offsetParent){ b.remove(); return; }
-    var r=b.getBoundingClientRect(), gap=parseFloat(getComputedStyle(b.parentNode).columnGap)||0; b.style.overflow='hidden';
-    var a=b.animate([{width:r.width+'px',flex:'0 0 '+r.width+'px',opacity:1,marginRight:'0px'},{width:'0px',flex:'0 0 0px',minWidth:'0px',opacity:0,marginRight:'-'+gap+'px'}],{duration:380,easing:'cubic-bezier(.4,0,.7,.4)',fill:'forwards'});
-    a.onfinish=function(){ b.style.overflow=''; b.remove(); try{ a.cancel(); }catch(e){} }; }
 
   /* ---------------------------------------------------------------- "X is learning something new. Pick one:"
      When a creature comes home it may have a pick waiting (member.pick: three new moves or abilities made for it). The three
@@ -721,7 +697,7 @@
   function paneSeen(){ return !pane.hidden&&!!pane.offsetParent; }
   function pickSync(){ if(!S.on) return;
     if(PK.id!=null&&!PK.busy){ var cur=M(PK.id); if(!pickOf(cur)||cur.status==='out') pickClose(); else if(PK.pid!==cur.pick.id){ PK.pid=cur.pick.id; PK.mode='pick'; PK.opt=null; pkRender(false); } }
-    if(PK.id!=null||S.revealing!=null||drag||S.placing!=null||G.st==='fly') return;
+    if(PK.id!=null||S.revealing!=null||drag||S.placing!=null||G.open) return;
     var n=S.members.filter(function(m){ return pickOf(m)&&m.status!=='out'&&!PK.seen[m.pick.id]; })[0]; if(!n) return;
     if(paneSeen()){ PK.seen[n.pick.id]=1; pickOpen(n.id); }
     else if(!PK.seen['t'+n.pick.id]){ PK.seen['t'+n.pick.id]=1; if(ptNow()!=='team') tabDot(true); if(phone()&&sideNow()!=='rewards') addDot(tabRew,true); toast(nameOf(n)+' is learning something new.'); } }
@@ -800,6 +776,6 @@
   /* ---------------------------------------------------------------- start */
   var demo=null;
   window.CDTEAM={S:S,draw:draw,stateIn:stateIn,poll:poll,api:api,setDemo:function(d){ demo=d; }};
-  if(DEMO){ var s=document.createElement('script'); s.src=BASE+'team-demo.js?v='+VER+'.8'; s.onload=function(){ if(window.CDTEAM_DEMO){ demo=window.CDTEAM_DEMO(stateIn,X); } }; document.head.appendChild(s); }
+  if(DEMO){ var s=document.createElement('script'); s.src=BASE+'team-demo.js?v='+VER+'.9'; s.onload=function(){ if(window.CDTEAM_DEMO){ demo=window.CDTEAM_DEMO(stateIn,X); } }; document.head.appendChild(s); }
   else { var wait=function(){ if(me()) poll(); else setTimeout(wait,1500); }; setTimeout(wait,800); }
 })();

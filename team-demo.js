@@ -21,7 +21,7 @@ window.CDTEAM_DEMO=function(stateIn,X){
     {id:10,slot:null,egg:true,hue:150,status:'home'},
     {id:11,slot:null,egg:true,hue:205,status:'home'}];
   /* ?team=demo&new=1: a brand-new visitor (no creatures, the free egg waiting, every tab still locked). &gift=5 lights the present after 5 s. */
-  var NEW=/[?&]new=1\b/.test(location.search), free={available:NEW,claimed:false}, unl={pets:false,power:false,shop:false,collection:false};
+  var NEW=/[?&]new=1\b/.test(location.search), EGG=NEW||/[?&]egg=1\b/.test(location.search), free={available:EGG,claimed:false}, unl={pets:false,power:false,shop:false,collection:false};
   if(NEW) L.length=0;
   var MV={lemon:{name:'Lemon Rain',line:'Lemons fall on the player for 4 seconds.'},roll:{name:'Barrel Roll',line:'Rolls at the player and knocks them back.'},spit:{name:'Seed Spit',line:'Spits 3 fast seeds in a row.'},
     boom:{name:'Short Fuse',line:'Blows up when it dies. 30 damage nearby.'},slow:{name:'Sticky Air',line:'Everything near it moves 20% slower.'},thorn:{name:'Thorn Coat',line:'Hitting it up close hurts a little.'},zap:{name:'Zap Hop',line:'Jumps to the player in a flash of sparks.'},wall:{name:'Toast Wall',line:'Throws up a wall of hot toast for 5 seconds.'}};
@@ -33,7 +33,7 @@ window.CDTEAM_DEMO=function(stateIn,X){
     var lj=by(5); lj.moves=[mv('lemon'),mv('roll')]; lj.abilities=[mv('slow','ability'),mv('boom','ability')]; }
 
   function out(){ var t=Date.now();
-    return {on:true,slots:5,cooldown:14400,members:L.map(function(m){ var c={}; for(var k in m) if(k!=='evo'&&k!=='until') c[k]=m[k]; if(m.until) c.left=Math.max(0,Math.round((m.until-t)/1000)); return c; }),making:null,free_egg:NEW?free:undefined,unlocks:NEW?unl:undefined}; }
+    return {on:true,slots:5,cooldown:14400,members:L.map(function(m){ var c={}; for(var k in m) if(k!=='evo'&&k!=='until') c[k]=m[k]; if(m.until) c.left=Math.max(0,Math.round((m.until-t)/1000)); return c; }),making:null,free_egg:EGG?free:undefined,unlocks:NEW?unl:undefined}; }
   L.forEach(function(m){ if(m.left) m.until=now+m.left*1000; });
   var big=by(2); if(big) setTimeout(function(){ comeBack(big); },25000);
   function comeBack(m){ m.status='resting'; delete m.side; m.rest_total=NEW?1800:14400; m.until=Date.now()+m.rest_total*700; if(NEW) unl.power=true;
@@ -56,7 +56,8 @@ window.CDTEAM_DEMO=function(stateIn,X){
     clear:function(){ return ok(); },
     claim:function(t){ if(/poop/i.test(t)) return err('not allowed'); if(free.claimed) return err('claimed');
       var h=0, i; for(i=0;i<t.length;i++) h=(h*31+t.charCodeAt(i))%360;
-      var m={id:20,slot:0,egg:true,hue:h,status:'home',making:true}; L.push(m); free.claimed=true; free.available=false; unl.pets=true; hatches[20]={name:t.replace(/\b\w/g,function(c){ return c.toUpperCase(); }).slice(0,14),danger:'harmless',sprite:f(3,0)};
+      var k0=null, q; for(q=0;q<5;q++) if(!L.some(function(x){ return x.slot===q; })){ k0=q; break; }
+      var m={id:20,slot:k0,egg:true,hue:h,status:'home',making:true}; L.push(m); free.claimed=true; free.available=false; unl.pets=true; hatches[20]={name:t.replace(/\b\w/g,function(c){ return c.toUpperCase(); }).slice(0,14),danger:'harmless',sprite:f(3,0)};
       setTimeout(function(){ m.making=false; push(); },6000);
       return new Promise(function(done){ setTimeout(function(){ done({card:20,state:out()}); },500); }); },
     pick:function(i,n,rep){ var m=by(i), o=m&&m.pick&&m.pick.options[n]; if(!m||!m.pick) return err('no pick'); if(!o) return err('bad option');
