@@ -26,10 +26,9 @@ window.CDTEAM_DEMO=function(stateIn,X){
   var MV={lemon:{name:'Lemon Rain',line:'Lemons fall on the player for 4 seconds.'},roll:{name:'Barrel Roll',line:'Rolls at the player and knocks them back.'},spit:{name:'Seed Spit',line:'Spits 3 fast seeds in a row.'},
     boom:{name:'Short Fuse',line:'Blows up when it dies. 30 damage nearby.'},slow:{name:'Sticky Air',line:'Everything near it moves 20% slower.'},thorn:{name:'Thorn Coat',line:'Hitting it up close hurts a little.'},zap:{name:'Zap Hop',line:'Jumps to the player in a flash of sparks.'},wall:{name:'Toast Wall',line:'Throws up a wall of hot toast for 5 seconds.'}};
   function mv(k,kind){ var x=MV[k]; return {kind:kind||'move',name:x.name,line:x.line}; }
-  function offer(m,a){ m.pick={id:++id,options:a}; }
   var hatches={4:{name:'Spark Gorilla',danger:'harmless',sprite:f(3,0)},10:{name:'Toast Knight',danger:'harmless',sprite:f(6,0)},11:{name:'Tiny Wizard',danger:'harmless',sprite:f(2,0)}};
   L.forEach(function(m){ var h=HPX[m.id]; if(h&&!m.egg){ m.hp_max=h[1]; m.sleep=SL[h[0]]; } if(!m.egg){ m.moves=[mv('spit')]; m.abilities=[]; } if(m.left) m.rest_total=14400; });
-  if(!NEW){ var bd=by(1); bd.moves=[mv('spit'),mv('roll'),mv('zap')]; bd.abilities=[mv('thorn','ability')]; bd.signature={name:'Bomb Breath',line:'Breathes a line of small bombs.'}; offer(bd,[mv('lemon'),mv('slow','ability'),mv('wall')]);
+  if(!NEW){ var bd=by(1); bd.moves=[mv('spit'),mv('roll'),mv('zap')]; bd.abilities=[mv('thorn','ability')]; bd.signature={name:'Bomb Breath',line:'Breathes a line of small bombs.'};
     var lj=by(5); lj.moves=[mv('lemon'),mv('roll')]; lj.abilities=[mv('slow','ability'),mv('boom','ability')]; }
 
   function out(){ var t=Date.now();
@@ -37,7 +36,7 @@ window.CDTEAM_DEMO=function(stateIn,X){
   L.forEach(function(m){ if(m.left) m.until=now+m.left*1000; });
   var big=by(2); if(big) setTimeout(function(){ comeBack(big); },25000);
   function comeBack(m){ m.status='resting'; delete m.side; m.rest_total=NEW?1800:14400; m.until=Date.now()+m.rest_total*700; if(NEW) unl.power=true;
-    if(!m.egg&&!m.pick&&!m.picked){ m.picked=1; offer(m,[mv('lemon'),mv('boom','ability'),mv('roll')]); }   /* came home with 30% of its health */ m.sends++; m.xp+=172; if(m.xp_next&&m.xp>=m.xp_next){ m.xp=m.xp_next; m.evolve_ready=true; }
+    m.sends++; m.xp+=172; if(m.xp_next&&m.xp>=m.xp_next){ m.xp=m.xp_next; m.evolve_ready=true; }
     m.last={channel:(typeof X.channel==='function'?X.channel():X.channel)||'mottafierr',alive_s:107,damage:162,ko:true,lines:[['Sent into a stream',60],['Alive 1:47',47],['Damage dealt',65],['First KO on '+((typeof X.channel==='function'?X.channel():X.channel)||'mottafierr')+' today',100]]}; push(); }
   function push(){ stateIn(out()); }
   function ok(){ return Promise.resolve(out()); }
@@ -59,11 +58,6 @@ window.CDTEAM_DEMO=function(stateIn,X){
       var k0=null, q; for(q=0;q<5;q++) if(!L.some(function(x){ return x.slot===q; })){ k0=q; break; }
       var m={id:20,slot:k0,egg:true,hue:h,status:'home',making:true}; L.push(m); free.claimed=true; free.available=false; unl.pets=true; hatches[20]={name:t.replace(/\b\w/g,function(c){ return c.toUpperCase(); }).slice(0,14),danger:'harmless',sprite:f(3,0)};
       setTimeout(function(){ m.making=false; push(); },6000);
-      return new Promise(function(done){ setTimeout(function(){ done({card:20,state:out()}); },500); }); },
-    pick:function(i,n,rep){ var m=by(i), o=m&&m.pick&&m.pick.options[n]; if(!m||!m.pick) return err('no pick'); if(!o) return err('bad option');
-      var l=o.kind==='ability'?(m.abilities=m.abilities||[]):(m.moves=m.moves||[]), cap=o.kind==='ability'?2:3, at=-1, k; for(k=0;k<l.length;k++) if(l[k].name===rep) at=k;
-      if(l.length>=cap&&at<0) return err('full'); if(at>=0) l[at]={name:o.name,line:o.line}; else l.push({name:o.name,line:o.line}); m.pick=null;
-      return new Promise(function(done){ setTimeout(function(){ done(out()); },300); }); },
-    skip:function(i){ var m=by(i); if(!m||!m.pick) return err('no pick'); m.pick=null; return ok(); }
+      return new Promise(function(done){ setTimeout(function(){ done({card:20,state:out()}); },500); }); }
   };
 };
