@@ -33,6 +33,14 @@ if(location.pathname.indexOf("/live/")===0) document.write("<base href=\"/\">");
 <meta name="twitter:image" content="https://chatdungeon.io/preview.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Inter:wght@400;500;600&display=swap">
+<script>
+/* which tabs this visitor has unlocked, decided before anything is drawn so nothing flashes (team.js takes over from here) */
+(function(){ try{ var d=document.documentElement, q=location.search, demo=/[?&]team=demo\b/.test(q), fresh=demo&&/[?&]new=1\b/.test(q);
+  var u=fresh?'':demo?null:localStorage.getItem('cdUnl'), known=demo||!!(localStorage.getItem('cdTok')||localStorage.getItem('cdName'));
+  if(u==null&&known) return;
+  var have=(u||'').split(','); d.classList.add('cdpath');
+  ['pets','power','shop','col'].forEach(function(k){ if(have.indexOf(k)<0||(k!=='pets'&&have.indexOf('pets')<0)) d.classList.add('lk-'+k); }); }catch(e){} })();
+</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+15&text=0123456789%2B%2D%24%2C.%2F%25&display=swap">
 <style>
 /* Layout: phone first. One column on the dungeon wall: sign and room on top, the draw timer,
@@ -1231,6 +1239,18 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
 .m1 h4 label{font:inherit;color:inherit;cursor:text}
 .ptabs [hidden],.stabs [hidden],.pteam[hidden]{display:none!important}
 :has(> #pteam:not([hidden])) + .pline:not(:has(> .pmsg:not(:empty):not([hidden]), > form:not([hidden]), > .gbox:not([hidden]))){display:none}
+/* ---- tabs unlock one at a time for a new visitor (2026-11-26). First visit = the stream and the chat, nothing else.
+   The lk-* classes are set before the first paint (the small script in the head) and kept up to date by team.js:
+   Pets (the store, with only the Pets tab) > Power (the Power bar, Instants) > Shop (and rubies) > Collection.
+   Players from before this see everything. ---- */
+.room.online .points{transition:opacity .5s ease,transform .55s cubic-bezier(.2,.9,.3,1),visibility 0s}
+html.lk-pets .room.online .points{visibility:hidden;opacity:0;transform:translateY(14px);pointer-events:none;transition:none}
+html.lk-pets .stabs [data-side=rewards]{display:none!important}
+html.lk-power #ptabs [data-pt=spawn],html.lk-power #pacts,html.lk-power .dpbar,html.lk-power .tbb.powc,html.lk-power #dbtn,html.lk-power #pbonus2{display:none!important}
+html.lk-power .sview.rewv .ptabs{display:none!important}
+html.lk-shop .stabs [data-side=shop],html.lk-shop #rbtn,html.lk-shop #pbuy{display:none!important}
+html.lk-col .stabs [data-side=collection],html.lk-col .tcolhost{display:none!important}
+html.cdpath .stabs [data-side=avatar]{display:none!important}
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3675714918619226"
@@ -1333,9 +1353,8 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
             <div class="pstore" id="pstore">
               <div class="ptabs" id="ptabs" role="tablist" aria-label="Store">
                 <button type="button" role="tab" data-pt="spawn" aria-selected="true"><span data-px="suns:24"></span>Instants</button>
-                <button type="button" role="tab" data-pt="make" aria-selected="false"><span data-px="anvil:24"></span>Make<i class="pdot" id="mkdot" hidden>1</i></button>
                 <button type="button" role="tab" data-pt="deck" aria-selected="false"><span data-px="cards:24"></span>Deck</button>
-                <button type="button" role="tab" data-pt="team" aria-selected="false" hidden><span data-px="cards:24"></span>Team</button>
+                <button type="button" role="tab" data-pt="team" aria-selected="false" hidden><span data-px="cards:24"></span>Pets</button>
               </div>
               <div class="pacts" id="pacts">
                 <button type="button" class="act" data-act="random_enemy" data-desc="Spawn a random enemy instantly"><span class="ai" data-px="enemy:40"></span><span class="an">Random Enemy</span><span class="ap"><span data-px="suns:24"></span><i data-price="random_enemy">20</i></span><span class="ad">Spawn a random enemy instantly</span></button>
@@ -1344,30 +1363,6 @@ button.item:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px #e0a030,
                 <button type="button" class="act" data-act="custom_enemy" data-desc="Create a custom enemy that will appear in game instantly"><span class="ai" data-px="custom:40"></span><span class="an">Custom Enemy</span><span class="ap"><span data-px="suns:24"></span><i data-price="custom_enemy">60</i></span><span class="ad">Create a custom enemy that will appear in game instantly</span></button>
                 <button type="button" class="act" data-act="random_event" data-desc="Anything you say will happen"><span class="ai" data-px="event:40"></span><span class="an">Random Event</span><span class="ap"><span data-px="suns:24"></span><i data-price="random_event">100</i></span><span class="ad">Anything you say will happen</span></button>
                 <button type="button" class="act" hidden data-act="genie" id="geniebtn" data-desc="Spawn into the game as a genie and grant 3 wishes instantly"><span class="ai" data-px="genie:40"></span><span class="an">Become a Genie</span><span class="ap"><span data-px="suns:24"></span><i data-price="genie">200</i></span><span class="ad" id="geniesub">Spawn into the game as a genie and grant 3 wishes instantly</span></button>
-              </div>
-              <div class="pmake" id="pmake" hidden>
-                <div class="m1" id="mkrow">
-                  <div class="lft">
-                    <h4><label for="mktext">Make anything</label></h4>
-                    <form class="mkbox" id="mzask"><span class="anv" data-px="anvil:28"></span><input id="mktext" maxlength="100" placeholder="a goose with a gun" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="send"><button type="submit" class="go" id="mkgo">Make<span data-px="ruby:24"></span><i class="mkp">30</i></button></form>
-                    <div class="mideas" id="mkideas" hidden><div class="mlbl">Or tap an idea</div><div class="chips" id="mkchips"></div></div>
-                  </div>
-                  <div class="mfeed" id="mkfeed" hidden><div class="mlbl"><i class="live"></i>Fresh from the forge</div><div class="frow" id="mkfrow"></div></div>
-                </div>
-                <div class="dz" id="mkdz" hidden>
-                  <div class="mw" id="mzcard"></div>
-                  <div class="dq">
-                    <div class="mzs" id="mzwip" hidden>
-                      <div class="st" id="mzwhat"></div>
-                      <div class="trk" id="mztrk"></div>
-                      <p class="tip" id="mzline" aria-live="polite"></p>
-                    </div>
-                    <div class="mzs" id="mzdone" hidden>
-                      <h4 id="mzready">Your enemy is ready!</h4>
-                      <div class="row"><button type="button" class="go big" id="mkreveal">Click to reveal</button></div>
-                    </div>
-                  </div>
-                </div>
               </div>
               <div class="pdeck" id="pdeck" hidden><div class="deck" id="deck"></div></div>
               <div class="pteam" id="pteam" hidden></div>
@@ -2837,8 +2832,8 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   (function(){ var want=''; try{ var q=new URLSearchParams(location.search); want=String(q.get('tab')||'').toLowerCase(); if(want){ q.delete('tab'); var rest=q.toString(); history.replaceState(null,'',location.pathname+(rest?'?'+rest:'')+location.hash); } }catch(e){}
     if(!/^(shop|deck|make|team|collection|rewards|account|avatar|instants)$/.test(want)) return; var n=0;
     var iv=setInterval(function(){ if(++n>50){ clearInterval(iv); return; } if(!app.classList.contains('inroom')) return;
-      var store=want==='deck'||want==='make'||want==='team'||want==='instants'||want==='rewards';
-      if(store){ if((want==='deck'||want==='make'||want==='team')&&!cards.ok) return; if(want==='team'&&document.querySelector('#ptabs [data-pt=team]').hidden) want='deck'; if(phoneMq.matches) sideTab('rewards',true); if(want==='deck'||want==='make'||want==='team') pTab(want); else if(want==='instants') pTab('spawn'); }
+      if(want==='make') want='team'; var store=want==='deck'||want==='team'||want==='instants'||want==='rewards';
+      if(store){ if((want==='deck'||want==='team')&&!cards.ok) return; if(want==='team'&&document.querySelector('#ptabs [data-pt=team]').hidden) want='deck'; if(phoneMq.matches) sideTab('rewards',true); if(want==='deck'||want==='team') pTab(want); else if(want==='instants') pTab('spawn'); }
       else { var sb=document.querySelector('.stabs [data-side="'+want+'"]'); if(sb&&!sb.hidden) sideTab(want,true); }
       clearInterval(iv); },300); })();
   /* the bridge for team.js (the egg/team screens, another file): the page's own helpers, nothing more. onTab(t) is
@@ -2846,16 +2841,12 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   window.CDX={rpc:rpc,withTok:withTok,pix:pix,esc:esc,cardHtml:cardHtml,cardArt:cardArt,fitName:fitName,pTab:pTab,sideTab:sideTab,pmsg:pmsg,layout:layout,once:once,store:store,load:load,
     needAccount:needAccount,myPoints:myPoints,drawPoints:drawPoints,phone:function(){ return phoneMq.matches; },
     get me(){ return me; }, get pts(){ return pts; }, get room(){ return code; }, get channel(){ return channel; }, get account(){ return !!(pts.account||locked); }, get cards(){ return cards; }, get ptNow(){ return ptNow; }, get sideNow(){ return sideNow; }, get roomOpen(){ return roomOpen; },
-    cardsIn:cardsIn,redrawMake:function(){ $('mzcard')._h=''; drawCards(); },teamOn:null,teamTips:null,eggCard:null,eggReady:null,makeDraw:null,
+    cardsIn:cardsIn,teamOn:null,eggReady:null,
     onTab:null,onSide:null};
   try{ document.dispatchEvent(new Event('cdx')); }catch(e){}
   setTimeout(meterPoll,1500);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden) meterPoll(); });
   var cards={ok:false,tried:false,acct:null,price:30,max:6,recharge:100,titleMax:20,making:null,list:[],t:0,from:'chat'}, ptNow='spawn', cardNew=0;
-  var MAKE_SECONDS=40;
-  /* Make's own state: pick = the Enemy page is open (nothing being made yet); seen = the make this page watched being
-     built (so its last stop, the painting, gets a moment); readyAt = when it was first seen ready; rv = the reveal is up */
-  var mz={fake:null,seen:0,readyId:0,readyAt:0,rv:null};
   function hue(t){ var h=0; t=String(t||''); for(var i=0;i<t.length;i++) h=(h*31+t.charCodeAt(i))%360; return h; }
   /* a card's picture: the 48x48 pixel sprite the database drew for it (my_cards' sprite, a base64 PNG), else a tinted face */
   function cardArt(c,n){ var sp=c&&typeof c.sprite==='string'&&c.sprite.length<60000&&/^[A-Za-z0-9+\/]+=*$/.test(c.sprite)?c.sprite:'';
@@ -2883,133 +2874,35 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   function myCards(){ if(!ON) return; rpc('my_cards',withTok({q_name:me})).then(function(j){ cardsIn(j); }).catch(function(){ setTimeout(function(){ cards.tried=false; },60000); }); }
   function cardsIn(j,quiet){ if(!j||typeof j!=='object'||!j.cards) return; var now=Date.now(), mk;
     if(!quiet) cards.ok=true; cards.price=(j.price|0)||cards.price; cards.wprice=j.weapon_price|0; cards.anyPrice=j.any_price|0; cards.max=(j.max|0)||cards.max; cards.recharge=(j.recharge|0)||cards.recharge; cards.titleMax=(j.title_max|0)||cards.titleMax;
-    mk=cards.making=j.making||null; if(mk){ mk.kind=mk.kind==='weapon'?'weapon':mk.kind==='any'?'':'enemy'; mk.since=now-(mk.age|0)*1000; if(!mk.ready) mz.seen=mk.id; if(mk.ready&&mz.readyId!==mk.id){ mz.readyId=mk.id; mz.readyAt=now; } }
+    mk=cards.making=j.making||null;
+    /* (an egg ordered before the Make tab went away: it goes straight to the Pets tab when it's ready) */
+    if(mk&&mk.ready&&cards.eggIn!==mk.id&&window.CDX&&typeof window.CDX.eggReady==='function'&&typeof window.CDX.teamOn==='function'&&window.CDX.teamOn()){ cards.eggIn=mk.id; try{ window.CDX.eggReady(mk); }catch(e){} }
     cards.list=(j.cards||[]).map(function(c){ c.until=now+(c.wait|0)*1000; return c; });
     if(j.note==='make failed'){ pmsg('That one couldn\'t be made, so your rubies are back.','bad'); gain.why='Refund'; myPoints(); }
-    clearTimeout(cards.t); if(mk&&(!mk.ready||(mk.sprite===null&&now-mz.readyAt<20000))) cards.t=setTimeout(myCards,3500);
+    clearTimeout(cards.t); if(mk&&!mk.ready) cards.t=setTimeout(myCards,3500);
     drawCards(); }
-  function pTab(t){ if(!cards.ok) t='spawn'; ptNow=t;
+  function pTab(t){ if(!cards.ok||t==='make') t='spawn'; ptNow=t;
     [].forEach.call(document.querySelectorAll('#ptabs [data-pt]'),function(b){ b.setAttribute('aria-selected',b.getAttribute('data-pt')===t?'true':'false'); });
-    $('pacts').hidden=t!=='spawn'; if(t==='spawn'&&meters.ok) meterPoll(); $('pmake').hidden=t!=='make'; $('pdeck').hidden=t!=='deck'; $('pteam').hidden=t!=='team'; pHover=''; drawCards(); if(window.CDX&&typeof window.CDX.onTab==='function'){ try{ window.CDX.onTab(t); }catch(e){} } }
+    $('pacts').hidden=t!=='spawn'; if(t==='spawn'&&meters.ok) meterPoll(); $('pdeck').hidden=t!=='deck'; $('pteam').hidden=t!=='team'; pHover=''; drawCards(); if(window.CDX&&typeof window.CDX.onTab==='function'){ try{ window.CDX.onTab(t); }catch(e){} } }
   [].forEach.call(document.querySelectorAll('#ptabs [data-pt]'),function(b){ b.addEventListener('click',function(){ pTab(b.getAttribute('data-pt')); }); });
   function deckList(){ return cards.list.filter(function(c){ return c.deck; }); }
-  /* where Make is: the three buttons, the prompt, the tracker, or the mystery card waiting to be revealed */
-  var STOPS=[['custom','Reading your idea'],['enemy','Building its body'],['gun','Teaching it to fight'],['suns','Sizing up the danger'],['cards','Painting the card']];
-  var WSTOPS=[['custom','Reading your idea'],['anvil','Forging its shape'],['gun','Teaching it to fire'],['event','Testing it out'],['cards','Painting the card']];
-  var NSTOPS=[['custom','Reading your idea'],['anvil','Working out what it is'],['enemy','Building it'],['event','Testing it out'],['cards','Painting the card']];
-  /* what a make costs: typed words go at the one price (the database picks what it becomes once it can: any_price),
-     an idea chip at the price of the saved thing it is */
-  function mkPrice(k){ return k==='weapon'?(cards.wprice||cards.price):k==='enemy'?cards.price:(cards.anyPrice||cards.price); }
-  /* words that were made before come back ready at once: the tracker still plays, as if it were being built */
-  var FAKE_MS=11000;
-  /* the Make tab's board: idea chips (saved prompts only: a tap costs no designing) and the newest cards viewers made */
-  var board={at:0,busy:false,ideas:[],fresh:[]};
-  function boardGet(force){ if(!ON||board.busy||(!force&&Date.now()-board.at<60000)) return; board.busy=true;
-    rpc('make_board',withTok({q_name:me||''})).then(function(j){ board.busy=false; board.at=Date.now(); if(!j||!j.ideas) return; board.ideas=j.ideas.slice(0,3); board.fresh=(j.fresh||[]).slice(0,8); drawBoard(); })
-    .catch(function(){ board.busy=false; board.at=Date.now()+240000; }); }
-  function drawBoard(){ var c='', f='';
-    board.ideas.forEach(function(i,n){ c+='<button type="button" class="idea" data-idea="'+n+'">'+pix(i.kind==='weapon'?'gun':'enemy',20)+'<span>'+esc(i.text)+'</span></button>'; });
-    board.fresh.forEach(function(x,n){ f+='<div class="mw">'+cardHtml({name:x.name,danger:x.danger||'normal',kind:x.kind,sprite:x.sprite,cost:0},'',x.text?'button':'div',' data-fresh="'+n+'"'+(x.text?' title="'+esc(x.text)+'"':''))+(n===0&&(x.ago|0)<3600?'<span class="tag">NEW</span>':'')+'<span class="by">'+(x.by?'by '+esc(x.by):'&nbsp;')+'</span></div>'; });
-    var cb=$('mkchips'), fb=$('mkfrow'); if(cb._h!==c){ cb._h=c; cb.innerHTML=c; } if(fb._h!==f){ fb._h=f; fb.innerHTML=f; }
-    $('mkideas').hidden=!board.ideas.length; $('mkfeed').hidden=!board.fresh.length; }
-  function teamOn(){ var x=window.CDX; try{ return !!(x&&typeof x.teamOn==='function'&&x.teamOn()); }catch(e){ return false; } }
-  function mkTips(k){ if(teamOn()&&window.CDX.teamTips&&window.CDX.teamTips.length) return window.CDX.teamTips; return [k==='weapon'?'It drops into the game as a present to open.':'The more powerful it is, the more Power it costs to spawn.','Your first spawn of a new card is free.','You get to name it when it\'s done.',
-    'After a spawn, a card recharges for '+cards.recharge+' seconds.','Your Deck holds '+cards.max+' cards. The rest wait in All cards.','You can leave this page. It keeps making.']; }
-  function mkStage(now){ var mk=cards.making; if(!mk) return 'home'; if(!mk.ready) return 'wip';
-    if(mz.fake&&mz.fake.id===mk.id&&now-mz.fake.t0<FAKE_MS) return 'wip';   /* (saved words: pretend to build) */
-    if(mk.sprite===null&&now-mz.readyAt<20000) return 'wip';       /* (made, its card not painted yet) */
-    if(mz.seen===mk.id&&now-mz.readyAt<1800) return 'wip';          /* (watched all the way: the last stop gets its moment) */
-    return 'done'; }
-  function drawMake(now){ var mk=cards.making, st=mkStage(now), kind=mk?mk.kind:'', wk=kind==='weapon', tm=teamOn(), what=tm?'egg':wk?'weapon':kind==='enemy'?'enemy':'card', h, price=mkPrice('');
-    [].forEach.call(document.querySelectorAll('.mkp'),function(i){ i.textContent=price; }); $('mkgo').classList.toggle('poor',pts.account&&pts.rubies<price);
-    $('mzready').textContent='Your '+what+' is ready!';
-    $('mkrow').hidden=st!=='home'; $('mkdz').hidden=st==='home'; $('mzwip').hidden=st!=='wip'; $('mzdone').hidden=st!=='done';
-    if(st==='home'&&ptNow==='make') boardGet();
-    $('mkdot').hidden=st!=='done';
-    if(st==='wip'){ var fk=mz.fake&&mz.fake.id===mk.id&&now-mz.fake.t0<FAKE_MS, el=fk?(now-mz.fake.t0)/1000:(now-mk.since)/1000, step=fk?Math.min(4,Math.floor(el/(FAKE_MS/5000))):mk.ready?4:Math.min(3,Math.floor(el/(MAKE_SECONDS/4))), t='';
-      h='<div class="mc forge t-normal"><span class="nin">New '+what+'</span><span class="anv">'+pix('anvil',40)+'</span><span class="fb"><b style="width:'+(fk?Math.round(Math.min(100,6+el/(FAKE_MS/1000)*94)):mk.ready?100:Math.round(Math.min(92,6+el/MAKE_SECONDS*80)))+'%"></b></span></div>';
-      (wk?WSTOPS:kind==='enemy'?STOPS:NSTOPS).forEach(function(s,i){ t+=i>step?'<div class="ts"><span class="ti"><b class="tq">?</b></span><span class="tl">???</span></div>'
-        :'<div class="ts '+(i<step?'did':'on')+'"><span class="ti">'+pix(s[0],24)+'<em>&#10003;</em></span><span class="tl">'+s[1]+'</span></div>'; });
-      var tr=$('mztrk'); if(tr._h!==t){ tr._h=t; tr.innerHTML=t; }
-      $('mzwhat').textContent='\u201c'+mk.text+'\u201d'; var tips=mkTips(kind), line=tips[Math.floor(Math.max(0,el)/6)%tips.length], tl=$('mzline'); if(tl.textContent!==line){ tl.textContent=line; once(tl,'swap',400); } }
-    else if(st==='done'&&tm&&typeof window.CDX.eggCard==='function') h=String(window.CDX.eggCard(mk)||'');
-    else if(st==='done') h='<button type="button" class="mc myst ready" id="mzmyst" aria-label="Reveal your '+what+'"><span class="nin">? ? ?</span><span class="q">?</span></button>';
-    var box=$('mzcard'); if(st!=='home'&&box._h!==h){ box._h=h; box.innerHTML=h; }
-    if(mz.rv&&(st!=='done'||!mk||mz.rv._id!==mk.id)) rvClose();
-    if(tm&&typeof window.CDX.makeDraw==='function'){ try{ window.CDX.makeDraw(st,mk); }catch(e){} } }
   function drawCards(){ var pt=$('points'), now=Date.now();
     pt.classList.toggle('cardsok',cards.ok); $('pstore').classList.toggle('cardsok',cards.ok); if($('room').classList.contains('cardsok')!==cards.ok){ $('room').classList.toggle('cardsok',cards.ok); layout(); } if(!cards.ok){ if(ptNow!=='spawn') pTab('spawn'); return; }
-    drawMake(now);
     /* the deck */
     var box=$('deck'), d=deckList(), html='';
     d.forEach(function(c){ var wait=Math.max(0,Math.ceil((c.until-now)/1000)), poor=!c.free&&pts.n<c.cost;
       html+='<button type="button" class="dcard mc t-'+esc(c.danger||'normal')+' k-'+cardKind(c)+(wait?' cool':'')+(c.free&&!wait?' free':'')+(poor&&!wait?' poor':'')+(c.id===cardNew?' fresh':'')+'" data-card="'+c.id+'" title="'+esc(c.name+': '+c.text)+'">'
         +'<span class="nin">'+esc(fitName(c.name))+'</span>'+cardArt(c,96)+kindBadge(c)
         +(wait?'<span class="cd">'+wait+'s</span><span class="cbar"><b style="width:'+Math.round(100-wait/cards.recharge*100)+'%"></b></span>':'<span class="cost">'+(c.free?'<i>FREE</i>':SUN_SVG+'<i>'+c.cost+'</i>')+'</span>')+'</button>'; });
-    for(var i=d.length;i<cards.max;i++) html+='<button type="button" class="dcard mc empty" data-empty="1" aria-label="Empty slot: make a card">+</button>';
+    for(var i=d.length;i<cards.max;i++) html+='<button type="button" class="dcard mc empty" data-empty="1" aria-label="Empty slot">+</button>';
     html+='<button type="button" class="allc" id="allc">'+pix('cards',24)+'<span>All cards</span><small>'+cards.list.length+' made</small></button>';
     if(box._h!==html){ box._h=html; box.innerHTML=html; }
     if(sideNow==='cards') drawAll(); }
   setInterval(function(){ if(cards.ok&&!document.hidden&&(cards.making||cards.list.some(function(c){ return c.until>Date.now()-1500; }))) drawCards(); },1000);
-  /* the Enemy button opens the designer page: only the prompt, then Make */
-  function mkSend(t0,kind,from){ var typed=t0==null, t=String(typed?$('mktext').value:t0).replace(/\s+/g,' ').trim(), b=$('mkgo'), box=from||$('mzask');
-    if(!(pts.account||locked)){ needAccount(function(){ mkSend(t0,kind,from); }); return; }
-    if(!t){ once(box,'no',450); $('mktext').focus(); return; }
-    /* (typed words go the old 4-argument way until the database can pick the type itself, so an older one still takes them) */
-    var k=typed?'':kind==='weapon'?'weapon':'enemy', cost=mkPrice(k), a=withTok({q_code:code,q_name:me,q_text:t}); if(k==='weapon') a.q_kind='weapon'; else if(typed&&cards.anyPrice) a.q_kind='any';
-    if(pts.rubies<cost){ once(b,'no',450); pmsg('You need '+(cost-pts.rubies)+' more rubies to make that.','bad'); sideTab('shop'); smsg('You need '+(cost-pts.rubies)+' more rubies.','bad'); return; }
-    if(b.classList.contains('wait')) return; b.classList.add('wait');
-    rpc('make_card',a).then(function(j){ b.classList.remove('wait'); if(!j) return; var mk=j.cards&&j.cards.making;
-      if(mk&&mk.ready) mz.fake={id:mk.id,t0:Date.now()};
-      if(typed) $('mktext').value=''; $('mktext').blur(); setRubies(j.rubies); drawTop(); pmsg(''); cardsIn(j.cards); fly(RUBY_SVG,$('rbtn'),$('mzcard'),3); board.at=0;
-    }).catch(function(err){ b.classList.remove('wait'); once(box,'no',450); var m=String(err&&err.message||'');
-      pmsg(m==='room closed'?'New cards are made while the streamer\'s game is running. Try again when it\'s live.':m==='not allowed'?'Those words aren\'t allowed. Try something else.':m==='weapons are not open yet'?'Weapons aren\'t open yet. Try again soon.':m==='have it'?'You already have that card.':/^You've made /.test(m)?m.slice(0,140):SPEND_ERR[m]||srvErr(err),'bad'); if(m==='no account') openAccount(); if(m==='making'||m==='not enough rubies'){ myCards(); myPoints(); } if(m==='have it') boardGet(true); }); }
-  $('mzask').addEventListener('submit',function(ev){ ev.preventDefault(); mkSend(); });
-  $('mkchips').addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-idea]'), i=b&&board.ideas[b.getAttribute('data-idea')|0]; if(i) mkSend(i.text,i.kind,b); });
-  /* a fresh card: its words go in the box, ready to make the same one */
-  $('mkfrow').addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('button[data-fresh]'), x=b&&board.fresh[b.getAttribute('data-fresh')|0]; if(x&&x.text){ $('mktext').value=x.text; if(!phoneMq.matches) $('mktext').focus(); once($('mzask'),'pick',500); } });
-  /* the reveal: the mystery card grows into the real one, in the store panel only (never over the stream). The viewer
-     names it there, then Add to Deck flies it to the Deck tab. */
-  function rvHost(){ return phoneMq.matches&&app.classList.contains('inroom')?$('pstore'):$('points'); }
-  function rvClose(){ var o=mz.rv; if(!o) return; mz.rv=null; if(o.parentNode){ o.parentNode.classList.remove('rvhost'); o.remove(); } }
-  function rvName(o){ var i=o.querySelector('#rvname'), v=i.value.replace(/[^A-Za-z0-9 '.!-]/g,'').replace(/\s+/g,' ').replace(/^ /,''), cut=false;
-    while(v.length&&!nameFits(v.trim())){ v=v.slice(0,-1); cut=true; } if(v!==i.value){ var at=i.selectionStart; i.value=v; try{ i.setSelectionRange(at,at); }catch(e){} } if(cut) once(i.parentNode,'no',450);
-    o.querySelector('.mc.big .nin').textContent=v.trim()||o._made; }
-  function rvOpen(){ var mk=cards.making; if(!mk||!mk.ready||mz.rv) return; if(teamOn()&&typeof window.CDX.eggReady==='function'){ window.CDX.eggReady(mk); return; } var host=rvHost(), o=document.createElement('div'), wk=mk.kind==='weapon', dn=wk?'normal':String(mk.danger||'normal'), tier=wk?'Weapon':tierName(dn);
-    var c={name:mk.name,kind:mk.kind,danger:dn,sprite:mk.sprite,cost:mk.cost||({harmless:10,weak:15,normal:30,tough:45,deadly:70,god:120})[dn]||30};
-    o.className='rv'; o._id=mk.id; o._made=fitName(mk.name); o.setAttribute('role','dialog'); o.setAttribute('aria-label','Your new '+(wk?'weapon':'enemy'));
-    o.innerHTML='<div class="rays"></div><div class="glow"></div><button type="button" class="rx" id="rvx" aria-label="Close" title="Name it later">&#10005;</button>'+cardHtml(c,'big')
-      +'<form class="dq rq t-'+esc(dn)+'"><h4 class="rt">'+esc(tier)+'!</h4><div class="tier"><span class="cost">'+SUN_SVG+c.cost+'</span><p>to spawn. First one is free.</p></div>'
-      +'<h4 class="rn"><label for="rvname">Give it a name</label></h4><div class="row"><span class="in"><input id="rvname" maxlength="'+cards.titleMax+'" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done"></span></div>'
-      +'<div class="row"><button type="submit" class="go big" id="rvadd">Add to Deck</button></div><div class="rm" id="rvmsg" role="status"></div></form>';
-    host.classList.add('rvhost'); host.appendChild(o); mz.rv=o; o.querySelector('#rvname').value=o._made;
-    o.querySelector('#rvname').addEventListener('input',function(){ o.querySelector('#rvmsg').textContent=''; rvName(o); });
-    o.querySelector('#rvx').addEventListener('click',rvClose);
-    o.querySelector('form').addEventListener('submit',function(ev){ ev.preventDefault(); rvAdd(o,c); });
-    if(!still) burst(pix('spark',24)||SUN_SVG,o.querySelector('.mc.big'),8);
-    if(phoneMq.matches) o.scrollIntoView({behavior:still?'auto':'smooth',block:'nearest'}); }
-  function claim(id,title){ return rpc('claim_card',withTok({q_name:me,q_card:id,q_title:title})).catch(function(err){
-      /* (a database from before card names: the old call, and the card keeps the design's own name) */
-      if(/Could not find the function|no function/i.test(String(err&&err.message||''))) return rpc('claim_card',withTok({q_name:me,q_card:id})); throw err; }); }
-  function rvAdd(o,c){ var b=o.querySelector('#rvadd'), mk=cards.making, title=o.querySelector('#rvname').value.trim(); if(!mk||b.disabled) return; b.disabled=true; b.classList.add('wait');
-    claim(mk.id,title===o._made&&o._made===mk.name?'':title).then(function(j){ if(!j) return; var inDeck=j.added==='deck', name=title||mk.name, tab=document.querySelector('#ptabs [data-pt=deck]'), big=o.querySelector('.mc.big');
-      var land=function(){ cardNew=mk.id; rvClose(); cardsIn(j); pTab('deck'); once(tab,'bump',450); once(tab,'hot',900);
-        pmsg(inDeck?name+' is in your Deck. Its first spawn is free!':'Your Deck is full, so '+name+' is waiting in All cards.','ok'); if(!inDeck) allOpen(); setTimeout(function(){ cardNew=0; },1600); };
-      if(still||!big.animate||!tab||!tab.offsetParent){ land(); return; }
-      var a=big.getBoundingClientRect(), t=tab.getBoundingClientRect(), f=document.createElement('div'), x0=a.left+a.width/2, y0=a.top+a.height/2, x1=t.left+t.width/2, y1=t.top+t.height/2;
-      c.name=name; f.className='rvfly'; f.innerHTML=cardHtml(c,''); document.body.appendChild(f); o.classList.add('gone'); o.style.visibility='hidden';
-      f.animate([{transform:'translate('+x0+'px,'+y0+'px) scale(1.5) rotate(0deg)',opacity:1},
-        {transform:'translate('+((x0+x1)/2)+'px,'+(Math.min(y0,y1)+(Math.abs(y0-y1)<60?-26:10))+'px) scale(.8) rotate(10deg)',opacity:1,offset:.55},
-        {transform:'translate('+x1+'px,'+y1+'px) scale(.22) rotate(18deg)',opacity:.9}],{duration:620,easing:'cubic-bezier(.5,0,.7,.6)',fill:'both'});
-      setTimeout(function(){ f.remove(); land(); },630);
-    }).catch(function(err){ b.disabled=false; b.classList.remove('wait'); var m=String(err&&err.message||'');
-      o.querySelector('#rvmsg').textContent=m==='bad name'?'That name isn\'t allowed. Try another.':SPEND_ERR[m]||srvErr(err); if(m==='bad name') once(o.querySelector('.in'),'no',450); else myCards(); }); }
-  $('mkreveal').addEventListener('click',rvOpen);
-  $('mzcard').addEventListener('click',function(ev){ if(ev.target.closest&&ev.target.closest('#mzmyst')) rvOpen(); });
   /* a card in the deck: click to spawn it */
   $('deck').addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('button'); if(!b) return;
     if(b.id==='allc'){ allOpen(); return; }
-    if(b.getAttribute('data-empty')){ if(cards.list.length>deckList().length) allOpen(); else { pTab('make'); pmsg('Make something and it becomes a card here.'); } return; }
+    if(b.getAttribute('data-empty')){ if(cards.list.length>deckList().length) allOpen();  return; }
     var id=+b.getAttribute('data-card'), c=cards.list.filter(function(x){ return x.id===id; })[0]; if(!c||b.classList.contains('wait')) return;
     if(c.until>Date.now()){ once(b,'no',450); pmsg(c.name+' is recharging.'); return; }
     var cost=c.free?0:c.cost; if(pts.n<cost){ once(b,'no',450); once($('dpmeter'),'shake',450); pmsg('Not enough Power. You need '+(cost-pts.n)+' more.','bad'); return; }
@@ -3034,7 +2927,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   var sideNow='chat';
   /* on a phone the reward buttons sit in their own tab, so the stream and the chat fit on one screen; anywhere else they're under the stream */
   var phoneMq=window.matchMedia('(max-width:640px) and (min-height:560px), (max-width:640px) and (pointer:coarse)');
-  function placeStore(){ if(mz.rv&&mz.rv.parentNode!==rvHost()) rvClose(); var ph=phoneMq.matches&&app.classList.contains('inroom'), home=$('points'), tab=$('rewv'), pa=$('pstore');
+  function placeStore(){ var ph=phoneMq.matches&&app.classList.contains('inroom'), home=$('points'), tab=$('rewv'), pa=$('pstore');
     if(ph&&pa.parentNode!==tab) tab.appendChild(pa);
     else if(!ph&&pa.parentNode!==home){ home.insertBefore(pa,home.querySelector('.pline')); if(sideNow==='rewards') sideTab('chat'); } }
   if(phoneMq.addEventListener) phoneMq.addEventListener('change',placeStore); else if(phoneMq.addListener) phoneMq.addListener(placeStore);
@@ -3071,7 +2964,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   $('msettings').addEventListener('click',function(){ closeMenu(); sideTab('account',true); });
   $('setstream').addEventListener('change',function(){ showStream(this.checked); layout(); });
   function logOut(){ closeMenu(); closeDaily(); twOut(); bonus.ready=false; bonus.guestAt=0; bonusDraw(); var t=tokenFor(me); if(t) rpc('logout_name',{q_token:t}).catch(function(){}); store('cdTok',null); store('cdTokName',null); store('cdName',null); store('cdGuest',null);
-    locked=false; me=''; pts.account=false; pts.rubies=0; pts.n=0; pts.genieMine=false; spends=[]; board.at=0; $('mktext').value=''; cardsIn({cards:[],making:null},true); pTab('spawn'); closeAsk(); drawPoints(); myPoints(); sideTab('chat'); pmsg('Logged out.'); }
+    locked=false; me=''; pts.account=false; pts.rubies=0; pts.n=0; pts.genieMine=false; spends=[]; cardsIn({cards:[],making:null},true); pTab('spawn'); closeAsk(); drawPoints(); myPoints(); sideTab('chat'); pmsg('Logged out.'); }
   $('mleave').addEventListener('click',logOut); $('setleave').addEventListener('click',logOut);
   $('setmake').addEventListener('click',openAccount);
   $('tbmake').addEventListener('click',openAccount);
@@ -3153,7 +3046,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
   if(ON&&!wantRecharge) siteIn(); else if(false) tryJoin(true);  /* (a remembered name rejoins after a reload or in a new tab) */
 })();
 </script>
-<script defer src="/team.js?v=3"></script>
+<script defer src="/team.js?v=4"></script>
 <script defer src="/bag.js?v=7"></script>
 </body>
 </html>
