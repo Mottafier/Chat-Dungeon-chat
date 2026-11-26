@@ -110,12 +110,12 @@
     'room closed':'The stream is offline, so nothing can go in right now.','out':'It’s already in the fight.','resting':'It’s still resting.',
     'not on team':'Put it on your team first, then send it.','too busy':'The stream is very busy. Try again in a moment.','slow down':'Slow down a little, then try again.','team off':'Teams aren’t switched on yet.','not ready':'That egg is still being made.','no account':'Make an account first.','not hatched':'It hasn’t hatched yet.','bad name':'That name isn’t allowed. Try another.','no side':'Helping isn’t switched on yet.','too many helpers':'There are enough helpers in there right now. Try again soon.',
     'not allowed':'Those words aren’t allowed. Try something else.','claimed':'You already opened your free egg.','too many':'Too many free eggs went out on your network today. Try again tomorrow.',
-    'full':'It’s full. Pick one to swap out.','bad option':'That one isn’t on offer any more.','no pick':'That pick is gone.'};
+    'full':'It’s full. Pick one to swap out.','bad replace':'It doesn’t have that one any more. Pick again.','bad option':'That one isn’t on offer any more.','no pick':'That pick is gone.'};
   function errText(e){ var m=String(e&&e.message||''); return ERR[m]||(!m||e instanceof TypeError?'Couldn’t reach the server. Try again.':'Server said: '+m.slice(0,100)); }
 
   function stateIn(j){ if(!j||typeof j!=='object'||!j.members) return false; var now=Date.now(), was=S.on;
     S.known=true; S.on=!!j.on; S.slots=(j.slots|0)||5; S.cooldown=(j.cooldown|0)||14400; S.got=now;
-    var by={}, events=[];
+    var by={}, events=[]; eggsIn(j); if(j.seed_max) WORD_MAX=Math.max(1,j.seed_max|0);
     S.members=j.members.map(function(m){ m.id=+m.id; m.slot=m.slot==null?null:+m.slot; m.egg=!!m.egg; m.until=now+(m.left|0)*1000;
       if(m.status==='out'){ if(!S.outSince[m.id]) S.outSince[m.id]=now; } else { delete S.outSince[m.id]; delete S.helping[m.id]; }
       var f=S.seenForm[m.id];
@@ -133,6 +133,11 @@
     giftSync(); pickSync();
     return true; }
 
+  /* an egg whose first form is still being designed is listed under `making`, not with the members: it stands on its
+     spot all the same (a wobbling egg that can't be sent yet) */
+  function eggsIn(j){ var mk=Array.isArray(j.making)?j.making:j.making&&typeof j.making==='object'?[j.making]:[];
+    mk.forEach(function(e){ if(!e||!e.egg||e.ready||e.id==null) return; var m=j.members.filter(function(x){ return +x.id===+e.id; })[0];
+      if(m) m.making=true; else j.members.push({id:e.id,slot:e.slot==null?null:e.slot,egg:true,hue:e.hue|0,status:'home',making:true}); }); }
   var pollT=0;
   function poll(){ clearTimeout(pollT);
     if(!api){ pollT=setTimeout(poll,5000); return; }
@@ -169,9 +174,10 @@
   X.teamOn=function(){ return S.on; };
 
   /* ---------------------------------------------------------------- an egg that was ordered before the Make tab went away: it lands by itself */
-  X.eggReady=function(mk){ var id=+mk.id, k=mk.slot==null?null:+mk.slot;
+  X.eggReady=function(mk){ var id=+mk.id, k=mk.slot==null?null:+mk.slot, here=!!M(id);
     var go=function(j){ if(j&&X.cardsIn) X.cardsIn(j); soon(100); };
     (api?api.clear(id):demo.clear(id)).then(go,function(){ soon(100); });
+    if(here) return;   /* (it's already standing on its spot: the free egg) */
     if(k!=null){ S.pick=id; S.spot=null; X.pTab('team'); toast('Your egg is on your team. Send it into a stream to hatch it!'); }
     else { S.pick=id; if(phone()) X.pTab('team'); else if(colOpen()) X.sideTab('collection',true); toast('Your team is full, so your egg went to your Collection.'); }
     S.landed=id; setTimeout(function(){ S.landed=null; },2500); draw(); };
@@ -657,6 +663,7 @@
     var had={}; S.members.forEach(function(m){ had[m.id]=1; });
     (api?api.claim(t):demo.claim(t)).then(function(j){ var st=j&&j.state&&j.state.members?j.state:j, id=j&&j.card!=null?+j.card:null;
       if(!st||!st.members) throw new Error('');
+      eggsIn(st);
       if(id==null){ var nw=st.members.filter(function(m){ return !had[+m.id]; }); nw.sort(function(a,b){ return (b.making?1:0)-(a.making?1:0)||b.id-a.id; }); id=nw.length?+nw[0].id:null; }
       giftFly(st,id);
     }).catch(function(e){ G.busy=false; b.disabled=false; inp.readOnly=false; G.view.classList.remove('busy'); var m=String(e&&e.message||'');
@@ -760,6 +767,7 @@
   function pkErr(e){ PK.busy=false; var m=String(e&&e.message||''); toast(errText(e),true);
     if(m==='full'&&PK.opt!=null){ PK.mode='swap'; pkRender(true); return; }
     if(m==='no pick'||m==='bad option'){ pickClose(); soon(200); return; }
+    if(m==='bad replace') soon(200);
     PK.mode='pick'; PK.opt=null; pkRender(true); soon(400); }
   /* the picked card shrinks into its place in the list (an empty slot, or over the one it replaces) while the server is told */
   function pkTake(i,rep){ var m=M(PK.id), box=$('tpk'), p=pickOf(m); if(!m||!p||PK.busy) return; var o=p.options[i], kind=kindOf(o), l=has(m,kind), id=m.id;
