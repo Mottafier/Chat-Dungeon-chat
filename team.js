@@ -1,13 +1,17 @@
-/* Chat Dungeon: the Team camp (store tab, replaces Deck) and the Collection (side tab beside Chat on a PC; under the camp on a phone).
+/* Chat Dungeon: the Pets tab (the team strip: a store tab, replaces Deck) and the Collection (side tab beside Chat on a PC; under the strip on a phone).
+   Also here (2026-11-26): the free egg present, the "learning something new" picks, and the tabs that unlock one at a time.
    Loaded by the streamer page (404.html), which hands over its helpers as window.CDX. Nothing shows until the
    database says team mode is on (team_state.on), or the page is opened with ?team=demo (pretend data, no calls).
-   Database: team_state, team_set, team_send, team_name, claim_card (clears an egg's make), live_dungeons. */
+   Database: team_state, team_set, team_send, team_name, claim_card (clears an egg's make), live_dungeons,
+   free_egg_claim, pick_choose, pick_skip, unlock_seen. */
 (function(){
   'use strict';
   var SRC=document.currentScript&&document.currentScript.src||'/team.js';
   var X=window.CDX; if(!X){ document.addEventListener('cdx',function go(){ document.removeEventListener('cdx',go); var sc=document.createElement('script'); sc.src=SRC; document.head.appendChild(sc); }); return; }
   if(window.CDTEAM) return;
   var DEMO=/[?&]team=demo\b/.test(location.search);
+  /* what the tab is called. It may change again: this is the only place the word lives (plus the tab's own label in 404.html). */
+  var PETS='Pets';
   var $=function(id){ return document.getElementById(id); };
   var $$=function(s,el){ return [].slice.call((el||document).querySelectorAll(s)); };
   var esc=X.esc, still=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -22,14 +26,14 @@
   function account(){ return typeof X.account==='function'?X.account():!!X.account; }
   var BASE=(function(){ var s=document.currentScript&&document.currentScript.src; return s?s.replace(/team\.js.*$/,''):'/'; })();
   var VER=(function(){ var s=document.currentScript&&document.currentScript.src, m=s&&s.match(/[?&]v=([\w.-]+)/); return m?m[1]:'1'; })();
-  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.9'; document.head.appendChild(l); })();
+  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.1'; document.head.appendChild(l); })();
 
   /* ---------------------------------------------------------------- state */
   var S={on:false,known:false,slots:5,cooldown:14400,members:[],byId:{},making:null,at:0,got:0,
          pick:null,      /* the creature that's picked: a team member (Send button over it) or a Collection card. Its full page shows in the Collection */
          spot:null,      /* an empty team spot that's picked (Add to team fills it) */
          placing:null,   /* a card being put on the team (dragged, or "Add to team" with a full team, then tap who it swaps with) */
-         seenForm:{}, seenEgg:{}, played:{}, titleMax:16, outSince:{}, helping:{}, noSide:false, revealing:null, live:null, liveAt:0, busy:false, dead:0};
+         free:null, fails:0, seenForm:{}, seenEgg:{}, played:{}, titleMax:16, outSince:{}, helping:{}, noSide:false, revealing:null, live:null, liveAt:0, busy:false, dead:0};
   function M(id){ return S.byId[id]||null; }
   function onPad(k){ for(var i=0;i<S.members.length;i++) if(S.members[i].slot===k) return S.members[i]; return null; }
   function teamCount(){ return S.members.filter(function(m){ return m.slot!=null; }).length; }
@@ -55,7 +59,8 @@
   var HEART='<svg class="thrt" viewBox="0 0 7 6" width="14" height="12" shape-rendering="crispEdges" aria-hidden="true"><path fill="#000" d="M1 0h2v1H1zM4 0h2v1H4zM0 1h7v2H0zM1 3h5v1H1zM2 4h3v1H2zM3 5h1v1H3z"/><path fill="#ff3b4e" d="M1 1h2v1H1zM4 1h2v1H4zM1 2h5v1H1zM2 3h3v1H2zM3 4h1v1H3z"/></svg>';
   function hpTag(m,cls){ return !m.egg&&(m.hp_max|0)>0?'<span class="'+cls+'">'+HEART+'<b>'+(m.hp_max|0)+'</b></span>':''; }
   function dozy(m,n,cls,fallback){ return spriteOk(m.sleep)?'<img class="tspr dozy'+(cls?' '+cls:'')+'" alt="" width="'+n+'" height="'+n+'" src="data:image/png;base64,'+m.sleep+'">':img(m,n,fallback); }
-  function restPct(m){ return Math.max(0,Math.min(100,100*(1-left(m)/Math.max(1,S.cooldown)))); }
+  /* how long a rest is depends on the creature's tier now: each one carries its own length (rest_total) */
+  function restPct(m){ return Math.max(0,Math.min(100,100*(1-left(m)/Math.max(1,(m.rest_total|0)||S.cooldown)))); }
   function restBar(m,cls){ return '<span class="trest'+(cls?' '+cls:'')+'"><b data-fill="'+m.id+'" style="width:'+restPct(m).toFixed(1)+'%"></b><i data-left="'+m.id+'" data-pre="">'+hm(left(m))+'</i></span>'; }
   function left(m){ return Math.max(0,Math.round(((m.until||0)-Date.now())/1000)); }
 
@@ -94,11 +99,18 @@
     name:function(id,t){ return X.rpc('team_name',X.withTok({q_name:me(),q_card:id,q_title:t})); },
     clear:function(id){ return X.rpc('claim_card',X.withTok({q_name:me(),q_card:id})); },
     live:function(){ return X.rpc('live_dungeons',{}); },
-    grow:function(id){ return X.rpc('test_grow',X.withTok({q_name:me(),q_card:id})); }
+    grow:function(id){ return X.rpc('test_grow',X.withTok({q_name:me(),q_card:id})); },
+    /* the free egg (one per account), a pick (q_replaces = the name of the old move it swaps out, when it's full), a tab seen by time */
+    claim:function(t){ return X.rpc('free_egg_claim',X.withTok({q_name:me(),q_text:t})); },
+    pick:function(id,i,rep){ return X.rpc('pick_choose',X.withTok({q_name:me(),q_card:id,q_option:i,q_replaces:rep==null?null:rep})); },
+    skip:function(id){ return X.rpc('pick_skip',X.withTok({q_name:me(),q_card:id})); },
+    seen:function(k){ return X.rpc('unlock_seen',X.withTok({q_name:me(),q_what:k})); }
   };
   var ERR={'busy':'It can’t move while it’s fighting or resting.','bad slot':'That spot doesn’t exist.','no card':'That creature isn’t yours.',
     'room closed':'The stream is offline, so nothing can go in right now.','out':'It’s already in the fight.','resting':'It’s still resting.',
-    'not on team':'Put it on your team first, then send it.','too busy':'The stream is very busy. Try again in a moment.','slow down':'Slow down a little, then try again.','team off':'Teams aren’t switched on yet.','not ready':'That egg is still being made.','no account':'Make an account first.','not hatched':'It hasn’t hatched yet.','bad name':'That name isn’t allowed. Try another.','no side':'Helping isn’t switched on yet.','too many helpers':'There are enough helpers in there right now. Try again soon.'};
+    'not on team':'Put it on your team first, then send it.','too busy':'The stream is very busy. Try again in a moment.','slow down':'Slow down a little, then try again.','team off':'Teams aren’t switched on yet.','not ready':'That egg is still being made.','no account':'Make an account first.','not hatched':'It hasn’t hatched yet.','bad name':'That name isn’t allowed. Try another.','no side':'Helping isn’t switched on yet.','too many helpers':'There are enough helpers in there right now. Try again soon.',
+    'not allowed':'Those words aren’t allowed. Try something else.','claimed':'You already opened your free egg.','too many':'Too many free eggs went out on your network today. Try again tomorrow.',
+    'full':'It’s full. Pick one to swap out.','bad option':'That one isn’t on offer any more.','no pick':'That pick is gone.'};
   function errText(e){ var m=String(e&&e.message||''); return ERR[m]||(!m||e instanceof TypeError?'Couldn’t reach the server. Try again.':'Server said: '+m.slice(0,100)); }
 
   function stateIn(j){ if(!j||typeof j!=='object'||!j.members) return false; var now=Date.now(), was=S.on;
@@ -111,12 +123,14 @@
       if(!m.egg&&S.seenEgg[m.id]&&!m.fresh) events.push(['hatched',m]);
       if(!m.egg) S.seenForm[m.id]=m.form|0; S.seenEgg[m.id]=m.egg;
       by[m.id]=m; return m; });
-    S.byId=by; S.making=j.making||null; if(j.title_max) S.titleMax=j.title_max|0;
+    S.byId=by; S.making=j.making||null; if(j.title_max) S.titleMax=j.title_max|0; S.free=j.free_egg||null;
     if(S.pick!=null&&!by[S.pick]) S.pick=null;
     if(S.on!==was) modeChanged();
+    uSync(j);
     draw(); events.forEach(function(e){ if(e[0]==='evolve') evolved(e[1],e[2]); });
     var fresh=S.members.filter(function(m){ return m.fresh&&!m.egg; })[0];
     if(fresh&&S.revealing!==fresh.id) hatchShow(fresh);
+    giftSync(); pickSync();
     return true; }
 
   var pollT=0;
@@ -124,11 +138,12 @@
     if(!api){ pollT=setTimeout(poll,5000); return; }
     if(document.hidden||!me()){ pollT=setTimeout(poll,4000); return; }
     S.busy=true;
-    api.state().then(function(j){ S.busy=false; S.dead=0; if(!stateIn(j)){ S.known=true; if(S.on){ S.on=false; modeChanged(); } } next(); })
+    api.state().then(function(j){ S.busy=false; S.dead=0; if(!stateIn(j)){ S.known=true; if(S.on){ S.on=false; modeChanged(); } uAll(); } next(); })
     .catch(function(e){ S.busy=false; var m=String(e&&e.message||'');
-      if(/Could not find the function|no function|does not exist/i.test(m)){ S.dead++; if(S.on){ S.on=false; modeChanged(); } pollT=setTimeout(poll,300000); return; }
+      if(/Could not find the function|no function|does not exist/i.test(m)){ S.dead++; if(S.on){ S.on=false; modeChanged(); } uAll(); pollT=setTimeout(poll,300000); return; }
+      if(++S.fails>=3) uAll();   /* (the server can't be reached: nobody is left staring at a page with no tabs) */
       pollT=setTimeout(poll,20000); }); }
-  function next(){ pollT=setTimeout(poll,!S.on?180000:shown()?5000:30000); }
+  function next(){ S.fails=0; pollT=setTimeout(poll,!S.on?180000:shown()||S.members.some(function(m){ return m.making; })?5000:30000); }
   function soon(ms){ clearTimeout(pollT); pollT=setTimeout(poll,ms||600); }
   document.addEventListener('visibilitychange',function(){ if(!document.hidden&&S.on) soon(200); });
 
@@ -137,29 +152,28 @@
   var pane=$('pteam'), colv=document.querySelector('.sview[data-view="collection"]');
   if(!tabTeam||!pane||!tabCol||!colv) return;
   (function(){ var ic=tabTeam.querySelector('[data-px]')||tabTeam.querySelector('svg'); var e=document.createElement('span'); e.className='tegg'; e.innerHTML=egg(38,1); if(ic) ic.parentNode.replaceChild(e,ic); else tabTeam.insertBefore(e,tabTeam.firstChild);
+    [].forEach.call(tabTeam.childNodes,function(n){ if(n.nodeType===3&&n.nodeValue.trim()) n.nodeValue=PETS; });
     if(!$('tmdot')){ var d=document.createElement('i'); d.className='pdot'; d.id='tmdot'; d.hidden=true; d.textContent='!'; tabTeam.appendChild(d); } })();
   function modeChanged(){ var on=S.on;
     document.documentElement.classList.toggle('cdteam',on);
-    tabTeam.hidden=!on; tabCol.hidden=!on||phone(); if(tabDeck) tabDeck.hidden=on;
+    tabTeam.hidden=!on; tabCol.hidden=!on||phone(); if(tabDeck) tabDeck.hidden=on; if(!on) uAll();
     if(on){ if(ptNow()==='deck') X.pTab('team'); if(sideNow()==='cards') X.sideTab('collection'); }
     else { if(ptNow()==='team') X.pTab('spawn'); if(sideNow()==='collection') X.sideTab('chat'); }
-    if(X.redrawMake) X.redrawMake();
     if(X.layout) X.layout(); }
   function shown(){ return (!pane.hidden&&!!pane.offsetParent)||(!colv.hidden&&!!colv.offsetParent); }
-  X.onTab=function(t){ ptCur=t; pane.hidden=t!=='team'; if(t==='team'){ tabDot(false); draw(); if(S.on) soon(150); } };
-  X.onSide=function(t){ sideCur=t; if(t==='collection'){ drawCol(); if(S.on) soon(150); } else if(S.placing!=null&&!drag&&!phone()&&t!=='rewards') stopPlacing(); };
+  X.onTab=function(t){ if(t==='spawn'&&lk('power')&&S.on&&!lk('pets')&&X.cards&&X.cards.ok){ X.pTab('team'); return; }
+    ptCur=t; pane.hidden=t!=='team'; if(t==='team'){ tabDot(false); draw(); if(S.on) soon(150); pickSync(); } else clearDot(document.querySelector('#ptabs [data-pt="'+t+'"]')); };
+  X.onSide=function(t){ sideCur=t; clearDot(document.querySelector('.stabs [data-side="'+t+'"]')); giftSide(t);
+    if(t==='collection'){ drawCol(); if(S.on) soon(150); } else if(S.placing!=null&&!drag&&!phone()&&t!=='rewards') stopPlacing();
+    if(t==='rewards'&&lk('power')&&S.on&&ptNow()!=='team') X.pTab('team'); if(t==='rewards') setTimeout(pickSync,50); };
   X.teamOn=function(){ return S.on; };
 
-  /* ---------------------------------------------------------------- Make, in team mode: what's made is an egg */
-  X.teamTips=['It comes out as an egg. Nobody knows what’s inside.','It hatches the first time you send it into a stream.','Sending your team in is always free.',
-    'Your team has '+5+' spots. The rest wait in your Collection.','You can leave this page. It keeps making.'];
-  X.eggCard=function(mk){ return '<button type="button" class="mc t-egg tegg ready" id="mzmyst" aria-label="Your new egg"><span class="nin">New egg</span><span class="ew">'+egg(mk.hue,2,'wob',2)+'</span></button>'; };
-  X.makeDraw=function(st){ if(!S.on) return; $('mzready').textContent='Your egg is ready!'; var b=$('mkreveal'); if(b&&b.textContent!=='Meet your egg') b.textContent='Meet your egg'; };
+  /* ---------------------------------------------------------------- an egg that was ordered before the Make tab went away: it lands by itself */
   X.eggReady=function(mk){ var id=+mk.id, k=mk.slot==null?null:+mk.slot;
     var go=function(j){ if(j&&X.cardsIn) X.cardsIn(j); soon(100); };
     (api?api.clear(id):demo.clear(id)).then(go,function(){ soon(100); });
     if(k!=null){ S.pick=id; S.spot=null; X.pTab('team'); toast('Your egg is on your team. Send it into a stream to hatch it!'); }
-    else { S.pick=id; if(phone()) X.pTab('team'); else X.sideTab('collection',true); toast('Your team is full, so your egg went to your Collection.'); }
+    else { S.pick=id; if(phone()) X.pTab('team'); else if(colOpen()) X.sideTab('collection',true); toast('Your team is full, so your egg went to your Collection.'); }
     S.landed=id; setTimeout(function(){ S.landed=null; },2500); draw(); };
 
   /* ---------------------------------------------------------------- the team strip: five plain columns, one fun colour per creature
@@ -181,6 +195,7 @@
   function xpPct(m){ var a=m.xp_from|0, b=m.xp_next; if(!b) return 100; return Math.max(0,Math.min(100,100*((m.xp|0)-a)/Math.max(1,b-a))); }
   /* the big button that appears over the one you picked */
   function sendTop(m){ if(m.status==='out'||m.status==='resting') return '';
+    if(m.making) return '<span class="tsend gray">Almost ready…</span>';
     if(!roomOpen()) return '<span class="tsend gray">Stream is offline</span>';
     if(!m.egg&&!S.noSide) return '<span class="tsend duo'+(m.evolve_ready?' evo':'')+'">'
       +'<button type="button" class="tside atk" data-act="send" data-side="attack" data-id="'+m.id+'">'+SWORD+'Attack</button>'
@@ -203,6 +218,7 @@
       else if(m.egg){ cls.push(r?'locked':'full'); if(r) lk='Resting'; body='<span class="tshadow"></span><span class="who">'+egg(m.hue,2,'wob',2)+'</span>'; }
       else { cls.push(r?'locked':'full'); if(r){ cls.push('asleep'); lk='Resting'; } if(m.evolve_ready&&!r) cls.push('evo'); if(m.changing) cls.push('changing');
         body=bean(m)+'<span class="tshadow"></span><span class="who'+(r?'':' look')+'" style="animation-delay:-'+(k*1.3).toFixed(1)+'s">'+(r?dozy(m,cs,'','sleep'):img(m,cs,'alive'))+'</span>'+(r?'<span class="zz">z</span><span class="zz b">z</span>':''); }
+      if(pickOf(m)&&!out) body+='<button type="button" class="tpkb" data-act="pick" data-id="'+m.id+'" aria-label="'+esc(m.name)+' is learning something new">!</button>';
       if(sel) top=sendTop(m);
       if(!top&&!m.egg) top='<span class="thov">'+(m.changing?'Changing…':tierName(m.danger)+(m.level?' · Lv '+(m.level|0):' · Form '+((m.form|0)||1)))+'</span>';
       else if(!top) top='<span class="thov">Mystery egg</span>'; }
@@ -221,7 +237,7 @@
   function buildPane(){ if(campEl) return;
     pane.innerHTML='<div class="tstage"><div class="tcamp th-cols" id="tcamp">'
       +'<div class="ttitle"><span class="tt1"></span></div><div class="tspots"></div></div>'
-      +'<div class="trv" id="trv" hidden></div></div><div class="tcolhost" id="tcolhost"></div>';
+      +'<div class="trv" id="trv" hidden></div><div class="tpk" id="tpk" hidden></div></div><div class="tcolhost" id="tcolhost"></div>';
     campEl=$('tcamp'); }
   function drawTeam(){ if(!S.on) return; buildPane(); mount();
     /* on a PC the store under the stream has a fixed height: the camp fills all of it, one row of five.
@@ -248,7 +264,7 @@
   var colEl=document.createElement('div'); colEl.className='tcol';
   colEl.innerHTML='<h3>Collection <small class="tcount"></small></h3><div class="tprev" id="tprev"><div id="tprevin"></div></div><div class="tgrid" id="tgrid"></div><p class="dim tcolnote" id="tcolnote"></p>';
   function mount(){ var ph=phone(), host=ph?$('tcolhost'):colv; if(host&&colEl.parentNode!==host) host.appendChild(colEl);
-    tabCol.hidden=!S.on||ph; document.documentElement.classList.toggle('tphone',ph&&S.on);
+    tabCol.hidden=!S.on||ph; document.documentElement.classList.toggle('tphone',ph&&S.on); relabel();
     if(ph&&S.on&&sideNow()==='collection'){ X.sideTab('rewards'); X.pTab('team'); } }
   function tierTag(m){ return m.egg?'<span class="ttier t-egg">Egg</span>':'<span class="ttier tt-'+esc(m.danger||'normal')+'">'+tierName(m.danger)+'</span>'; }
   function xpBlock(m){ if(m.egg) return '';
@@ -281,16 +297,16 @@
       :m.final&&m.level?'Final form: it won\u2019t change again, but it keeps levelling up.'
       :on?(m.evolve_ready?'It’s ready to evolve. Send it in and it changes on stream!':'Ready to go.'):'Ready. Add it to your team to send it into a stream.';
     var grow=m.tester&&!m.egg&&!m.final&&!m.changing&&!lock?'<button type="button" class="tbtn ghost sm" data-act="grow" title="Test accounts only">Grow (test)</button>':'';
-    var acts=grow+(on?(lock?'':'<button type="button" class="tbtn ghost sm" data-act="off">Take off team</button>')
+    var acts=(pickOf(m)&&m.status!=='out'?'<button type="button" class="tbtn sm tpkgo" data-act="pick">Learning something new!</button>':'')+grow+(on?(lock?'':'<button type="button" class="tbtn ghost sm" data-act="off">Take off team</button>')
       :'<button type="button" class="tbtn" data-act="add">Add to team</button><span class="tdragtip">'+(phone()?'or hold and drag it up':'or drag its card onto your team')+'</span>');
     return '<div class="tpin '+tcls(m)+(on?' onteam':'')+'"><div class="tptop">'+art+'<div class="tpi"><span class="twhere'+(on?' on':'')+'">'+(on?'On your team':'In your collection')+'</span><span class="tname">'+(m.egg?'Mystery egg':esc(lvl(m)+m.name))+'</span>'
       +'<span class="trowi">'+tierTag(m)+(m.egg?'':'<span class="tform">Form '+((m.form|0)||1)+'</span>')+hpTag(m,'thp pin')+'</span>'+(m.status==='resting'&&!m.egg?restBar(m,'big'):'')+xpBlock(m)+(m.egg?'':'<div class="tstats"><span>Streams <b>'+(m.sends|0)+'</b></span><span>KOs <b>'+(m.kos|0)+'</b></span></div>')+'</div></div>'
-      +forms(m)+'<p class="tmuted">'+state+'</p>'+(acts?'<div class="tacts">'+acts+'</div>':'')+report(m)+(m.status==='resting'?liveList():'')
+      +forms(m)+movesBlock(m)+'<p class="tmuted">'+state+'</p>'+(acts?'<div class="tacts">'+acts+'</div>':'')+report(m)+(m.status==='resting'?liveList():'')
       +'<button type="button" class="tx" data-act="close" aria-label="Close">×</button></div>'; }
-  function spotHint(){ var any=S.members.some(function(m){ return m.slot==null; });
+  function spotHint(){ if(!S.members.some(function(m){ return m.slot==null; })) return '';   /* (nobody is waiting: the empty spot says enough) */
     return '<div class="tpin t-none"><div class="tpi"><span class="twhere on">Empty spot</span><span class="tname">Who goes here?</span><p class="tmuted">'
-      +(any?(phone()?'Tap a creature below, then <b>Add to team</b>. Or hold one and drag it up.':'Click a creature below, then <b>Add to team</b>. Or just drag its card onto the spot.'):'Everyone you have is already on your team. Make a new egg to fill this spot.')
-      +'</p>'+(any?'':'<div class="tacts"><button type="button" class="tbtn sm" data-act="make">Make an egg</button></div>')+'</div><button type="button" class="tx" data-act="close" aria-label="Close">×</button></div>'; }
+      +(phone()?'Tap a creature below, then <b>Add to team</b>. Or hold one and drag it up.':'Click a creature below, then <b>Add to team</b>. Or just drag its card onto the spot.')
+      +'</p></div><button type="button" class="tx" data-act="close" aria-label="Close">×</button></div>'; }
   /* the Collection's order is the viewer's own (drag a card onto another to move it); it's kept in this browser.
      Anyone not placed yet comes first, newest first. */
   var colOrder=[]; try{ colOrder=JSON.parse(localStorage.getItem('cdColOrder')||'[]')||[]; }catch(e){ colOrder=[]; }
@@ -303,7 +319,7 @@
     colEl.querySelector('.tcount').textContent=list.length?list.length+' waiting':'';
     var g=list.map(smallCard).join(''), gs=sig(g), grid=colEl.querySelector('#tgrid'); if(grid._h!==gs&&!drag){ grid._h=gs; grid.innerHTML=g; }
     colEl.querySelector('#tcolnote').textContent=list.length?(phone()?'Tap one to look. Hold and drag it onto your team, or onto another card to reorder.':'Click one to look. Drag it onto your team, or onto another card to reorder.')
-      :S.members.length?'Everyone is on your team. Make another egg in the Make tab.':'Nothing here yet. Make something in the Make tab and it comes out as an egg.';
+      :'';
     var m=S.pick!=null&&M(S.pick), pv=colEl.querySelector('#tprev'), ph=m?pinHtml(m):S.spot!=null&&!onPad(S.spot)?spotHint():'';
     var ps=sig(ph); if(pv._h!==ps){ var op=pv.querySelector('details'); if(op) S.repOpen=op.open; pv._h=ps; if(ph) colEl.querySelector('#tprevin').innerHTML=ph; } pv.classList.toggle('open',!!ph);
     if(m&&m.status==='resting') getLive(); }
@@ -322,7 +338,8 @@
   function grow(id){ var m=M(id); if(!m||!api) return; m.changing=true; draw();
     api.grow(id).then(function(j){ if(j&&j.state) stateIn(j.state); toast(nameOf(m)+' is growing. Its new form shows up in about a minute.'); soon(3000); },
       function(e){ m.changing=false; draw(); toast(ERR[String(e&&e.message||'')]||'Couldn\u2019t grow it: '+String(e&&e.message||'try again')); }); }
-  function showInfo(){ if(!phone()&&sideNow()!=='collection'&&!tabCol.hidden) X.sideTab('collection',true); }
+  function colOpen(){ return !tabCol.hidden&&!lk('col'); }
+  function showInfo(){ if(!phone()&&sideNow()!=='collection'&&colOpen()&&sideNow()!=='gift') X.sideTab('collection',true); }
   function onClick(e){ if(justDragged) return; var a=e.target.closest('[data-act]');
     if(a){ var act=a.getAttribute('data-act');
       if(act==='send') send(+a.getAttribute('data-id'),a,a.getAttribute('data-side')||'');
@@ -331,7 +348,8 @@
       else if(act==='add') addToTeam(S.pick);
       else if(act==='off') bench(S.pick);
       else if(act==='grow') grow(S.pick);
-      else if(act==='make') X.pTab('make');
+      else if(act==='pick') pickOpen(a.getAttribute('data-id')?+a.getAttribute('data-id'):S.pick);
+      else if(/^pk/.test(act)) pickAct(act,a);
       return; }
     var c=e.target.closest('.tcard');
     if(c){ var id=+c.getAttribute('data-id'); if(S.placing!=null) stopPlacing(); S.pick=S.pick===id?null:id; draw(); return; }
@@ -413,7 +431,7 @@
     function step(now){ if(fly[id]!==run||!M(id)){ g.remove(); return; }
       if(!t0) t0=now; var t=Math.min(1,(now-t0)/400), e=ease(t), b=at(id), o=1;
       if(!b){ /* it lands somewhere that isn't on screen (the Collection behind another tab): it shrinks into that tab's button */
-        var tb=tabCol&&!tabCol.hidden?tabCol.getBoundingClientRect():null; b=last||(tb&&tb.width?{x:tb.left+tb.width/2,y:tb.top+tb.height/2,w:20}:{x:a.x,y:a.y+30,w:a.w*.5}); if(!last) o=1-e*e; }
+        var tb=tabCol&&colOpen()?tabCol.getBoundingClientRect():null; b=last||(tb&&tb.width?{x:tb.left+tb.width/2,y:tb.top+tb.height/2,w:20}:{x:a.x,y:a.y+30,w:a.w*.5}); if(!last) o=1-e*e; }
       else last=b;
       put(a.x+(b.x-a.x)*e,a.y+(b.y-a.y)*e-Math.sin(Math.PI*e)*Math.min(26,Math.abs(b.x-a.x)/5+Math.abs(b.y-a.y)/8),a.w+(b.w-a.w)*e,o);
       if(t<1) requestAnimationFrame(step); else { g.remove(); unhide(id); } }
@@ -458,7 +476,7 @@
     drag={id:id,el:el,team:team,ox:team?52:x-r.left,oy:team?60:y-r.top,home:r,hot:null,col:false,card:null,after:false,g:g}; el.classList.add('lifted');
     document.documentElement.classList.add('tdragging');
     if(navigator.vibrate) try{ navigator.vibrate(15); }catch(e){}
-    if(team){ S.lift=id; S.placing=id; document.documentElement.classList.add('tplacing','tfromteam'); if(!phone()&&!tabCol.hidden&&sideNow()!=='collection') X.sideTab('collection'); lastCamp=''; drawTeam(); markPads(); }
+    if(team){ S.lift=id; S.placing=id; document.documentElement.classList.add('tplacing','tfromteam'); if(!phone()&&colOpen()&&sideNow()!=='collection') X.sideTab('collection'); lastCamp=''; drawTeam(); markPads(); }
     else startPlacing(id,true);
     moveDrag(x,y); }
   function colZone(hit){ return !!(hit&&hit.closest&&(hit.closest('.tcol')||hit.closest('.sview[data-view="collection"]'))); }
@@ -525,13 +543,13 @@
       +'<div class="trvt"><p class="trvh">Your egg hatched!</p><p class="tmuted">It\u2019s a <b>'+esc(m.name)+'</b>. Give it a name, or keep this one.</p><form class="trvf"><label class="vh" for="trvname">Name</label><input id="trvname" maxlength="'+max+'" autocomplete="off" value="'+esc(String(m.name||'').slice(0,max))+'" enterkeyhint="done">'
       +'<button type="submit" class="tbtn sm">Name it</button><button type="button" class="tbtn ghost sm" data-act="keep">Keep</button></form><p class="trverr" id="trverr" role="status"></p></div></div>';
     o.hidden=false; pane.classList.add('rvon');
-    if(ptNow()!=='team'||!pane.offsetParent){ tabDot(true); toast('Your egg hatched! Open your Team to meet it.'); } }
+    if(ptNow()!=='team'||!pane.offsetParent){ tabDot(true); toast('Your egg hatched! Open '+PETS+' to meet it.'); } }
   function nameDone(typed){ var id=S.revealing, m=M(id), inp=$('trvname'); if(!m){ hatchClose(); return; }
     var t=typed&&inp?inp.value.replace(/\s+/g,' ').trim():''; if(t===m.name) t='';
     var b=$$('#trv button'); b.forEach(function(x){ x.disabled=true; });
     (api?api.name(id,t):demo.name(id,t)).then(function(j){ m.fresh=false; if(t) m.name=t; hatchClose(); if(j&&j.members) stateIn(j); else soon(200); })
     .catch(function(e){ b.forEach(function(x){ x.disabled=false; }); $('trverr').textContent=errText(e); }); }
-  function hatchClose(){ var o=$('trv'); if(o){ o.hidden=true; o.innerHTML=''; } pane.classList.remove('rvon'); S.revealing=null; lastCamp=''; draw(); }
+  function hatchClose(){ var o=$('trv'); if(o){ o.hidden=true; o.innerHTML=''; } pane.classList.remove('rvon'); S.revealing=null; lastCamp=''; draw(); setTimeout(pickSync,400); }
 
   /* ---------------------------------------------------------------- evolving: shown on the site while the stream shows it */
   function evolved(m,from){ S.played[m.id]=1; var k=m.slot, w=k!=null&&campEl&&campEl.querySelector('.tspot[data-k="'+k+'"] .who');
@@ -546,9 +564,234 @@
   if(window.ResizeObserver) new ResizeObserver(resized).observe(pane);
   window.addEventListener('resize',function(){ setTimeout(resized,120); });
 
+  /* ---------------------------------------------------------------- tabs unlock one at a time (new visitors only)
+     A first visit shows the stream and the chat. Then: Pets when the free egg is named, Power when a creature first comes
+     home (or 5 minutes on the site), Shop at the first rubies (or 20 minutes), Collection at the first evolution or a second
+     creature (or the 2nd visit). The server says what's unlocked (team_state.unlocks); the times are counted here and
+     told to the server (unlock_seen). What's unlocked is also kept in this browser (cdUnl) so a reload shows the right
+     tabs at once: the small script in the page's head reads it before anything is drawn. Players from before this (and
+     any database that doesn't send unlocks) see everything. A new tab grows into its row; nothing jumps. */
+  var KEYS=['pets','power','shop','col'], root=document.documentElement, NEWDEMO=DEMO&&/[?&]new=1\b/.test(location.search);
+  var U={have:{},path:false,open:false,queue:[],busy:false,noSeen:false,site:0,visits:1,told:{}};
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  (function(){ var u=NEWDEMO?'':DEMO?null:lsGet('cdUnl'), known=DEMO||!!(lsGet('cdTok')||lsGet('cdName'));
+    if(u==null&&known){ KEYS.forEach(function(k){ U.have[k]=1; }); if(!DEMO) lsSet('cdUnl',KEYS.join(',')); }
+    else { U.path=true; String(u||'').split(',').forEach(function(k){ if(KEYS.indexOf(k)>=0) U.have[k]=1; }); if(u==null&&!DEMO) lsSet('cdUnl',''); }
+    U.site=NEWDEMO?0:(+lsGet('cdSite')||0); var last=+lsGet('cdSeenAt')||0, v=+lsGet('cdVisits')||0, now=Date.now();
+    if(!DEMO){ if(!last||now-last>1800000){ v++; lsSet('cdVisits',String(v)); } lsSet('cdSeenAt',String(now)); } U.visits=Math.max(1,v); uPaint(); })();
+  function lk(k){ return !U.open&&(!U.have[k]||(k!=='pets'&&!U.have.pets)); }
+  function uPaint(){ KEYS.forEach(function(k){ root.classList.toggle('lk-'+k,lk(k)); }); root.classList.toggle('cdpath',U.path&&!U.open); }
+  function uSave(){ if(!DEMO&&!U.open) lsSet('cdUnl',KEYS.filter(function(k){ return U.have[k]; }).join(',')); }
+  /* everything, at once and without a show: team mode is off, or the database doesn't know about unlocks */
+  function uAll(){ if(U.open) return; U.open=true; U.queue=[]; uPaint(); relabel(); if(X.layout) X.layout(); }
+  function uWant(k){ if(U.open||U.have[k]||U.queue.indexOf(k)>=0) return; if(k!=='pets'&&!U.have.pets&&U.queue.indexOf('pets')<0) return; U.queue.push(k); uRun(); }
+  function uRun(){ if(U.busy||!U.queue.length) return; U.busy=true; var k=U.queue.shift(); U.have[k]=1; uSave(); reveal(k); setTimeout(function(){ U.busy=false; uRun(); },1500); }
+  /* a tab (or a bar) grows into its row from nothing, pushing its neighbours along */
+  function growIn(el,down){ if(!el||still||!el.animate||!el.offsetParent) return; var r=el.getBoundingClientRect(), cs=getComputedStyle(el), ov=el.style.overflow; if(!r.width||!r.height) return;
+    el.style.overflow='hidden';
+    var a=down?el.animate([{height:'0px',minHeight:'0px',flex:'0 0 0px',paddingTop:'0px',paddingBottom:'0px',marginBottom:'-'+(parseFloat(getComputedStyle(el.parentNode).rowGap)||0)+'px',opacity:0},{height:r.height+'px',minHeight:'0px',flex:'0 0 '+r.height+'px',paddingTop:cs.paddingTop,paddingBottom:cs.paddingBottom,marginBottom:cs.marginBottom,opacity:1}],{duration:520,easing:'cubic-bezier(.2,.9,.3,1)'})
+      :el.animate([{width:'0px',minWidth:'0px',flex:'0 0 0px',paddingLeft:'0px',paddingRight:'0px',marginRight:'-'+(parseFloat(getComputedStyle(el.parentNode).columnGap)||0)+'px',opacity:0},{width:r.width+'px',minWidth:'0px',flex:'0 0 '+r.width+'px',paddingLeft:cs.paddingLeft,paddingRight:cs.paddingRight,marginRight:cs.marginRight,opacity:1}],{duration:520,easing:'cubic-bezier(.2,.9,.3,1)'});
+    a.onfinish=a.oncancel=function(){ el.style.overflow=ov; }; }
+  function addDot(el,stab){ if(!el||el.querySelector('.tnew')) return; var d=document.createElement('i'); d.className=(stab?'dot':'pdot')+' tnew'; if(!stab) d.textContent='!'; el.appendChild(d); }
+  function clearDot(el){ var d=el&&el.querySelector('.tnew'); if(d) d.remove(); }
+  /* on a phone the store is a side tab: while Pets is all that's in it, that tab is the Pets tab */
+  var tabRew=document.querySelector('.stabs [data-side="rewards"]'), rewHtml=tabRew?tabRew.innerHTML:'', rewPets=false;
+  function relabel(){ if(!tabRew) return; var want=S.on&&lk('power')&&!lk('pets'); if(want===rewPets) return; rewPets=want;
+    var dot=tabRew.querySelector('.tnew'); tabRew.innerHTML=want?'<span class="tegg">'+egg(38,1)+'</span>'+PETS:rewHtml; if(dot) tabRew.appendChild(dot);
+    if(!still&&tabRew.offsetParent&&tabRew.animate) tabRew.animate([{opacity:.3},{opacity:1}],{duration:300}); }
+  function reveal(k){ var q=function(s){ return document.querySelector(s); };
+    root.classList.remove('lk-'+k); uPaint();
+    if(k==='pets'){ relabel(); if(X.cards&&X.cards.ok&&S.on&&lk('power')&&ptNow()!=='team') X.pTab('team'); growIn(tabRew); }
+    else if(k==='power'){ relabel(); var tb=q('#ptabs [data-pt="spawn"]'); growIn(tb); growIn(q('.dpbar'),true); growIn($('pchip')); growIn($('dbtn')); if(ptNow()!=='spawn') addDot(tb); if(phone()&&sideNow()!=='rewards') addDot(tabRew,true); }
+    else if(k==='shop'){ var sb=q('.stabs [data-side="shop"]'); growIn(sb); growIn($('rbtn')); growIn($('pbuy')); if(sideNow()!=='shop') addDot(sb,true); }
+    else if(k==='col'){ mount(); growIn(tabCol); if(sideNow()!=='collection') addDot(tabCol,true); var h=$('tcolhost'); if(h&&h.offsetParent&&h.animate&&!still) h.animate([{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{duration:450,easing:'cubic-bezier(.2,.9,.3,1)'}); drawCol(); }
+    if(X.layout) X.layout(); lastCamp=''; setTimeout(draw,80); }
+  function tell(k){ if(DEMO||!api||U.noSeen||U.told[k]) return; U.told[k]=1;
+    api.seen(k==='col'?'collection':k).then(function(){},function(e){ if(/Could not find the function|schema cache|PGRST202/i.test(String(e&&e.message||''))) U.noSeen=true; else delete U.told[k]; }); }
+  /* what the server says, then what this page can see for itself (so a tab is never stuck behind a slow poll) */
+  function uSync(j){ if(!S.on||!j||!j.unlocks||typeof j.unlocks!=='object'){ uAll(); return; }
+    var u=j.unlocks; if(u.pets) uWant('pets'); if(u.power) uWant('power'); if(u.shop) uWant('shop'); if(u.collection) uWant('col'); uLocal(); }
+  function uLocal(){ if(U.open||!S.on||!U.have.pets) return; var ms=S.members, pts=X.pts||{};
+    if(!U.have.power){ if(U.site>=300){ tell('power'); uWant('power'); } else if(ms.some(function(m){ return !m.egg&&(m.sends|0)>=1&&m.status!=='out'; })) uWant('power'); }
+    if(!U.have.shop){ if(U.site>=1200){ tell('shop'); uWant('shop'); } else if((pts.rubies|0)>0) uWant('shop'); }
+    if(!U.have.col){ if(U.visits>=2){ tell('collection'); uWant('col'); } else if(ms.length>=2||ms.some(function(m){ return (m.form|0)>1; })) uWant('col'); } }
+  /* time on the site: counted while the page is on show */
+  setInterval(function(){ if(document.hidden) return; U.site++; if(U.site%5===0&&!DEMO){ lsSet('cdSite',String(U.site)); lsSet('cdSeenAt',String(Date.now())); } if(U.site%5===0) uLocal(); giftSync();
+    if(S.on&&!lk('pets')&&lk('power')&&ptNow()==='spawn'&&X.cards&&X.cards.ok) X.pTab('team'); },1000);
+
+  /* ---------------------------------------------------------------- the free egg: a present that lights up
+     About a minute into a first visit a present lights up beside the Chat tab (a player from before gets theirs straight
+     away). Opening it asks one thing: "What should it hatch into?" (20 letters). The egg then flies out of the present
+     into the Pets tab, which appears at that moment. It all happens in the side panel: nothing covers the stream. */
+  var GIFT_AT=(function(){ var m=DEMO&&location.search.match(/[?&]gift=(\d+)/); return m?+m[1]:60; })(), WORD_MAX=20;
+  var G={st:'off',btn:null,view:null,busy:false};
+  function giftCan(){ return !!(S.on&&S.free&&S.free.available&&!S.free.claimed); }
+  function giftSync(){ if(G.busy||G.st==='fly') return;
+    if(!giftCan()){ if(G.st!=='off') giftGone(); return; }
+    if(G.st==='off'&&(!U.path||U.site>=GIFT_AT)) giftLight(); }
+  function giftLight(){ var chat=document.querySelector('.stabs [data-side="chat"]'), side=$('side'); if(!chat||!side) return;
+    if(!G.btn){ var b=document.createElement('button'); b.type='button'; b.setAttribute('role','tab'); b.setAttribute('data-side','gift'); b.setAttribute('aria-selected','false'); b.className='ic tgift';
+      b.title='A present for you'; b.setAttribute('aria-label','A present for you'); b.innerHTML='<span class="tgi">'+X.pix('gift',24)+'</span><span class="tgl">Free egg</span><i class="dot"></i>';
+      b.addEventListener('click',function(){ X.sideTab('gift'); }); G.btn=b;
+      var v=document.createElement('div'); v.className='sview tgiftv'; v.setAttribute('data-view','gift'); v.hidden=true; G.view=v; side.appendChild(v);
+      v.addEventListener('submit',function(e){ e.preventDefault(); giftSend(); });
+      v.addEventListener('input',function(){ var er=$('tgerr'); if(er) er.textContent=''; }); }
+    if(!G.btn.parentNode) chat.parentNode.insertBefore(G.btn,chat.nextSibling);
+    G.st='lit'; growIn(G.btn); }
+  function giftSide(t){ if(G.st==='off'||G.st==='fly') return;
+    if(t==='gift'){ if(G.st!=='open') giftOpen(); }
+    else if(G.st==='open'&&!G.busy){ G.st='lit'; if(G.btn) G.btn.classList.remove('seen'); } }
+  function giftOpen(){ var v=G.view; G.st='open'; G.btn.classList.add('seen');
+    if(!v.firstChild){ v.innerHTML='<div class="tgbox"><div class="tgart"><span class="rays" aria-hidden="true"></span><span class="tgpres">'+X.pix('gift',96)+'</span><span class="tgegg" id="tgegg">'+egg(38,5,'wob',2)+'</span></div>'
+        +'<p class="tgh">You got a free egg!</p>'
+        +'<form class="tgf" autocomplete="off"><label for="tgword">What should it hatch into?</label>'
+        +'<div class="tgrow"><input id="tgword" maxlength="'+WORD_MAX+'" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><button type="submit" class="tbtn" id="tggo">OK</button></div></form>'
+        +'<p class="trverr" id="tgerr" role="status"></p></div>';
+      if(!phone()) setTimeout(function(){ var i=$('tgword'); if(i&&G.st==='open') try{ i.focus({preventScroll:true}); }catch(e){} },still?0:1100); } }
+  function giftSend(){ var inp=$('tgword'), b=$('tggo'), er=$('tgerr'); if(!inp||G.busy) return;
+    var t=inp.value.replace(/\s+/g,' ').trim().slice(0,WORD_MAX);
+    if(!t){ shake(inp.parentNode); inp.focus(); return; }
+    if(!DEMO&&!account()){ X.needAccount(giftSend); return; }
+    G.busy=true; b.disabled=true; inp.readOnly=true; er.textContent=''; G.view.classList.add('busy');
+    var had={}; S.members.forEach(function(m){ had[m.id]=1; });
+    (api?api.claim(t):demo.claim(t)).then(function(j){ var st=j&&j.state&&j.state.members?j.state:j, id=j&&j.card!=null?+j.card:null;
+      if(!st||!st.members) throw new Error('');
+      if(id==null){ var nw=st.members.filter(function(m){ return !had[+m.id]; }); nw.sort(function(a,b){ return (b.making?1:0)-(a.making?1:0)||b.id-a.id; }); id=nw.length?+nw[0].id:null; }
+      giftFly(st,id);
+    }).catch(function(e){ G.busy=false; b.disabled=false; inp.readOnly=false; G.view.classList.remove('busy'); var m=String(e&&e.message||'');
+      er.textContent=errText(e); shake(inp.parentNode); if(m==='claimed'){ soon(200); } else if(m==='no account'){ X.needAccount(giftSend); } else inp.focus(); }); }
+  /* something flies from a to wherever target() says it is right now (it may still be sliding into place).
+     corner = it goes down first and then across (on a PC that keeps it off the stream: down the side panel, then along under the stream) */
+  function flight(inner,a,target,dur,lift,corner,done){ var g=document.createElement('div'); g.className='tflyer'; g.innerHTML='<span>'+inner+'</span>'; document.body.appendChild(g);
+    var nat=g.firstChild.getBoundingClientRect().width||96, t0=0, last=null;
+    function put(x,y,w,r){ g.style.transform='translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px) scale('+(w/nat).toFixed(3)+') rotate('+r.toFixed(1)+'deg)'; }
+    put(a.x,a.y,a.w,0);
+    function step(now){ if(!t0) t0=now; var t=Math.min(1,(now-t0)/dur), e=ease(t), b=target()||last; if(!b){ g.remove(); done(); return; } last=b;
+      var u=1-e, x=corner?u*u*a.x+2*u*e*a.x+e*e*b.x:a.x+(b.x-a.x)*e, y=corner?u*u*a.y+2*u*e*b.y+e*e*b.y:a.y+(b.y-a.y)*e-Math.sin(Math.PI*e)*lift;
+      put(x,y,a.w+(b.w-a.w)*e,Math.sin(Math.PI*e)*-14);
+      if(t<1) requestAnimationFrame(step); else { g.remove(); done(); } }
+    requestAnimationFrame(step); }
+  function giftFly(st,id){ var art=$('tgegg'), r=art?art.getBoundingClientRect():null, ph=phone();
+    G.st='fly'; G.busy=false; S.free={available:false,claimed:true};
+    var from=r&&r.width?{x:r.left+r.width/2,y:r.top+r.height/2,w:r.width}:null;
+    if(from&&id!=null) fly[id]=-1;                       /* (hidden on its spot until it lands there) */
+    uWant('pets'); stateIn(st); var m=id!=null?M(id):null;
+    if(m){ S.pick=id; S.spot=null; }
+    if(X.cards&&X.cards.ok&&ptNow()!=='team') X.pTab('team'); lastCamp=''; draw();
+    var land=function(){ if(id!=null){ unhide(id); S.landed=id; setTimeout(function(){ if(S.landed===id){ S.landed=null; } },1200); }
+      if(ph){ X.sideTab('rewards'); if(ptNow()!=='team') X.pTab('team'); once2(tabRew,'tbump'); } else { X.sideTab('chat'); once2(tabTeam,'tbump'); }
+      giftGone(); lastCamp=''; draw(); soon(1500); };
+    if(!m||!from||still||document.hidden){ land(); return; }
+    G.view.classList.add('sent');
+    flight(egg(m.hue,2,'',2),from,function(){ if(ph){ var tr=tabRew&&tabRew.offsetParent?tabRew.getBoundingClientRect():null; return tr&&tr.width?{x:tr.left+tr.width/2,y:tr.top+tr.height/2,w:22}:null; } var q=at(id); if(q) q.w=64; return q; },ph?800:1000,ph?46:0,!ph,land); }
+  function once2(el,cls){ if(!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(function(){ el.classList.remove(cls); },700); }
+  /* the present is gone (opened, or claimed somewhere else): its tab shrinks away */
+  function giftGone(){ var b=G.btn, v=G.view; G.st='off'; G.busy=false;
+    if(sideNow()==='gift') X.sideTab('chat');
+    if(v){ v.innerHTML=''; v.classList.remove('sent','busy'); }
+    if(!b||!b.parentNode) return; b.classList.remove('seen');
+    if(still||!b.animate||!b.offsetParent){ b.remove(); return; }
+    var r=b.getBoundingClientRect(), gap=parseFloat(getComputedStyle(b.parentNode).columnGap)||0; b.style.overflow='hidden';
+    var a=b.animate([{width:r.width+'px',flex:'0 0 '+r.width+'px',opacity:1,marginRight:'0px'},{width:'0px',flex:'0 0 0px',minWidth:'0px',opacity:0,marginRight:'-'+gap+'px'}],{duration:380,easing:'cubic-bezier(.4,0,.7,.4)',fill:'forwards'});
+    a.onfinish=function(){ b.style.overflow=''; b.remove(); try{ a.cancel(); }catch(e){} }; }
+
+  /* ---------------------------------------------------------------- "X is learning something new. Pick one:"
+     When a creature comes home it may have a pick waiting (member.pick: three new moves or abilities made for it). The three
+     show as cards in the Pets tab; picking one slides it into the creature's list. A creature knows 3 moves and 2 abilities
+     at most: when it's full, the pick swaps with one it has (pick which). Skipping is allowed, and there's no hurry: the
+     offer waits (a "!" on the creature) while it's sent out again with what it has. Moves get stronger by themselves when
+     the creature evolves, so nothing here upgrades anything. */
+  var CAP={move:3,ability:2};
+  var AURA=pxIcon(['....w....','....w....','...wyw...','..wyyyw..','wwyyyyyww','..wyyyw..','...wyw...','....w....','....w....'],{w:'#fff3dc',y:'#7df0e0'},'au');
+  var PK={id:null,mode:'pick',opt:null,busy:false,seen:{},arm:0,armT:0};
+  function pickOf(m){ return m&&!m.egg&&m.pick&&m.pick.options&&m.pick.options.length?m.pick:null; }
+  function kindOf(o){ return o&&o.kind==='ability'?'ability':'move'; }
+  function has(m,kind){ return (kind==='ability'?m.abilities:m.moves)||[]; }
+  function movesBlock(m){ if(m.egg) return ''; var mv=m.moves||[], ab=m.abilities||[], sg=m.signature; if(!mv.length&&!ab.length&&!sg) return '';
+    var li=function(x,cls,tag){ return '<li class="'+cls+'"><b>'+esc(x.name)+(tag?'<i>'+tag+'</i>':'')+'</b><span>'+esc(x.line||'')+'</span></li>'; };
+    return '<ul class="tmoves" aria-label="What it can do">'+(sg&&sg.name?li(sg,'sig','Signature'):'')+mv.map(function(x){ return li(x,'mv',''); }).join('')+ab.map(function(x){ return li(x,'ab','Ability'); }).join('')+'</ul>'; }
+  function paneSeen(){ return !pane.hidden&&!!pane.offsetParent; }
+  function pickSync(){ if(!S.on) return;
+    if(PK.id!=null&&!PK.busy){ var cur=M(PK.id); if(!pickOf(cur)||cur.status==='out') pickClose(); else if(PK.pid!==cur.pick.id){ PK.pid=cur.pick.id; PK.mode='pick'; PK.opt=null; pkRender(false); } }
+    if(PK.id!=null||S.revealing!=null||drag||S.placing!=null||G.st==='fly') return;
+    var n=S.members.filter(function(m){ return pickOf(m)&&m.status!=='out'&&!PK.seen[m.pick.id]; })[0]; if(!n) return;
+    if(paneSeen()){ PK.seen[n.pick.id]=1; pickOpen(n.id); }
+    else if(!PK.seen['t'+n.pick.id]){ PK.seen['t'+n.pick.id]=1; if(ptNow()!=='team') tabDot(true); if(phone()&&sideNow()!=='rewards') addDot(tabRew,true); toast(nameOf(n)+' is learning something new.'); } }
+  function pickOpen(id){ var m=M(id), box=$('tpk'); if(!pickOf(m)||m.status==='out'){ return; } if(!box){ drawTeam(); box=$('tpk'); } if(!box||S.revealing!=null) return;
+    PK.seen[m.pick.id]=1; PK.id=id; PK.pid=m.pick.id; PK.mode='pick'; PK.opt=null; PK.busy=false; PK.arm=0;
+    if(ptNow()!=='team') X.pTab('team');
+    box.hidden=false; box.classList.remove('out'); pane.classList.add('pkon'); pkRender(false); once2(box,'in');
+    if(phone()||!pane.classList.contains('fixed')){ var r=box.getBoundingClientRect(); if(r.top<0||r.bottom>innerHeight) box.scrollIntoView({block:'nearest',behavior:still?'auto':'smooth'}); } }
+  function pickClose(){ var box=$('tpk'); PK.id=null; PK.busy=false; PK.mode='pick'; PK.opt=null; clearTimeout(PK.armT); if(!box||box.hidden) return;
+    box.classList.add('out'); setTimeout(function(){ if(PK.id!=null) return; box.hidden=true; box.innerHTML=''; box.classList.remove('out'); pane.classList.remove('pkon'); if(campEl) once2(campEl,'tback'); lastCamp=''; draw(); },still?0:220); }
+  function pkCard(o,key,act,attr,cls){ var ab=kindOf(o)==='ability';
+    return '<button type="button" class="tpc '+(ab?'k-ab':'k-mv')+(cls?' '+cls:'')+'" data-key="'+key+'" data-act="'+act+'"'+(attr||'')+'><span class="tpk1">'+(ab?AURA+'Ability':SWORD+'Move')+'</span><b>'+esc(o.name)+'</b><span class="tpl">'+esc(o.line||'')+'</span></button>'; }
+  function pkChips(m,kind,taking){ var l=has(m,kind), h='', n=CAP[kind], i;
+    for(i=0;i<n;i++) h+=l[i]?'<span class="tpm '+(kind==='ability'?'ab':'mv')+'" data-slot="'+kind+i+'" title="'+esc(l[i].line||'')+'">'+esc(l[i].name)+'</span>':'<span class="tpm empty'+(taking===i?' take':'')+'" data-slot="'+kind+i+'"></span>';
+    return h; }
+  function pkHtml(){ var m=M(PK.id), p=pickOf(m); if(!p) return ''; var o=p.options, rows='', title, sg=m.signature, cs=camp.cs>=96&&!phone()?96:72;
+    if(PK.mode==='swap'&&o[PK.opt]){ var nw=o[PK.opt], kind=kindOf(nw), old=has(m,kind);
+      title='<p class="tpkt" data-key="t-swap">It can only '+(kind==='ability'?'have '+CAP.ability+' abilities':'know '+CAP.move+' moves')+'. Pick one to swap out:</p>';
+      rows=pkCard(nw,'o'+PK.opt,'pkback','','sel')+'<span class="tpka" data-key="arrow" aria-hidden="true">&#8644;</span>'
+        +old.map(function(x,i){ return pkCard({kind:kind,name:x.name,line:x.line},'h'+kind+i,'pkswap',' data-n="'+i+'"','old'); }).join(''); }
+    else { title='<p class="tpkt" data-key="t-pick"><b>'+esc(m.name)+'</b> is learning something new. Pick one:</p>';
+      rows=o.slice(0,3).map(function(x,i){ return pkCard(x,'o'+i,'pkpick',' data-i="'+i+'"',''); }).join(''); }
+    return '<div class="tpkbox"><div class="tpkwho" data-key="who" style="--cc:'+(m.slot!=null?teamCol(m.slot):FUN[funCol(m)])+'">'+img(m,cs,'alive')+'</div><div class="tpkmain">'
+      +'<div class="tpkh">'+title+'<span class="tpkx" data-key="x"><button type="button" class="tlink" data-act="pkskip">Skip</button><button type="button" class="tx" data-act="pkclose" aria-label="Close">×</button></span></div>'
+      +'<div class="tpkrow'+(PK.mode==='swap'?' swap':'')+'">'+rows+'</div>'
+      +'<div class="tpkhas" data-key="has">'+pkHas(m)+'</div></div></div>'; }
+  function pkHas(m){ var sg=m.signature; return (sg&&sg.name?'<span class="tpm sig" title="'+esc(sg.line||'')+'">'+esc(sg.name)+'</span>':'')+'<span class="tpg"><em>Moves</em>'+pkChips(m,'move')+'</span><span class="tpg"><em>Abilities</em>'+pkChips(m,'ability')+'</span>'; }
+  /* redraw the panel: what stays glides from where it was, what's new fades in */
+  function pkRender(move){ var box=$('tpk'); if(!box) return; var old={};
+    if(move&&!still) $$('[data-key]',box).forEach(function(e){ old[e.getAttribute('data-key')]=e.getBoundingClientRect(); });
+    var fx=pane.classList.contains('fixed'); box.style.height=fx?camp.h+'px':''; box.classList.toggle('narrow',!fx&&(pane.clientWidth||600)<560); box.classList.toggle('short',fx&&camp.h<166);
+    box.innerHTML=pkHtml();
+    if(!move||still) return;
+    $$('[data-key]',box).forEach(function(e,n){ if(!e.animate) return; var a=old[e.getAttribute('data-key')], b=e.getBoundingClientRect();
+      if(a){ if(Math.abs(a.left-b.left)+Math.abs(a.top-b.top)+Math.abs(a.width-b.width)>1) e.animate([{transformOrigin:'0 0',transform:'translate('+(a.left-b.left)+'px,'+(a.top-b.top)+'px) scale('+(a.width/b.width).toFixed(3)+','+(a.height/b.height).toFixed(3)+')'},{transformOrigin:'0 0',transform:'none'}],{duration:360,easing:'cubic-bezier(.3,.8,.3,1)'}); }
+      else e.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:300,delay:90+n*35,fill:'backwards',easing:'cubic-bezier(.2,.9,.3,1)'}); }); }
+  /* change what the panel shows: what's leaving fades first, then the rest moves over */
+  function pkMode(mode,opt){ var box=$('tpk'); if(!box) return; var keep={who:1,x:1,has:1}; if(opt!=null) keep['o'+opt]=1;
+    var go=function(){ PK.mode=mode; PK.opt=mode==='swap'?opt:null; pkRender(true); };
+    if(still){ go(); return; }
+    $$('[data-key]',box).forEach(function(e){ if(!keep[e.getAttribute('data-key')]&&e.animate) e.animate([{opacity:1},{opacity:0,transform:'translateY(8px)'}],{duration:160,fill:'forwards',easing:'ease-in'}); });
+    setTimeout(go,170); }
+  function pkErr(e){ PK.busy=false; var m=String(e&&e.message||''); toast(errText(e),true);
+    if(m==='full'&&PK.opt!=null){ PK.mode='swap'; pkRender(true); return; }
+    if(m==='no pick'||m==='bad option'){ pickClose(); soon(200); return; }
+    PK.mode='pick'; PK.opt=null; pkRender(true); soon(400); }
+  /* the picked card shrinks into its place in the list (an empty slot, or over the one it replaces) while the server is told */
+  function pkTake(i,rep){ var m=M(PK.id), box=$('tpk'), p=pickOf(m); if(!m||!p||PK.busy) return; var o=p.options[i], kind=kindOf(o), l=has(m,kind), id=m.id;
+    PK.busy=true; clearTimeout(PK.armT);
+    var card=box.querySelector('[data-key="o'+i+'"]'), slot=box.querySelector('[data-slot="'+kind+(rep!=null?rep:l.length)+'"]'), oldCard=rep!=null?box.querySelector('[data-key="h'+kind+rep+'"]'):null;
+    var call=(api?api.pick(id,i,rep!=null?l[rep].name:null):demo.pick(id,i,rep!=null?l[rep].name:null)), shown=new Promise(function(ok){ setTimeout(ok,still?0:560); });
+    if(!still){ $$('.tpc',box).forEach(function(c){ if(c!==card&&c.animate) c.animate([{opacity:1},{opacity:0,transform:c===oldCard?'translateY(26px) rotate(6deg)':'translateY(10px)'}],{duration:c===oldCard?420:220,fill:'forwards',easing:'ease-in'}); c.disabled=true; });
+      var ar=box.querySelector('.tpka'); if(ar&&ar.animate) ar.animate([{opacity:1},{opacity:0}],{duration:160,fill:'forwards'});
+      if(card&&slot&&card.animate){ var a=card.getBoundingClientRect(), b=slot.getBoundingClientRect(); slot.classList.add('take');
+        card.animate([{transformOrigin:'0 0',transform:'none',opacity:1},{transformOrigin:'0 0',transform:'translate('+(b.left-a.left)+'px,'+(b.top-a.top)+'px) scale('+(b.width/a.width).toFixed(3)+','+(b.height/a.height).toFixed(3)+')',opacity:.25}],{duration:520,delay:rep!=null?120:0,fill:'forwards',easing:'cubic-bezier(.5,0,.3,1)'}); } }
+    Promise.all([call,shown]).then(function(r){ var j=r[0], st=j&&j.state&&j.state.members?j.state:j;
+      /* the list with the new one in it shows for a moment, then the panel goes */
+      var mm=M(id), list; if(mm&&!has(mm,kind).some(function(x){ return x.name===o.name; })){ list=has(mm,kind).slice(); if(rep!=null) list[rep]={name:o.name,line:o.line}; else list.push({name:o.name,line:o.line}); if(kind==='ability') mm.abilities=list; else mm.moves=list; } if(mm) mm.pick=null;
+      var hasEl=box.querySelector('.tpkhas'); if(hasEl&&mm){ hasEl.innerHTML=pkHas(mm); var ns=hasEl.querySelector('[data-slot="'+kind+(rep!=null?rep:l.length)+'"]'); if(ns) once2(ns,'pop'); }
+      var row=box.querySelector('.tpkrow'), tt=box.querySelector('.tpkt'); if(tt) tt.innerHTML='<b>'+esc(m.name)+'</b> picked <b>'+esc(o.name)+'</b>!'; if(row) row.classList.add('done'); var xx=box.querySelector('.tpkx'); if(xx) xx.style.visibility='hidden';
+      if(box.classList.contains('narrow')) box.scrollIntoView({block:'nearest',behavior:still?'auto':'smooth'});
+      setTimeout(function(){ if(st&&st.members) stateIn(st); else soon(200); PK.busy=false; if(PK.id===id) pickClose(); },still?0:1100);
+    },function(e){ shown.then(function(){ pkErr(e); }); }); }
+  function pickAct(act,el){ var m=M(PK.id), p=pickOf(m); if(!m||!p){ pickClose(); return; } if(PK.busy) return;
+    if(act==='pkclose'){ pickClose(); return; }
+    if(act==='pkskip'){ if(PK.arm&&Date.now()-PK.arm<3500){ PK.busy=true; clearTimeout(PK.armT);
+        (api?api.skip(m.id):demo.skip(m.id)).then(function(j){ var st=j&&j.state&&j.state.members?j.state:j; m.pick=null; PK.busy=false; pickClose(); if(st&&st.members) stateIn(st); else soon(200); },function(e){ pkErr(e); });
+        return; }
+      PK.arm=Date.now(); el.textContent='Skip this pick?'; el.classList.add('arm'); clearTimeout(PK.armT); PK.armT=setTimeout(function(){ PK.arm=0; if(el.isConnected){ el.textContent='Skip'; el.classList.remove('arm'); } },3500); return; }
+    if(act==='pkpick'){ var i=+el.getAttribute('data-i'), o=p.options[i]; if(!o) return; var kind=kindOf(o);
+      if(has(m,kind).length>=CAP[kind]) pkMode('swap',i); else pkTake(i,null); return; }
+    if(act==='pkback'){ pkMode('pick',PK.opt); return; }
+    if(act==='pkswap'){ pkTake(PK.opt,+el.getAttribute('data-n')); return; } }
+
   /* ---------------------------------------------------------------- start */
   var demo=null;
   window.CDTEAM={S:S,draw:draw,stateIn:stateIn,poll:poll,api:api,setDemo:function(d){ demo=d; }};
-  if(DEMO){ var s=document.createElement('script'); s.src=BASE+'team-demo.js?v='+VER+'.7'; s.onload=function(){ if(window.CDTEAM_DEMO){ demo=window.CDTEAM_DEMO(stateIn,X); } }; document.head.appendChild(s); }
+  if(DEMO){ var s=document.createElement('script'); s.src=BASE+'team-demo.js?v='+VER+'.8'; s.onload=function(){ if(window.CDTEAM_DEMO){ demo=window.CDTEAM_DEMO(stateIn,X); } }; document.head.appendChild(s); }
   else { var wait=function(){ if(me()) poll(); else setTimeout(wait,1500); }; setTimeout(wait,800); }
 })();
