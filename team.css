@@ -16,6 +16,9 @@
 .tbtn.gray{background:#2e2620;color:#a89878;box-shadow:inset 0 -3px 0 #1f1a14,0 0 0 3px #000;cursor:default;font-size:16px}
 .tbtn.ghost{background:var(--slab,#14100c);color:var(--parch);box-shadow:inset 0 0 0 2px #4a3a22,0 0 0 3px #000,0 3px 0 3px #000}
 .tbtn:disabled{opacity:.6;cursor:default}
+/* on a PC the button floats well above the picked one: over the Power bar, its top just lapping the bottom of the stream */
+.pteam.fixed .tsend,.pteam.fixed .tcamp.compact .tsend{bottom:calc(100% + var(--lift,50px))}
+.tcamp.haspick{overflow:visible}
 @keyframes tevo{0%,100%{transform:rotate(0)}6%{transform:rotate(-1.5deg)}12%{transform:rotate(1.5deg)}18%{transform:rotate(0)}}
 
 /* ---------- the team strip ---------- */
@@ -127,7 +130,7 @@
 .tspot.el .tsend{left:5px;transform:none}.tspot.el .tsend::after{left:calc(var(--sw)/2 - 13px)}.tspot.el .tsend::before{left:calc(var(--sw)/2 - 10px)}
 .tspot.er .tsend{left:auto;right:5px;transform:none}.tspot.er .tsend::after{left:auto;right:calc(var(--sw)/2 - 13px)}.tspot.er .tsend::before{left:auto;right:calc(var(--sw)/2 - 10px)}
 @keyframes tsendin{from{scale:.5;opacity:0}}
-/* Attack or Help: two buttons share the spot over a hatched creature. The pressed one swells, the other slides away. */
+/* "Send in as…" Enemy or Friend (sent as attack / help): two buttons share the spot over a hatched creature, under a small plate. The pressed one swells, the other slides away. */
 .tsend.duo{display:flex;align-items:stretch;gap:9px;padding:0;background:none;box-shadow:none;cursor:default;animation:tbob 1.5s ease-in-out .45s infinite}
 .tsend.duo::before{display:none}
 .tsend.duo:hover{filter:none}
@@ -146,17 +149,23 @@
 }
 .tside:active:not(:disabled){translate:0 2px;scale:.97}
 .tside:disabled{cursor:default}
+.tas{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);padding:2px 8px 4px;font:400 14px/1 var(--display);white-space:nowrap;color:#ffe7b5;background:#130d07;box-shadow:0 0 0 2px #000,0 3px 0 2px rgba(0,0,0,.6);pointer-events:none;transition:opacity .2s,translate .25s;animation:tsidein .3s cubic-bezier(.2,1.6,.4,1) backwards;--from:0px}
+.tsend.duo.went .tas{opacity:0;translate:0 6px}
 .tsend.duo.went{animation-play-state:paused}
 .tsend.duo.went .tside:not(.pick){opacity:0;scale:.6;pointer-events:none}
 .tsend.duo.went .tside.atk:not(.pick){translate:-18px 0}
 .tsend.duo.went .tside.help:not(.pick){translate:18px 0}
 .tsend.duo.went .tside.pick{scale:1.14;filter:brightness(1.25)}
-@media (prefers-reduced-motion:reduce){ .tsend.duo,.tside{animation:none;transition:none} }
+@media (prefers-reduced-motion:reduce){ .tsend.duo,.tside,.tas{animation:none;transition:none} }
 @keyframes tbob{0%,100%{translate:0 0}50%{translate:0 -3px}}
 .pteam.fixed .tsend{min-height:30px;font-size:18px;padding:2px 12px 5px;bottom:min(calc(var(--lh) + var(--cs) + 5px),calc(100% - 33px))}
 .pteam.fixed .tspot .tnm{font-size:14px}.pteam.fixed .tst{font-size:12px;margin-top:2px;padding:0 5px 1px}
 .pteam.fixed .tspot.sel .who{transform:none}
 .pteam.fixed .tcamp.compact .tsend{min-height:30px;font-size:17px;padding:3px 10px 6px}
+/* on a PC the button floats well above the picked one: over the Power bar, its top just lapping the bottom of the stream */
+.pteam.fixed .tsend,.pteam.fixed .tcamp.compact .tsend{bottom:calc(100% + var(--lift,50px))}
+.tcamp.th-cols.haspick{overflow:visible}
+.pteam:not(.fixed) .tsend.duo{margin-bottom:-18px}.pteam:not(.fixed) .tas{bottom:calc(100% + 6px)}
 @keyframes tevo{0%,100%{transform:rotate(0)}6%{transform:rotate(-1.5deg)}12%{transform:rotate(1.5deg)}18%{transform:rotate(0)}}
 
 /* marks while a card is being put on the team */

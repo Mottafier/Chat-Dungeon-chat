@@ -26,7 +26,7 @@
   function account(){ return typeof X.account==='function'?X.account():!!X.account; }
   var BASE=(function(){ var s=document.currentScript&&document.currentScript.src; return s?s.replace(/team\.js.*$/,''):'/'; })();
   var VER=(function(){ var s=document.currentScript&&document.currentScript.src, m=s&&s.match(/[?&]v=([\w.-]+)/); return m?m[1]:'1'; })();
-  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.3'; document.head.appendChild(l); })();
+  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.4'; document.head.appendChild(l); })();
 
   /* ---------------------------------------------------------------- state */
   var S={on:false,known:false,slots:5,cooldown:14400,members:[],byId:{},making:null,at:0,got:0,
@@ -106,7 +106,7 @@
   };
   var ERR={'busy':'It can’t move while it’s fighting or resting.','bad slot':'That spot doesn’t exist.','no card':'That creature isn’t yours.',
     'room closed':'The stream is offline, so nothing can go in right now.','out':'It’s already in the fight.','resting':'It’s still resting.',
-    'not on team':'Put it on your team first, then send it.','too busy':'The stream is very busy. Try again in a moment.','slow down':'Slow down a little, then try again.','team off':'Teams aren’t switched on yet.','not ready':'That egg is still being made.','no account':'Make an account first.','not hatched':'It hasn’t hatched yet.','bad name':'That name isn’t allowed. Try another.','no side':'Helping isn’t switched on yet.','too many helpers':'There are enough helpers in there right now. Try again soon.',
+    'not on team':'Put it on your team first, then send it.','too busy':'The stream is very busy. Try again in a moment.','slow down':'Slow down a little, then try again.','team off':'Teams aren’t switched on yet.','not ready':'That egg is still being made.','no account':'Make an account first.','not hatched':'It hasn’t hatched yet.','bad name':'That name isn’t allowed. Try another.','no side':'Sending in as a friend isn’t switched on yet.','too many helpers':'There are enough friends in there right now. Try again soon.',
     'not allowed':'Those words aren’t allowed. Try something else.','claimed':'You already opened your free egg.','too many':'Too many free eggs went out on your network today. Try again tomorrow.'};
   function errText(e){ var m=String(e&&e.message||''); return ERR[m]||(!m||e instanceof TypeError?'Couldn’t reach the server. Try again.':'Server said: '+m.slice(0,100)); }
 
@@ -200,9 +200,10 @@
   function sendTop(m){ if(m.status==='out'||m.status==='resting') return '';
     if(m.making) return '<span class="tsend gray">Almost ready…</span>';
     if(!roomOpen()) return '<span class="tsend gray">Stream is offline</span>';
-    if(!m.egg&&!S.noSide) return '<span class="tsend duo'+(m.evolve_ready?' evo':'')+'">'
-      +'<button type="button" class="tside atk" data-act="send" data-side="attack" data-id="'+m.id+'">'+SWORD+'Attack</button>'
-      +'<button type="button" class="tside help" data-act="send" data-side="help" data-id="'+m.id+'">'+HEART+'Help</button></span>';
+    if(!m.egg&&!S.noSide) return '<span class="tsend duo'+(m.evolve_ready?' evo':'')+'" role="group" aria-label="Send in as">'
+      +'<span class="tas" aria-hidden="true">Send in as…</span>'
+      +'<button type="button" class="tside atk" data-act="send" data-side="attack" data-id="'+m.id+'">'+SWORD+'Enemy</button>'
+      +'<button type="button" class="tside help" data-act="send" data-side="help" data-id="'+m.id+'">'+HEART+'Friend</button></span>';
     var what=m.egg?'Send to hatch!':m.evolve_ready?'Send to evolve!':'Send to dungeon!';
     return '<button type="button" class="tsend'+(m.evolve_ready&&!m.egg?' evo':'')+'" data-act="send" data-id="'+m.id+'">'+what+'</button>'; }
   /* every creature gets its own fun panel colour, picked from a fixed set by its id so it never changes */
@@ -368,7 +369,7 @@
   pane.addEventListener('submit',function(e){ e.preventDefault(); if(e.target.closest('#tgv')) giftSend(); });
   pane.addEventListener('input',function(e){ if(e.target.id==='tgword'){ var er=$('tgerr'); if(er) er.textContent=''; } });
 
-  /* Attack or Help: the one you press swells while the other slides away, and both come back if the send fails */
+  /* Enemy or Friend (sent as attack / help): the one you press swells while the other slides away, and both come back if the send fails */
   function send(id,btn,side){ var m=M(id); if(!m) return;
     if(!DEMO&&!account()){ X.needAccount(function(){ send(id,null,side); }); return; }
     if(m.egg) side='';
