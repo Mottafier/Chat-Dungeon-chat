@@ -520,3 +520,27 @@
 .tbbtns.went .tside.pick{scale:1.12;filter:brightness(1.25)}
 .tbox.shut .tbctl,.tbox.bye .tbctl{opacity:0;pointer-events:none}
 .tbox.shut .tbtail,.tbox.bye .tbtail{opacity:0}
+
+/* ---------------------------------------------------------------- coming home (the send, backwards)
+   The same crate comes down from above with its lid shut and its label on: "Click to open". Opened, the sleeping
+   creature hops back to its spot, its XP flies out of the crate into its bar, and a level gained flashes LEVEL UP. */
+.tbox.ret .tbcrate{display:block;margin:0;font:inherit;color:inherit;text-align:left;-webkit-appearance:none;appearance:none;cursor:pointer;pointer-events:auto;-webkit-tap-highlight-color:transparent;outline:0}
+.tbox.ret .tbcrate:disabled{cursor:default}
+.tbox.ret .tbcrate:focus-visible{box-shadow:inset 0 0 0 1px #7a5c36,inset 0 0 0 4px #5c4428,inset 0 0 0 5px #1a120a,0 0 0 3px #fff,0 0 0 5px #000}
+.tbox.ret .tblid{pointer-events:none}
+.tbox.ret .tbin .sleep{animation:none}
+.tbopen{position:absolute;left:0;bottom:134px;translate:-50% 6px;padding:3px 9px 5px;font:400 15px/1 var(--display);white-space:nowrap;color:#130d07;background:linear-gradient(#ffe48a,#ffb22a);box-shadow:inset 0 -3px 0 #c97a12,0 0 0 2px #000,0 3px 0 2px #000,0 0 16px rgba(255,200,70,.7);opacity:0;pointer-events:none;transition:opacity .2s,translate .25s cubic-bezier(.2,1.6,.4,1)}
+.tbopen::after{content:"";position:absolute;left:calc(50% - 6px);top:calc(100% + 2px);border:6px solid transparent;border-top:7px solid #000;border-bottom:0}
+.tbox.ret.ready .tbopen{opacity:1;translate:-50% 0;animation:tbob 1.5s ease-in-out .3s infinite}
+/* something inside wants out: a quick side to side, left first, every few seconds */
+.tbox.ret.ready .tbcrate{animation:tbknock 2.6s .9s infinite}
+@keyframes tbknock{0%,78%,100%{transform:none}81%,85%{transform:translateX(-3px) rotate(-1.5deg)}88%,92%{transform:translateX(3px) rotate(1.5deg)}95%{transform:none}}
+@media (hover:hover){ .tbox.ret.ready .tbcrate:hover{filter:brightness(1.12)} }
+.txr.rest{gap:5px}.txr.rest .trest{margin-top:0;width:min(84px,calc(var(--sw) - 62px))}
+.tlv{display:inline-block;font-variant-numeric:tabular-nums;white-space:nowrap;transform-origin:50% 60%}
+.tspot .txp b{transition:width .2s ease-out}
+.txporb{position:fixed;z-index:46;width:8px;height:8px;margin:-4px 0 0 -4px;background:#bff0ff;box-shadow:0 0 0 2px #0b0706,0 0 10px 2px rgba(80,180,255,.9);pointer-events:none}
+.tretpop{position:fixed;z-index:47;pointer-events:none;white-space:nowrap;font:400 18px/1 var(--display);color:#9be6ff;text-shadow:0 2px 0 #000,2px 0 0 #000,-2px 0 0 #000,0 -2px 0 #000,0 0 10px rgba(60,160,255,.8)}
+.tretpop.lv{font-size:26px;letter-spacing:.04em;color:#ffe48a;text-shadow:0 3px 0 #000,3px 0 0 #000,-3px 0 0 #000,0 -3px 0 #000,2px 2px 0 #000,-2px 2px 0 #000,2px -2px 0 #000,-2px -2px 0 #000,0 0 16px rgba(255,200,70,.9)}
+.tlvflash{position:absolute;inset:0;z-index:5;background:#fff;pointer-events:none}
+@media (prefers-reduced-motion:reduce){ .tbox.ret.ready .tbcrate,.tbox.ret.ready .tbopen{animation:none} .tspot .txp b{transition:none} }
