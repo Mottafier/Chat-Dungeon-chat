@@ -2703,6 +2703,8 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     b.addEventListener('click',function(){
       var a=b.getAttribute('data-act'); pHover='';
       if(!pts.account){ needAccount(function(){ b.click(); }); return; }
+      if(MT.indexOf(a)>=0&&!meters.ok&&!meters.none){ /* the jars haven't answered yet: ask now, and take the click as a chip once they have */
+        meterPoll(); once(b,'wait',700); setTimeout(function(){ if(meters.ok) b.click(); else pmsg('Can\'t reach the dungeon right now. Try again in a moment.','bad'); },700); return; }
       if(isMeter(a)){ closeAsk(); meterChip(a,b); return; }
       if(a==='genie'&&pts.genie){ once(b,'no',450); pmsg(pts.genieMine?'You\'re the genie already: type your wishes below.':pts.genie+' is the genie right now. Try again when they\'re done.',pts.genieMine?'ok':'bad'); return; }
       if(pts.n<price(a)){ closeAsk(); once(b,'no',450); once($('dpmeter'),'shake',450); pmsg('Not enough Power. You need '+(price(a)-pts.n)+' more.','bad'); sideTab('shop'); smsg('You need '+(price(a)-pts.n)+' more Power for that.','bad'); return; }
@@ -2787,7 +2789,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     if(phoneMq.matches){ var c=$('jcred'); if(!c){ c=document.createElement('div'); c.id='jcred'; c.className='jcred'; c.setAttribute('aria-live','polite'); $('pacts').appendChild(c); }
       c.innerHTML='<b>'+esc(MT_NAME[sp.action])+' spawned!</b><span>'+esc(meterNames(sp.names))+'</span>'; once(c,'on',8000); }
     else pmsg(MT_NAME[sp.action]+' spawned! Credit: '+meterNames(sp.names),'ok'); }
-  function meterIn(j,mine){ if(!j||typeof j!=='object'||!j.meters) return; var was=meters.ok; meters.ok=true; meters.tries=0; meters.chip=(j.chip|0)||5; meters.poll=Math.max(2,(j.poll|0)||3); meters.passive=(j.passive|0)||5;
+  function meterIn(j,mine){ if(!j||typeof j!=='object'||!j.meters) return; var was=meters.ok; meters.ok=true; meters.none=false; meters.tries=0; meters.chip=(j.chip|0)||5; meters.poll=Math.max(2,(j.poll|0)||3); meters.passive=(j.passive|0)||5;
     MT.forEach(function(a){ var m=j.meters[a]; if(m) meters.m[a]={pool:m.pool|0,goal:m.goal|0,you:m.you|0,round:m.round|0}; });
     (j.spawns||[]).forEach(function(sp){ if(meters.seen[sp.id]) return; meters.seen[sp.id]=1; if(meters.primed||(sp.ago|0)<6) meterSpawned(sp); }); meters.primed=true;
     if(j.points!=null&&(mine||(j.gained|0)>0||!was)){ pts.n=j.points|0; if((j.gained|0)>0) [$('pchip'),document.querySelector('.dpnum')].forEach(function(h){ if(!h||!h.offsetParent) return; var e=document.createElement('span'); e.className='plus bon'; e.textContent='+'+j.gained; h.appendChild(e); setTimeout(function(){ e.remove(); },1700); }); }
@@ -2797,11 +2799,15 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     if(!ON||!code||document.hidden||adUp){ next(5); return; }
     if(meters.busy){ next(1); return; } meters.busy=true; var st0=meters.stamp;
     rpc('meter_status',withTok({q_code:code,q_name:me||''})).then(function(j){ meters.busy=false; if(!meters.out&&!meterWaiting()&&st0===meters.stamp) meterIn(j);   /* (an answer from before a click would show the jar without it) */ next(meterShown()?meters.poll:20); })
-    .catch(function(){ meters.busy=false; meters.tries++; if(meters.ok&&meters.tries>3){ meters.ok=false; drawPoints(); meterDraw(); } next(meters.ok?meters.poll*2:300); }); }
+    .catch(function(err){ meters.busy=false; meters.tries++;
+      /* only a database from before the jars brings the old buy-it-now buttons back. A call that just failed (a phone waking
+         up, a weak signal) is asked again soon: the jars stay, and nothing is ever sold at the old full price meanwhile */
+      if(/schema cache|Could not find/i.test(String(err&&err.message||''))){ meters.none=true; if(meters.ok){ meters.ok=false; drawPoints(); meterDraw(); } next(300); return; }
+      next(Math.min(30,2*meters.tries)); }); }
   meters.credit=0;
   /* A click on a jar counts at once and never waits (Mott 2026-11-25). The first click goes straight out; clicks made
      while that call is away ride together in the next one (q_n), so fast clicking is a few calls, not one per click. */
-  meters.q={}; meters.out=null; meters.old=false; meters.stamp=0;
+  meters.q={}; meters.out=null; meters.old=false; meters.stamp=0; meters.none=false;
   function meterWaiting(){ var n=0, a; for(a in meters.q) n+=meters.q[a]; return n; }
   /* (an answer shows the jars as the server has them: the clicks still waiting to go are put back on top) */
   function meterPending(){ var a, m, n; for(a in meters.q){ m=meters.m[a]; n=meters.q[a]*meters.chip; if(m&&n){ m.pool+=n; m.you+=n; pts.n=Math.max(0,pts.n-n); } } }
@@ -2883,7 +2889,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     drawCards(); }
   function pTab(t){ if(!cards.ok||t==='make') t='spawn'; ptNow=t;
     [].forEach.call(document.querySelectorAll('#ptabs [data-pt]'),function(b){ b.setAttribute('aria-selected',b.getAttribute('data-pt')===t?'true':'false'); });
-    $('pacts').hidden=t!=='spawn'; if(t==='spawn'&&meters.ok) meterPoll(); $('pdeck').hidden=t!=='deck'; $('pteam').hidden=t!=='team'; pHover=''; drawCards(); if(window.CDX&&typeof window.CDX.onTab==='function'){ try{ window.CDX.onTab(t); }catch(e){} } }
+    $('pacts').hidden=t!=='spawn'; if(t==='spawn'&&!meters.none) meterPoll(); $('pdeck').hidden=t!=='deck'; $('pteam').hidden=t!=='team'; pHover=''; drawCards(); if(window.CDX&&typeof window.CDX.onTab==='function'){ try{ window.CDX.onTab(t); }catch(e){} } }
   [].forEach.call(document.querySelectorAll('#ptabs [data-pt]'),function(b){ b.addEventListener('click',function(){ pTab(b.getAttribute('data-pt')); }); });
   function deckList(){ return cards.list.filter(function(c){ return c.deck; }); }
   function drawCards(){ var pt=$('points'), now=Date.now();
@@ -2931,7 +2937,7 @@ if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\]|10\.|192\.168
     if(ph&&pa.parentNode!==tab) tab.appendChild(pa);
     else if(!ph&&pa.parentNode!==home){ home.insertBefore(pa,home.querySelector('.pline')); if(sideNow==='rewards') sideTab('chat'); } }
   if(phoneMq.addEventListener) phoneMq.addEventListener('change',placeStore); else if(phoneMq.addListener) phoneMq.addListener(placeStore);
-  function sideTab(t,scroll){ sideNow=t; placeStore(); if(window.CDX&&typeof window.CDX.onSide==='function'){ try{ window.CDX.onSide(t); }catch(e){} } if(t==='rewards'&&meters.ok) setTimeout(meterPoll,0);
+  function sideTab(t,scroll){ sideNow=t; placeStore(); if(window.CDX&&typeof window.CDX.onSide==='function'){ try{ window.CDX.onSide(t); }catch(e){} } if(t==='rewards'&&!meters.none) setTimeout(meterPoll,0);
     [].forEach.call(document.querySelectorAll('.stabs [data-side]'),function(b){ b.setAttribute('aria-selected',b.getAttribute('data-side')===t?'true':'false'); });
     [].forEach.call(document.querySelectorAll('.sview'),function(p){ p.hidden=p.getAttribute('data-view')!==t; });
     if(t==='shop'){ smsg(''); myPoints(); }
