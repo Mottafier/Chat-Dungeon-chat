@@ -26,7 +26,7 @@
   function account(){ return typeof X.account==='function'?X.account():!!X.account; }
   var BASE=(function(){ var s=document.currentScript&&document.currentScript.src; return s?s.replace(/team\.js.*$/,''):'/'; })();
   var VER=(function(){ var s=document.currentScript&&document.currentScript.src, m=s&&s.match(/[?&]v=([\w.-]+)/); return m?m[1]:'1'; })();
-  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.3'; document.head.appendChild(l); })();
+  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.4'; document.head.appendChild(l); })();
 
   /* ---------------------------------------------------------------- state */
   var S={on:false,known:false,slots:5,cooldown:14400,members:[],byId:{},making:null,at:0,got:0,
@@ -84,6 +84,7 @@
     return '<svg class="tico '+cls+'" viewBox="0 0 '+g[0].length+' '+g.length+'" shape-rendering="crispEdges" aria-hidden="true">'+r+'</svg>'; }
   var SWORD=pxIcon(['........kkk','.......kwwk','......kwwsk','.....kwwsk.','.k..kwwsk..','kgkkwwsk...','.kggwsk....','..kggk.....','.kbkggk....','kbbk.kgk...','kbk...k....','.k.........'],{k:'#0b0706',w:'#fff3dc',s:'#c9bfae',g:'#ffc23a',b:'#8a4a1c'},'sw');
   var HEART=pxIcon(['.kkk...kkk.','kwwrk.krrrk','kwrrrkrrrrk','krrrrrrrrrk','krrrrrrrrdk','.krrrrrrdk.','..krrrrdk..','...krrdk...','....krk....','.....k.....'],{k:'#0b0706',w:'#fff3dc',r:'#ff4a5c',d:'#b81d3a'},'ht');
+  var SKULL=pxIcon(['..kkkkkkk..','.kwwwwwwwk.','kwwwwwwwwwk','kwkkwwwkkwk','kwkkwwwkkwk','kwwwwkwwwwk','.kwwwkwwwk.','..kwwwwwk..','..kwkwkwk..','..kwkwkwk..','...kkkkk...'],{k:'#0b0706',w:'#fff3dc'},'sk');
 
   /* ---------------------------------------------------------------- talking to the database (or the pretend one) */
   var api=DEMO?null:{
@@ -106,7 +107,7 @@
   };
   var ERR={'busy':'It can’t move while it’s fighting or resting.','bad slot':'That spot doesn’t exist.','no card':'That creature isn’t yours.',
     'room closed':'The stream is offline, so nothing can go in right now.','out':'It’s already in the fight.','resting':'It’s still resting.',
-    'not on team':'Put it on your team first, then send it.','too busy':'The stream is very busy. Try again in a moment.','slow down':'Slow down a little, then try again.','team off':'Teams aren’t switched on yet.','not ready':'That egg is still being made.','no account':'Make an account first.','not hatched':'It hasn’t hatched yet.','bad name':'That name isn’t allowed. Try another.','no side':'Helping isn’t switched on yet.','too many helpers':'There are enough helpers in there right now. Try again soon.',
+    'not on team':'Put it on your team first, then send it.','too busy':'The stream is very busy. Try again in a moment.','slow down':'Slow down a little, then try again.','team off':'Teams aren’t switched on yet.','not ready':'That egg is still being made.','no account':'Make an account first.','not hatched':'It hasn’t hatched yet.','bad name':'That name isn’t allowed. Try another.','no side':'Sending in as a friend isn’t switched on yet.','too many helpers':'There are enough friends in there right now. Try again soon.',
     'not allowed':'Those words aren’t allowed. Try something else.','claimed':'You already opened your free egg.','too many':'Too many free eggs went out on your network today. Try again tomorrow.'};
   function errText(e){ var m=String(e&&e.message||''); return ERR[m]||(!m||e instanceof TypeError?'Couldn’t reach the server. Try again.':'Server said: '+m.slice(0,100)); }
 
@@ -196,15 +197,11 @@
     if(m.evolve_ready) return '<span class="tst evo">Ready to evolve!</span>';
     return '<span class="tst ok">Ready</span>'; }
   function xpPct(m){ var a=m.xp_from|0, b=m.xp_next; if(!b) return 100; return Math.max(0,Math.min(100,100*((m.xp|0)-a)/Math.max(1,b-a))); }
-  /* the big button that appears over the one you picked */
+  /* a grey note over the one you picked when it can't go right now (when it can, it gets the shipping crate instead) */
   function sendTop(m){ if(m.status==='out'||m.status==='resting') return '';
     if(m.making) return '<span class="tsend gray">Almost ready…</span>';
     if(!roomOpen()) return '<span class="tsend gray">Stream is offline</span>';
-    if(!m.egg&&!S.noSide) return '<span class="tsend duo'+(m.evolve_ready?' evo':'')+'">'
-      +'<button type="button" class="tside atk" data-act="send" data-side="attack" data-id="'+m.id+'">'+SWORD+'Attack</button>'
-      +'<button type="button" class="tside help" data-act="send" data-side="help" data-id="'+m.id+'">'+HEART+'Help</button></span>';
-    var what=m.egg?'Send to hatch!':m.evolve_ready?'Send to evolve!':'Send to dungeon!';
-    return '<button type="button" class="tsend'+(m.evolve_ready&&!m.egg?' evo':'')+'" data-act="send" data-id="'+m.id+'">'+what+'</button>'; }
+    return ''; }
   /* every creature gets its own fun panel colour, picked from a fixed set by its id so it never changes */
   var FUN=['#5fd04a','#3fa7ff','#ff8a1c','#ff5fa8','#2fd0c0','#f2c531','#ff4a4a','#a56bff'];
   function funCol(m){ var t=String(m.id), h=2166136261, i; for(i=0;i<t.length;i++){ h^=t.charCodeAt(i); h=Math.imul(h,16777619); } h^=h>>>13; h=Math.imul(h,0x5bd1e995); h^=h>>>15; return (h>>>0)%FUN.length; }
@@ -225,7 +222,7 @@
       if(sel) top=sendTop(m);
       if(!top&&!m.egg) top='<span class="thov">'+(m.changing?'Changing…':tierName(m.danger)+(m.level?' · Lv '+(m.level|0):' · Form '+((m.form|0)||1)))+'</span>';
       else if(!top) top='<span class="thov">Mystery egg</span>'; }
-    if(sel) cls.push('sel'); if(m&&S.landed===m.id) cls.push('landed'); if(m&&S.lift===m.id) cls.push('lifted'); if(m&&fly[m.id]) cls.push('flying'); if(pos.e) cls.push(pos.e);
+    if(m&&boxed[m.id]) cls.push('boxed'); if(sel) cls.push('sel'); if(m&&S.landed===m.id) cls.push('landed'); if(m&&S.lift===m.id) cls.push('lifted'); if(m&&fly[m.id]) cls.push('flying'); if(pos.e) cls.push(pos.e);
     return '<div class="'+cls.join(' ')+'" data-k="'+k+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" aria-label="'+(m?esc(m.egg?'Egg':m.name):'Empty spot')+'" style="left:'+pos.x+'%;top:'+pos.y+'px;height:'+pos.h+'px'+(m?';--cc:'+teamCol(k):'')+'">'
       +'<span class="tglow"></span><span class="mark"></span>'+(lk?'<span class="lk">'+lk+'</span>':'')+top+name+body+'<span class="tlbl">'+tag+'</span></div>'; }
   /* what's compared to decide on a redraw: the HTML without its running clocks (the 1 s tick keeps those going) */
@@ -257,8 +254,10 @@
     campEl.style.setProperty('--sw',sw+'px'); camp.sw=sw;
     rows.forEach(function(row,ri){ row.forEach(function(k,i){ P[k]={x:two?(ri?[25,75]:[17,50,83])[i]:10+i*20,y:Math.round(ri*rh),h:Math.round(rh),e:sw<216?(i===0?'el':i===row.length-1?'er':''):''}; }); });
     campEl.querySelector('.tt1').textContent='Your team  '+teamCount()+' / '+S.slots; var pk=S.pick!=null&&M(S.pick); campEl.classList.toggle('haspick',!!(pk&&pk.slot!=null));
+    boxWant();
     var html=''; for(var k=0;k<S.slots;k++) html+=spotHtml(k,P[k]||P[P.length-1]);
     var hs=sig(html); if(hs!==lastCamp){ lastCamp=hs; campEl.querySelector('.tspots').innerHTML=html; if(S.placing!=null) markPads(); }
+    boxSync();
  }
 
   /* ---------------------------------------------------------------- the Collection: everyone who is not on the team, and
@@ -368,18 +367,113 @@
   pane.addEventListener('submit',function(e){ e.preventDefault(); if(e.target.closest('#tgv')) giftSend(); });
   pane.addEventListener('input',function(e){ if(e.target.id==='tgword'){ var er=$('tgerr'); if(er) er.textContent=''; } });
 
-  /* Attack or Help: the one you press swells while the other slides away, and both come back if the send fails */
+  /* ---------------------------------------------------------------- the shipping crate
+     Whoever is picked and able to go jumps into a crate (the Bag's crate, a size up) that drops in over their spot, with
+     "Send in as…" Enemy or Friend beside it (sent as attack / help; an egg just hatches). Sending slams the lid, slaps on a
+     shipping label with the viewer's name (skull or heart) and the crate flies up past the stream. If the send fails the lid
+     pops back open. The crate sits on the page itself so nothing clips it; boxed{} says whose picture is out of its spot. */
+  var box=null, boxed={}, boxT=0;
+  var crateArt=(function(){ var done=false; return function(){ if(done) return; done=true; try{
+    var c=document.createElement('canvas'), g, x, y; c.width=c.height=27; g=c.getContext('2d');
+    function px(x,y,col){ g.fillStyle=col; g.fillRect(x,y,1,1); }
+    function mix(a,b,t){ var o='#'; for(var i=1;i<7;i+=2){ var u=parseInt(a.substr(i,2),16), v=parseInt(b.substr(i,2),16), w=Math.round(u+(v-u)*t); o+=(w<16?'0':'')+w.toString(16); } return o; }
+    /* the inside, exactly as the Bag draws it: one vanishing point, a back wall of three planks, side walls, thin ceiling, shallow floor */
+    var VY=9, S=21/27, PW=5.4, VX=13.5, y0=Math.round(VY*(1-S)), h=Math.round(27*S/3), TAB=[[2,6],[2,7],[3,8],[3,9]];
+    function face(cx,cy){ var dx=cx-VX, dy=cy-VY, u=Math.abs(dx)/13.5, v=dy>0?dy/(27-VY):-dy/VY, f=Math.max(u,v,S);
+      return {f:f,k:f<=S?'back':u>=v?'side':dy>0?'floor':'ceil',X:VX+dx/f,Y:VY+dy*S/f,right:dx>0}; }
+    function plank(X){ return Math.floor((X-VX+PW/2)/PW); }
+    for(y=0;y<27;y++) for(x=0;x<27;x++){ var F=face(x+.5,y+.5), d=(F.f-S)/(1-S), col, row;
+      if(F.k==='back'){ row=(y-y0)%h; col=y===y0+3*h-1?'#140d08':row===h-1?'#1c130b':row===0?'#443322':['#3a2a1c','#34261a','#2e2116'][Math.floor((y-y0)/h)]; }
+      else if(F.k==='side'){ var Yb=(F.Y-VY*(1-S))/(27*S/3), fr=Yb-Math.floor(Yb); col=fr>.83?'#120c07':mix(F.right?'#2a1e13':'#241a10','#30231a',d); if(F.f<S+.06) col=mix(col,'#120c07',.5); }
+      else { var A=face(x+.02,y+.5), B=face(x+.98,y+.5), seam=plank(A.X)!==plank(B.X);
+        if(F.k==='floor'){ var o=Math.abs(x-13), tr=TAB[y-(27-TAB.length)]; seam=!!tr&&tr.indexOf(o)>=0; }
+        col=F.k==='floor'?(seam?'#3a2a18':mix('#5e462a','#8a6840',d)):(seam?'#0e0906':mix('#1a120b','#241a10',d)); }
+      px(x,y,col); }
+    [[7,5],[18,12],[10,19]].forEach(function(q){ px(q[0],q[1],'#2a1e14'); px(q[0]+1,q[1],'#2a1e14'); });
+    [4,22].forEach(function(nx){ [5,12,19].forEach(function(ny){ px(nx,ny,'#5c4428'); }); });
+    document.documentElement.style.setProperty('--crate','url('+c.toDataURL()+')');
+    /* the lid: the same wood from the front, three planks across with a nail at each end */
+    c=document.createElement('canvas'); c.width=c.height=27; g=c.getContext('2d');
+    var W=['#86643e','#7e5e3a','#765836'];
+    for(y=0;y<27;y++) for(x=0;x<27;x++){ row=y%9; px(x,y,row===8?'#3a2a18':row===0?'#9a7648':W[Math.floor(y/9)]); }
+    [[5,2],[14,5],[9,12],[19,15],[6,21],[16,23]].forEach(function(q){ px(q[0],q[1],'#6a4e30'); px(q[0]+1,q[1],'#6a4e30'); px(q[0]+2,q[1],'#6a4e30'); });
+    [1,25].forEach(function(nx){ [4,13,22].forEach(function(ny){ px(nx,ny,'#2a1e14'); }); });
+    document.documentElement.style.setProperty('--lid','url('+c.toDataURL()+')');
+  }catch(e){} }; })();
+  function canBox(m){ return !!m&&m.slot!=null&&m.status!=='out'&&m.status!=='resting'&&!m.making&&!m.gift&&roomOpen()&&S.placing==null; }
+  function boxKey(m){ return [m.id,m.egg?1:0,S.noSide?1:0,m.evolve_ready?1:0].join('.'); }
+  /* before the spots are drawn: whose picture should be out of its spot */
+  function boxWant(){ var m=S.pick!=null&&M(S.pick); if(box&&box.busy) return;
+    if(box&&(!canBox(m)||box.key!==boxKey(m))){ boxShutUp(box); box=null; }
+    if(canBox(m)) boxed[m.id]=1; }
+  /* after: make the crate for a fresh pick, and keep it over its spot */
+  function boxSync(){ var m=S.pick!=null&&M(S.pick);
+    if(!box&&canBox(m)&&campEl.offsetWidth) box=boxMake(m);
+    if(box) boxPlace(box); clearInterval(boxT); if(box) boxT=setInterval(function(){ if(box) boxPlace(box); },300); }
+  function spotOf(id){ var m=M(id); return m&&m.slot!=null&&campEl?campEl.querySelector('.tspot[data-k="'+m.slot+'"]'):null; }
+  function boxPlace(b){ var sp=spotOf(b.id), r=sp&&sp.getBoundingClientRect();
+    if(!r||!r.width){ if(b.busy){ b.el.hidden=true; return; } boxDrop(b); if(box===b) box=null; return; }
+    b.el.hidden=false; var over=!pane.classList.contains('fixed'), cr=campEl.getBoundingClientRect(), x=Math.round(r.left+r.width/2), y=Math.round(over?r.top+146:r.top-40);
+    b.el.classList.toggle('over',over); b.el.classList.toggle('flip',x>cr.left+cr.width*.56);
+    b.el.style.transform='translate('+x+'px,'+y+'px)'; }
+  function boxDrop(b){ if(b.el.parentNode) b.el.parentNode.removeChild(b.el); if(boxed[b.id]&&!(box&&box!==b&&box.id===b.id)){ delete boxed[b.id]; lastCamp=''; setTimeout(draw,0); } }
+  function anim(el,frames,opt){ if(still||!el||!el.animate) return Promise.resolve(); var a=el.animate(frames,opt); return a.finished?a.finished.catch(function(){}):new Promise(function(ok){ a.onfinish=a.oncancel=ok; }); }
+  function wait(ms){ return new Promise(function(ok){ setTimeout(ok,still?0:ms); }); }
+  function whoRect(id){ var sp=spotOf(id), w=sp&&sp.querySelector('.who'), r=w&&w.getBoundingClientRect(); return r&&r.width?r:null; }
+  function boxMake(m){ crateArt(); var n=Math.min(camp.cs,96), el=document.createElement('div'), b={id:m.id,key:boxKey(m),el:el,busy:false};
+    var btns=m.egg||S.noSide?'<button type="button" class="tside one'+(m.evolve_ready&&!m.egg?' evo':'')+'" data-act="send" data-id="'+m.id+'">'+(m.egg?'Send to hatch!':m.evolve_ready?'Send to evolve!':'Send to dungeon!')+'</button>'
+      :'<button type="button" class="tside atk" data-act="send" data-side="attack" data-id="'+m.id+'">'+SKULL+'Enemy</button><button type="button" class="tside help" data-act="send" data-side="help" data-id="'+m.id+'">'+HEART+'Friend</button>';
+    el.className='tbox'+(m.evolve_ready&&!m.egg?' evo':'');
+    el.innerHTML='<i class="tbtail"></i><div class="tbcrate"><span class="tblidup"></span><span class="tbin"><span class="tbpet">'+(m.egg?egg(m.hue,2,'',2):img(m,n,''))+'</span></span><span class="tblid"></span><span class="tbdust l"></span><span class="tbdust r"></span></div>'
+      +'<div class="tbctl"'+(m.egg||S.noSide?'':' role="group" aria-label="Send in as"')+'>'+(m.egg||S.noSide?'':'<span class="tbas" aria-hidden="true">Send in as…</span>')+'<span class="tbbtns">'+btns+'</span></div>';
+    el.addEventListener('click',onClick); document.body.appendChild(el); boxPlace(b);
+    var crate=el.querySelector('.tbcrate'), pet=el.querySelector('.tbpet'), ctl=el.querySelector('.tbctl'), from=whoRect(m.id), to=pet.getBoundingClientRect();
+    anim(crate,[{transform:'translateY(-30px) scale(.55)',opacity:0},{transform:'translateY(4px) scale(1.06,.95)',opacity:1,offset:.7},{transform:'none',opacity:1}],{duration:240,easing:'ease-out'});
+    anim(ctl,[{opacity:0,transform:'translateX('+(el.classList.contains('flip')?14:-14)+'px) scale(.8)'},{opacity:1,transform:'none'}],{duration:260,delay:230,easing:'cubic-bezier(.2,1.6,.4,1)',fill:'backwards'});
+    if(from&&to.width){ var dx=from.left+from.width/2-(to.left+to.width/2), dy=from.bottom-to.bottom, s=from.height/to.height||1;
+      /* out of its spot and up into the crate in one hop, then it lands and the crate takes the weight */
+      anim(pet,[{transform:'translate('+dx+'px,'+dy+'px) scale('+s+')',easing:'cubic-bezier(.3,0,.5,1)'},{transform:'translate('+dx*.35+'px,'+(Math.min(dy,0)-34)+'px) scale(1.08)',offset:.55,easing:'cubic-bezier(.5,0,.8,.6)'},{transform:'none'}],{duration:430,delay:90,fill:'backwards'})
+        .then(function(){ anim(pet,[{transform:'scale(1.18,.78)'},{transform:'translateY(-7px) scale(.94,1.08)'},{transform:'none'}],{duration:260,easing:'ease-out'});
+          anim(crate,[{transform:'none'},{transform:'translateY(5px)'},{transform:'translateY(-3px)'},{transform:'none'}],{duration:260,easing:'ease-out'}); }); }
+    return b; }
+  /* picked someone else, or nobody: it hops back to its spot and the crate goes */
+  function boxShutUp(b){ var el=b.el, pet=el.querySelector('.tbpet'), crate=el.querySelector('.tbcrate'), to=whoRect(b.id), r=pet.getBoundingClientRect(); el.classList.add('bye');
+    var back=to&&r.width?anim(pet,[{transform:'none',easing:'cubic-bezier(.3,0,.5,1)'},{transform:'translate('+(to.left+to.width/2-(r.left+r.width/2))*.6+'px,-30px) scale(1.06)',offset:.4,easing:'cubic-bezier(.5,0,.8,.6)'},{transform:'translate('+(to.left+to.width/2-(r.left+r.width/2))+'px,'+(to.bottom-r.bottom)+'px) scale('+(to.height/r.height||1)+')'}],{duration:300,fill:'forwards'}):Promise.resolve();
+    crate.style.boxShadow='none'; crate.style.background='none'; crate.style.borderColor='transparent'; [].forEach.call(crate.querySelectorAll('.tblidup,.tblid'),function(x){ x.style.visibility='hidden'; });
+    back.then(function(){ boxDrop(b); }); }
+  /* the lid comes down, then the label is slapped on */
+  function boxSlam(b,side){ var el=b.el, crate=el.querySelector('.tbcrate'), lid=el.querySelector('.tblid'), up=el.querySelector('.tblidup'), name=String(me()||'you');
+    var lab=document.createElement('span'); lab.className='tblabel'+(side==='help'?' help':side==='attack'?' atk':''); lab.style.visibility='hidden';
+    lab.innerHTML=(side==='help'?HEART:side==='attack'?SKULL:'')+'<small>FROM</small><b>'+esc(name)+'</b><i></i>'; lid.appendChild(lab);
+    var nb=lab.querySelector('b'), room=lab.clientWidth-12-(lab.querySelector('.tico')?lab.querySelector('.tico').getBoundingClientRect().width/1+6:0); if(nb.scrollWidth>room&&room>0) nb.style.fontSize=Math.max(8,Math.floor(15*room/nb.scrollWidth))+'px';
+    return wait(260).then(function(){ el.classList.add('shut');
+      return Promise.all([anim(up,[{transform:'skewX(-7deg)',opacity:1},{transform:'skewX(-7deg) scaleY(0)',opacity:1}],{duration:90,easing:'ease-in'}),
+        anim(lid,[{transform:'scaleY(0)'},{transform:'scaleY(0)',offset:.4},{transform:'none'}],{duration:190,easing:'cubic-bezier(.6,0,1,.6)'})]); })
+    .then(function(){ [].forEach.call(el.querySelectorAll('.tbdust'),function(d,i){ anim(d,[{opacity:.9,transform:'none'},{opacity:0,transform:'translate('+(i?16:-16)+'px,-10px) scale(1.8)'}],{duration:320,easing:'ease-out'}); });
+      return anim(crate,[{transform:'translateY(6px) scale(1.05,.93)'},{transform:'translateY(-3px)'},{transform:'none'}],{duration:210,easing:'ease-out'}); })
+    .then(function(){ lab.style.visibility=''; anim(crate,[{transform:'none'},{transform:'translate(2px,3px) rotate(1.5deg)',offset:.45},{transform:'none'}],{duration:200,delay:90});
+      return anim(lab,[{transform:'rotate(-16deg) scale(2.3)',opacity:0},{transform:'rotate(-4deg) scale(.94)',opacity:1,offset:.6},{transform:'rotate(-4deg)',opacity:1}],{duration:170,easing:'ease-in'}); })
+    .then(function(){ return wait(330); }); }
+  /* up and away, past the stream and off the top of the page */
+  function boxShip(b){ var crate=b.el.querySelector('.tbcrate'), r=crate.getBoundingClientRect(), up=Math.round(r.bottom+60);
+    return anim(crate,[{transform:'none',easing:'ease-out'},{transform:'translateY(7px) scale(1.08,.88)',offset:.22,easing:'cubic-bezier(.5,0,.9,.4)'},{transform:'translateY(-'+up+'px) rotate(7deg) scale(.96,1.06)'}],{duration:620,fill:'forwards'}); }
+  function boxOpen(b){ var el=b.el, lab=el.querySelector('.tblabel'), btns=el.querySelector('.tbbtns'); if(lab) lab.parentNode.removeChild(lab); el.classList.remove('shut');
+    anim(el.querySelector('.tblid'),[{transform:'none'},{transform:'scaleY(0)'}],{duration:160,easing:'ease-out'});
+    anim(el.querySelector('.tbcrate'),[{transform:'none'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(-2px)'},{transform:'none'}],{duration:260});
+    if(btns){ btns.classList.remove('went'); $$('button',btns).forEach(function(x){ x.disabled=false; x.classList.remove('pick'); }); } }
   function send(id,btn,side){ var m=M(id); if(!m) return;
     if(!DEMO&&!account()){ X.needAccount(function(){ send(id,null,side); }); return; }
     if(m.egg) side='';
-    var duo=btn&&btn.closest('.tsend.duo'), all=duo?$$('button',duo):btn?[btn]:[];
-    all.forEach(function(b){ b.disabled=true; }); if(duo){ duo.classList.add('went'); btn.classList.add('pick'); }
-    var help=side==='help';
-    var t0=Date.now(), held=function(v){ return new Promise(function(ok){ setTimeout(function(){ ok(v); },duo&&!still?Math.max(0,340-(Date.now()-t0)):0); }); };
-    (api?api.send(id,side):demo.send(id,side)).then(held).then(function(j){ if(j&&j.state&&j.state.members){ stateIn(j.state); m=M(id)||m; } m.status='out'; S.outSince[id]=Date.now(); if(help) S.helping[id]=1; else delete S.helping[id]; lastCamp=''; draw();
+    var b=box&&box.id===id&&!box.busy?box:null, btns=b&&b.el.querySelector('.tbbtns'), help=side==='help';
+    if(b){ b.busy=true; $$('button',btns).forEach(function(x){ x.disabled=true; if(x===btn||(!btn&&(x.getAttribute('data-side')||'')===side)) x.classList.add('pick'); }); btns.classList.add('went'); }
+    var shut=b?boxSlam(b,side):Promise.resolve();
+    (api?api.send(id,side):demo.send(id,side)).then(function(j){ return shut.then(function(){ return b?boxShip(b):null; }).then(function(){ return j; }); })
+    .then(function(j){ if(b){ b.busy=false; if(box===b) box=null; }
+      if(j&&j.state&&j.state.members){ stateIn(j.state); m=M(id)||m; } m.status='out'; S.outSince[id]=Date.now(); if(help) S.helping[id]=1; else delete S.helping[id]; lastCamp=''; if(b) boxDrop(b); draw();
       toast(m.egg?'Your egg drops into '+chanS()+' dungeon. Watch it hatch!':help?nameOf(m)+' jumps in to help '+(channel()||'the streamer')+'!':m.evolve_ready?nameOf(m)+' jumps in. Watch it evolve on stream!':nameOf(m)+' jumps into '+chanS()+' dungeon!'); soon(1500); })
-    .catch(function(e){ all.forEach(function(b){ b.disabled=false; }); if(duo){ duo.classList.remove('went'); btn.classList.remove('pick'); }
-      if(S.noSide){ lastCamp=''; draw(); } toast(errText(e),true); soon(300); }); }
+    .catch(function(e){ shut.then(function(){ if(b){ b.busy=false; if(S.noSide&&box===b){ boxShutUp(b); box=null; } else boxOpen(b); } lastCamp=''; draw(); });
+      toast(errText(e),true); soon(300); }); }
+  window.addEventListener('scroll',function(){ if(box) boxPlace(box); },true); window.addEventListener('resize',function(){ if(box) boxPlace(box); });
 
   /* ---------------------------------------------------------------- joining the team: drag a card onto a spot, or Add to team.
      Add to team goes straight in when there's an empty spot; with a full team you pick who it swaps with. */

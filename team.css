@@ -127,7 +127,7 @@
 .tspot.el .tsend{left:5px;transform:none}.tspot.el .tsend::after{left:calc(var(--sw)/2 - 13px)}.tspot.el .tsend::before{left:calc(var(--sw)/2 - 10px)}
 .tspot.er .tsend{left:auto;right:5px;transform:none}.tspot.er .tsend::after{left:auto;right:calc(var(--sw)/2 - 13px)}.tspot.er .tsend::before{left:auto;right:calc(var(--sw)/2 - 10px)}
 @keyframes tsendin{from{scale:.5;opacity:0}}
-/* Attack or Help: two buttons share the spot over a hatched creature. The pressed one swells, the other slides away. */
+/* "Send in as…" Enemy or Friend (sent as attack / help): two buttons share the spot over a hatched creature, under a small plate. The pressed one swells, the other slides away. */
 .tsend.duo{display:flex;align-items:stretch;gap:9px;padding:0;background:none;box-shadow:none;cursor:default;animation:tbob 1.5s ease-in-out .45s infinite}
 .tsend.duo::before{display:none}
 .tsend.duo:hover{filter:none}
@@ -157,6 +157,10 @@
 .pteam.fixed .tspot .tnm{font-size:14px}.pteam.fixed .tst{font-size:12px;margin-top:2px;padding:0 5px 1px}
 .pteam.fixed .tspot.sel .who{transform:none}
 .pteam.fixed .tcamp.compact .tsend{min-height:30px;font-size:17px;padding:3px 10px 6px}
+/* on a PC the button floats well above the picked one: over the Power bar, its top just lapping the bottom of the stream */
+.pteam.fixed .tsend,.pteam.fixed .tcamp.compact .tsend{bottom:calc(100% + var(--lift,50px))}
+.tcamp.th-cols.haspick{overflow:visible}
+.pteam:not(.fixed) .tsend.duo{margin-bottom:-18px}.pteam:not(.fixed) .tas{bottom:calc(100% + 6px)}
 @keyframes tevo{0%,100%{transform:rotate(0)}6%{transform:rotate(-1.5deg)}12%{transform:rotate(1.5deg)}18%{transform:rotate(0)}}
 
 /* marks while a card is being put on the team */
@@ -307,7 +311,7 @@
   .tname{font-size:20px}
 }
 @media (prefers-reduced-motion:reduce){
-  .tcamp *,.tcard,.tcard *,.tpin,.tpin *,.ttoast,.tghost,.tghost *,.trv *{animation:none!important;transition:none!important}
+  .tcamp *,.tbox,.tbox *,.tcard,.tcard *,.tpin,.tpin *,.ttoast,.tghost,.tghost *,.trv *{animation:none!important;transition:none!important}
 }
 
 /* ---------- PC: the store under the stream has a fixed height ---------- */
@@ -469,3 +473,50 @@
 .tmoves li.sig b i{color:#ffd23a}
 .tmoves span{font-size:12.5px;line-height:1.3;color:var(--parch-dim)}
 @media (prefers-reduced-motion:reduce){ .tpkb,.tgegg{animation:none} }
+
+/* ---------------------------------------------------------------- the shipping crate (the Bag's crate, a size up)
+   Pick someone who can go and a crate drops in over their spot; they jump into it. "Send in as…" Enemy or Friend sits beside it.
+   Sending slams the lid, slaps on a shipping label with your name (skull or heart), and the crate flies up past the stream.
+   It lives on the page itself (position:fixed, moved by team.js) so nothing clips it on its way up. */
+.tspot.boxed .who,.tspot.boxed .zz{visibility:hidden}
+.tspot.boxed .tshadow{opacity:.45}
+.tbox{position:fixed;z-index:45;left:0;top:0;width:0;height:0;pointer-events:none;font:400 20px/1 var(--display);--flame:#ffb23a}
+.tbcrate{position:absolute;left:-61px;bottom:0;width:122px;height:122px;box-sizing:border-box;padding:5px;border:2px solid #0b0706;background:var(--crate,linear-gradient(#34261a,#2a1e14)) content-box,#5c4428;background-size:108px 108px;background-repeat:no-repeat;image-rendering:pixelated;
+  box-shadow:inset 0 0 0 1px #7a5c36,inset 0 0 0 4px #5c4428,inset 0 0 0 5px #1a120a,0 0 0 3px var(--flame),0 0 0 5px #000,0 0 22px rgba(255,190,60,.55);transform-origin:50% 100%}
+.tbin{position:absolute;left:7px;right:7px;top:7px;bottom:13px;display:flex;align-items:flex-end;justify-content:center;line-height:0}
+.tbpet{display:block;line-height:0;transform-origin:50% 100%;will-change:transform}
+.tbpet img,.tbpet svg,.tbpet .tspr{display:block;image-rendering:pixelated}
+/* the lid: propped open above the crate until it is sent */
+.tblidup{position:absolute;left:-2px;right:-2px;bottom:calc(100% + 5px);height:26px;border:2px solid #0b0706;background:var(--lid,#6e5232) center/100% 100%;image-rendering:pixelated;transform-origin:50% 100%;transform:skewX(-7deg);box-shadow:inset 0 2px 0 rgba(255,255,255,.14),0 0 0 3px var(--flame),0 0 0 5px #000}
+.tblid{position:absolute;inset:-2px;border:2px solid #0b0706;background:var(--lid,#6e5232) center/100% 100%;image-rendering:pixelated;transform-origin:50% 0;transform:scaleY(0);box-shadow:inset 0 0 0 1px #7a5c36,inset 0 0 0 4px #5c4428,inset 0 0 0 5px #1a120a}
+.tbox.shut .tblid{transform:none}.tbox.shut .tblidup{transform:skewX(-7deg) scaleY(0);opacity:0}
+.tbdust{position:absolute;bottom:-4px;width:14px;height:14px;background:#cdbb97;opacity:0}
+.tbdust.l{left:-8px}.tbdust.r{right:-8px}
+/* the shipping label */
+.tblabel{position:absolute;left:9px;right:9px;top:28px;box-sizing:border-box;min-height:58px;padding:7px 6px 6px;display:grid;grid-template-columns:auto 1fr;gap:2px 6px;align-items:center;color:#1a120a;background:#f4ead2;box-shadow:0 0 0 2px #0b0706,3px 4px 0 2px rgba(0,0,0,.4);transform:rotate(-4deg);text-align:left;line-height:1;overflow:hidden}
+.tblabel .tico{grid-row:1 / span 2;height:28px;width:auto}
+.tblabel small{font:400 10px/1 var(--display);letter-spacing:.08em;color:#7a6a4c;align-self:end}
+.tblabel b{font:400 15px/1 var(--display);white-space:nowrap;align-self:start}
+.tblabel i{grid-column:1 / -1;height:8px;margin-top:3px;background:repeating-linear-gradient(90deg,#1a120a 0 2px,transparent 2px 3px,#1a120a 3px 4px,transparent 4px 7px,#1a120a 7px 10px,transparent 10px 12px)}
+.tblabel.atk{box-shadow:0 0 0 2px #0b0706,inset 0 4px 0 #d42a2a,3px 4px 0 2px rgba(0,0,0,.4)}
+.tblabel.help{box-shadow:0 0 0 2px #0b0706,inset 0 4px 0 #43b638,3px 4px 0 2px rgba(0,0,0,.4)}
+/* which spot it belongs to: a gold tail down to the gold-framed column */
+.tbtail{position:absolute;left:-11px;top:6px;border:11px solid transparent;border-top:12px solid #000;border-bottom:0;animation:tbob 1.5s ease-in-out infinite;transition:opacity .15s}
+.tbtail::after{content:"";position:absolute;left:-7px;top:-12px;border:7px solid transparent;border-top:8px solid var(--flame);border-bottom:0}
+.tbox.over .tbtail{display:none}
+/* "Send in as…" and the two ways in, beside the crate */
+.tbctl{position:absolute;left:76px;bottom:4px;display:flex;flex-direction:column;align-items:stretch;gap:10px;pointer-events:auto;transition:opacity .22s .12s}
+.tbox.flip .tbctl{left:auto;right:76px}
+.tbas{align-self:flex-start;padding:2px 8px 4px;font:400 14px/1 var(--display);white-space:nowrap;color:#ffe7b5;background:#130d07;box-shadow:0 0 0 2px #000,0 3px 0 2px rgba(0,0,0,.6)}
+.tbox.flip .tbas{align-self:flex-end}
+.tbbtns{display:flex;flex-direction:column;gap:12px}
+.tbbtns .tside{min-height:34px;justify-content:center;padding:4px 14px 7px 10px}
+.tbbtns .tside.one{padding:5px 14px 8px}
+.tbox.evo .tbbtns .tside{box-shadow:inset 0 -4px 0 rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.45),0 0 0 3px #000,0 4px 0 3px #000,0 0 20px rgba(255,200,70,.85)}
+.tbbtns .tside.one.evo{background:linear-gradient(#fff0a8,#ffb22a);color:#130d07}
+.tbbtns.went .tside:not(.pick){opacity:0;scale:.6;pointer-events:none}
+.tbbtns.went .tside.atk:not(.pick){translate:0 -14px}
+.tbbtns.went .tside.help:not(.pick){translate:0 14px}
+.tbbtns.went .tside.pick{scale:1.12;filter:brightness(1.25)}
+.tbox.shut .tbctl,.tbox.bye .tbctl{opacity:0;pointer-events:none}
+.tbox.shut .tbtail,.tbox.bye .tbtail{opacity:0}
