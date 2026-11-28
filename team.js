@@ -410,7 +410,6 @@
   function boxSync(){ var m=S.pick!=null&&M(S.pick);
     if(!box&&canBox(m)&&campEl.offsetWidth) box=boxMake(m);
     if(box) boxPlace(box); clearInterval(boxT); if(box) boxT=setInterval(function(){ if(box) boxPlace(box); },300); }
-  function spotOf(id){ var m=M(id); return m&&m.slot!=null&&campEl?campEl.querySelector('.tspot[data-k="'+m.slot+'"]'):null; }
   function boxPlace(b){ var sp=spotOf(b.id), r=sp&&sp.getBoundingClientRect();
     if(!r||!r.width){ if(b.busy){ b.el.hidden=true; return; } boxDrop(b); if(box===b) box=null; return; }
     b.el.hidden=false; var over=!pane.classList.contains('fixed'), cr=campEl.getBoundingClientRect(), x=Math.round(r.left+r.width/2), y=Math.round(over?r.top+146:r.top-40);
@@ -418,7 +417,8 @@
     b.el.style.transform='translate('+x+'px,'+y+'px)'; }
   function boxDrop(b){ if(b.el.parentNode) b.el.parentNode.removeChild(b.el); if(boxed[b.id]&&!(box&&box!==b&&box.id===b.id)){ delete boxed[b.id]; lastCamp=''; setTimeout(draw,0); } }
   function anim(el,frames,opt){ if(still||!el||!el.animate) return Promise.resolve(); var a=el.animate(frames,opt); return a.finished?a.finished.catch(function(){}):new Promise(function(ok){ a.onfinish=a.oncancel=ok; }); }
-  function wait(ms){ return new Promise(function(ok){ setTimeout(ok,still?0:ms); }); }
+  /* (not called wait: the page's own start-up further down has a var of that name, which would replace it) */
+  function boxWait(ms){ return new Promise(function(ok){ setTimeout(ok,still?0:ms); }); }
   function whoRect(id){ var sp=spotOf(id), w=sp&&sp.querySelector('.who'), r=w&&w.getBoundingClientRect(); return r&&r.width?r:null; }
   function boxMake(m){ crateArt(); var n=Math.min(camp.cs,96), el=document.createElement('div'), b={id:m.id,key:boxKey(m),el:el,busy:false};
     var btns=m.egg||S.noSide?'<button type="button" class="tside one'+(m.evolve_ready&&!m.egg?' evo':'')+'" data-act="send" data-id="'+m.id+'">'+(m.egg?'Send to hatch!':m.evolve_ready?'Send to evolve!':'Send to dungeon!')+'</button>'
@@ -446,14 +446,14 @@
     var lab=document.createElement('span'); lab.className='tblabel'+(side==='help'?' help':side==='attack'?' atk':''); lab.style.visibility='hidden';
     lab.innerHTML=(side==='help'?HEART:side==='attack'?SKULL:'')+'<small>FROM</small><b>'+esc(name)+'</b><i></i>'; lid.appendChild(lab);
     var nb=lab.querySelector('b'), room=lab.clientWidth-12-(lab.querySelector('.tico')?lab.querySelector('.tico').getBoundingClientRect().width/1+6:0); if(nb.scrollWidth>room&&room>0) nb.style.fontSize=Math.max(8,Math.floor(15*room/nb.scrollWidth))+'px';
-    return wait(260).then(function(){ el.classList.add('shut');
+    return boxWait(260).then(function(){ el.classList.add('shut');
       return Promise.all([anim(up,[{transform:'skewX(-7deg)',opacity:1},{transform:'skewX(-7deg) scaleY(0)',opacity:1}],{duration:90,easing:'ease-in'}),
         anim(lid,[{transform:'scaleY(0)'},{transform:'scaleY(0)',offset:.4},{transform:'none'}],{duration:190,easing:'cubic-bezier(.6,0,1,.6)'})]); })
     .then(function(){ [].forEach.call(el.querySelectorAll('.tbdust'),function(d,i){ anim(d,[{opacity:.9,transform:'none'},{opacity:0,transform:'translate('+(i?16:-16)+'px,-10px) scale(1.8)'}],{duration:320,easing:'ease-out'}); });
       return anim(crate,[{transform:'translateY(6px) scale(1.05,.93)'},{transform:'translateY(-3px)'},{transform:'none'}],{duration:210,easing:'ease-out'}); })
     .then(function(){ lab.style.visibility=''; anim(crate,[{transform:'none'},{transform:'translate(2px,3px) rotate(1.5deg)',offset:.45},{transform:'none'}],{duration:200,delay:90});
       return anim(lab,[{transform:'rotate(-16deg) scale(2.3)',opacity:0},{transform:'rotate(-4deg) scale(.94)',opacity:1,offset:.6},{transform:'rotate(-4deg)',opacity:1}],{duration:170,easing:'ease-in'}); })
-    .then(function(){ return wait(330); }); }
+    .then(function(){ return boxWait(330); }); }
   /* up and away, past the stream and off the top of the page */
   function boxShip(b){ var crate=b.el.querySelector('.tbcrate'), r=crate.getBoundingClientRect(), up=Math.round(r.bottom+60);
     return anim(crate,[{transform:'none',easing:'ease-out'},{transform:'translateY(7px) scale(1.08,.88)',offset:.22,easing:'cubic-bezier(.5,0,.9,.4)'},{transform:'translateY(-'+up+'px) rotate(7deg) scale(.96,1.06)'}],{duration:620,fill:'forwards'}); }
