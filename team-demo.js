@@ -27,6 +27,8 @@ window.CDTEAM_DEMO=function(stateIn,X){
     boom:{name:'Short Fuse',line:'Blows up when it dies. 30 damage nearby.'},slow:{name:'Sticky Air',line:'Everything near it moves 20% slower.'},thorn:{name:'Thorn Coat',line:'Hitting it up close hurts a little.'},zap:{name:'Zap Hop',line:'Jumps to the player in a flash of sparks.'},wall:{name:'Toast Wall',line:'Throws up a wall of hot toast for 5 seconds.'}};
   function mv(k,kind){ var x=MV[k]; return {kind:kind||'move',name:x.name,line:x.line}; }
   var hatches={4:{name:'Spark Gorilla',danger:'harmless',sprite:f(3,0)},10:{name:'Toast Knight',danger:'harmless',sprite:f(6,0)},11:{name:'Tiny Wizard',danger:'harmless',sprite:f(2,0)}};
+  var LV={1:[12,300,450],2:[27,520,700],3:[3,40,250],5:[44,900,1000],6:[9,100,450],7:[21,200,700],8:[1,0,250],9:[99,0,null]};
+  L.forEach(function(m){ var q=LV[m.id]; if(q&&!m.egg){ m.level=q[0]; m.xp_from=q[1]; m.xp_next=q[2]; } });
   L.forEach(function(m){ var h=HPX[m.id]; if(h&&!m.egg){ m.hp_max=h[1]; m.sleep=SL[h[0]]; } if(!m.egg){ m.moves=[mv('spit')]; m.abilities=[]; } if(m.left) m.rest_total=14400; });
   if(!NEW){ var bd=by(1); bd.moves=[mv('spit'),mv('roll'),mv('zap')]; bd.abilities=[mv('thorn','ability')]; bd.signature={name:'Bomb Breath',line:'Breathes a line of small bombs.'};
     var lj=by(5); lj.moves=[mv('lemon'),mv('roll')]; lj.abilities=[mv('slow','ability'),mv('boom','ability')]; }
@@ -34,10 +36,10 @@ window.CDTEAM_DEMO=function(stateIn,X){
   function out(){ var t=Date.now();
     return {on:true,slots:5,cooldown:14400,members:L.map(function(m){ var c={}; for(var k in m) if(k!=='evo'&&k!=='until') c[k]=m[k]; if(m.until) c.left=Math.max(0,Math.round((m.until-t)/1000)); return c; }),making:null,free_egg:EGG?free:undefined,unlocks:NEW?unl:undefined}; }
   L.forEach(function(m){ if(m.left) m.until=now+m.left*1000; });
-  var big=by(2); if(big) setTimeout(function(){ comeBack(big); },25000);
+  var big=by(2), BACK=+((location.search.match(/[?&]back=(\d+)/)||[])[1]||25); if(big) setTimeout(function(){ comeBack(big); },BACK*1000);
   function comeBack(m){ m.status='resting'; delete m.side; m.rest_total=NEW?1800:14400; m.until=Date.now()+m.rest_total*700; if(NEW) unl.power=true;
-    m.sends++; m.xp+=172; if(m.xp_next&&m.xp>=m.xp_next){ m.xp=m.xp_next; m.evolve_ready=true; }
-    m.last={channel:(typeof X.channel==='function'?X.channel():X.channel)||'mottafierr',alive_s:107,damage:162,ko:true,lines:[['Sent into a stream',60],['Alive 1:47',47],['Damage dealt',65],['First KO on '+((typeof X.channel==='function'?X.channel():X.channel)||'mottafierr')+' today',100]]}; push(); }
+    m.sends++; m.xp+=172; if(m.level&&!m.evolve_ready){ while(m.xp_next&&m.xp>=m.xp_next&&m.level<99){ m.level++; m.xp_from=m.xp_next; m.xp_next+=180+m.level*4; } } else if(m.xp_next&&m.xp>=m.xp_next){ m.xp=m.xp_next; m.evolve_ready=true; }
+    m.last={channel:(typeof X.channel==='function'?X.channel():X.channel)||'mottafierr',alive_s:107,damage:162,ko:true,xp:172,lines:[['Sent into a stream',60],['Alive 1:47',47],['Damage dealt',65],['First KO on '+((typeof X.channel==='function'?X.channel():X.channel)||'mottafierr')+' today',100,true]]}; push(); }
   function push(){ stateIn(out()); }
   function ok(){ return Promise.resolve(out()); }
   function err(m){ return Promise.reject(new Error(m)); }
@@ -49,7 +51,7 @@ window.CDTEAM_DEMO=function(stateIn,X){
       m.status='out'; m.side=m.egg?null:side||null; m.out_where=(typeof X.channel==='function'?X.channel():X.channel)||'mottafierr';
       if(m.egg) setTimeout(function(){ var h=hatches[m.id]||hatches[4]; m.egg=false; m.fresh=true; m.name=h.name; m.danger=h.danger; m.sprite=h.sprite; m.form=1; m.forms_seen=[]; m.xp=60; m.xp_next=250; m.sends=1; m.kos=0; m.hp_max=40; m.level=1; m.moves=[mv('spit')]; m.abilities=[]; push(); },6000);
       else if(m.evolve_ready&&m.evo) setTimeout(function(){ m.forms_seen=(m.forms_seen||[]).concat([{name:m.name,sprite:m.sprite}]); m.sprite=m.evo[0]; m.name=m.evo[1]; m.danger=m.evo[2]; m.form++; m.xp=0; m.xp_next=m.form>=6?null:1400; m.evolve_ready=false; delete m.evo; push(); },5000);
-      setTimeout(function(){ if(m.status==='out') comeBack(m); },m.egg?30000:20000);
+      setTimeout(function(){ if(m.status==='out') comeBack(m); },m.egg?30000:Math.min(20,BACK)*1000);
       return Promise.resolve({id:++id,state:'queued'}); },
     name:function(i,t){ var m=by(i); if(!m) return err('no card'); if(/poop/i.test(t)) return err('bad name'); m.fresh=false; if(t) m.name=t; return ok(); },
     clear:function(){ return ok(); },

@@ -26,7 +26,7 @@
   function account(){ return typeof X.account==='function'?X.account():!!X.account; }
   var BASE=(function(){ var s=document.currentScript&&document.currentScript.src; return s?s.replace(/team\.js.*$/,''):'/'; })();
   var VER=(function(){ var s=document.currentScript&&document.currentScript.src, m=s&&s.match(/[?&]v=([\w.-]+)/); return m?m[1]:'1'; })();
-  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.4'; document.head.appendChild(l); })();
+  (function(){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=BASE+'team.css?v='+VER+'.5'; document.head.appendChild(l); })();
 
   /* ---------------------------------------------------------------- state */
   var S={on:false,known:false,slots:5,cooldown:14400,members:[],byId:{},making:null,at:0,got:0,
@@ -120,9 +120,10 @@
       if(!m.egg&&((f!=null&&(m.form|0)>f)||(f==null&&m.evolved_ago!=null&&m.evolved_ago<12&&!S.played[m.id]))) events.push(['evolve',m,f]);
       if(!m.egg&&S.seenEgg[m.id]&&!m.fresh) events.push(['hatched',m]);
       if(!m.egg) S.seenForm[m.id]=m.form|0; S.seenEgg[m.id]=m.egg;
-      by[m.id]=m; return m; });
+      retNote(m); by[m.id]=m; return m; });
     S.byId=by; giftMember(); S.making=j.making||null; if(j.title_max) S.titleMax=j.title_max|0; S.free=j.free_egg||null;
     if(S.pick!=null&&!by[S.pick]) S.pick=null;
+    retTidy(by);
     if(S.on!==was) modeChanged();
     uSync(j);
     draw(); events.forEach(function(e){ if(e[0]==='evolve') evolved(e[1],e[2]); });
@@ -209,12 +210,14 @@
   function teamCol(k){ var used={}, j, m, c; for(j=0;j<=k;j++){ m=onPad(j); if(!m) continue; c=funCol(m); while(used[c]) c=(c+1)%FUN.length; used[c]=1; } return FUN[c]; }
   function spotHtml(k,pos){ var m=onPad(k), cls=['tspot'], body='', lk='', tag='', top='', name='', sel=m?S.pick===m.id:S.spot===k, cs=camp.cs;
     if(!m){ cls.push('empty'); body='<span class="tplus" aria-hidden="true"><i>+</i></span>'; name='<span class="tnm top dim">Empty spot</span>'; }
-    else { cls.push(tcls(m)); var nm=m.egg?'Egg':esc(lvl(m)+(camp.sw<170?X.fitName(m.name):m.name)), r=m.status==='resting', out=m.status==='out';
-      var xpr=m.egg?'':'<span class="txr"><i>XP</i><span class="txp'+(m.xp_next?'':' max')+(m.evolve_ready?' full':'')+'"><b style="width:'+Math.round(xpPct(m))+'%"></b></span></span>';
+    else { cls.push(tcls(m)); var nm=m.egg?'Egg':esc(camp.sw<170?X.fitName(m.name):m.name), r=m.status==='resting', out=m.status==='out', rt=RET[m.id], v=retView(m);
+      if(rt&&!rt.home){ out=true; r=false; } var rbar=r&&!(rt&&rt.xp);
+      var lv=m.egg?'':'<i class="tlv" data-lv="'+m.id+'">'+(v.level?'Lv '+v.level:'XP')+'</i>';
+      var xpr=m.egg?'':'<span class="txr">'+lv+'<span class="txp'+(v.max?' max':'')+(m.evolve_ready&&!rt?' full':'')+'"><b data-xp="'+m.id+'" style="width:'+Math.round(v.pct)+'%"></b></span></span>';
       /* name above; under the creature its heart and XP, or the rest bar while it sleeps. No status badges: ready shows nothing extra. */
       name='<span class="tnm top">'+nm+'</span>';
-      tag=m.changing?'<span class="tst evo">Changing…</span>':r?restBar(m):hpTag(m,'thp')+xpr;
-      if(out){ cls.push('locked','isout','gone'); lk=outWord(m); body='<span class="who">'+(m.egg?egg(m.hue,2,'',2):img(m,cs,''))+'</span>'; }
+      tag=m.changing?'<span class="tst evo">Changing…</span>':rbar?'<span class="txr rest">'+(v.level?lv:'')+restBar(m)+'</span>':hpTag(m,'thp')+xpr;
+      if(out){ cls.push('locked','isout','gone'); lk=m.status==='out'?outWord(m):''; body='<span class="who">'+(m.egg?egg(m.hue,2,'',2):img(m,cs,''))+'</span>'; }
       else if(m.egg){ cls.push(r?'locked':'full'); if(m.gift) cls.push('gift'); if(r) lk='Resting'; body='<span class="tshadow"></span><span class="who">'+egg(m.hue,2,'wob',2)+'</span>'; }
       else { cls.push(r?'locked':'full'); if(r){ cls.push('asleep'); lk='Resting'; } if(m.evolve_ready&&!r) cls.push('evo'); if(m.changing) cls.push('changing');
         body=bean(m)+'<span class="tshadow"></span><span class="who'+(r?'':' look')+'" style="animation-delay:-'+(k*1.3).toFixed(1)+'s">'+(r?dozy(m,cs,'','sleep'):img(m,cs,'alive'))+'</span>'+(r?'<span class="zz">z</span><span class="zz b">z</span>':''); }
@@ -222,7 +225,7 @@
       if(sel) top=sendTop(m);
       if(!top&&!m.egg) top='<span class="thov">'+(m.changing?'Changing…':tierName(m.danger)+(m.level?' · Lv '+(m.level|0):' · Form '+((m.form|0)||1)))+'</span>';
       else if(!top) top='<span class="thov">Mystery egg</span>'; }
-    if(m&&boxed[m.id]) cls.push('boxed'); if(sel) cls.push('sel'); if(m&&S.landed===m.id) cls.push('landed'); if(m&&S.lift===m.id) cls.push('lifted'); if(m&&fly[m.id]) cls.push('flying'); if(pos.e) cls.push(pos.e);
+    if(m&&boxed[m.id]) cls.push('boxed'); if(m&&RET[m.id]) cls.push('ret'); if(sel) cls.push('sel'); if(m&&S.landed===m.id) cls.push('landed'); if(m&&S.lift===m.id) cls.push('lifted'); if(m&&fly[m.id]) cls.push('flying'); if(pos.e) cls.push(pos.e);
     return '<div class="'+cls.join(' ')+'" data-k="'+k+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" aria-label="'+(m?esc(m.egg?'Egg':m.name):'Empty spot')+'" style="left:'+pos.x+'%;top:'+pos.y+'px;height:'+pos.h+'px'+(m?';--cc:'+teamCol(k):'')+'">'
       +'<span class="tglow"></span><span class="mark"></span>'+(lk?'<span class="lk">'+lk+'</span>':'')+top+name+body+'<span class="tlbl">'+tag+'</span></div>'; }
   /* what's compared to decide on a redraw: the HTML without its running clocks (the 1 s tick keeps those going) */
@@ -257,7 +260,7 @@
     boxWant();
     var html=''; for(var k=0;k<S.slots;k++) html+=spotHtml(k,P[k]||P[P.length-1]);
     var hs=sig(html); if(hs!==lastCamp){ lastCamp=hs; campEl.querySelector('.tspots').innerHTML=html; if(S.placing!=null) markPads(); }
-    boxSync();
+    boxSync(); retSync();
  }
 
   /* ---------------------------------------------------------------- the Collection: everyone who is not on the team, and
@@ -400,7 +403,7 @@
     [1,25].forEach(function(nx){ [4,13,22].forEach(function(ny){ px(nx,ny,'#2a1e14'); }); });
     document.documentElement.style.setProperty('--lid','url('+c.toDataURL()+')');
   }catch(e){} }; })();
-  function canBox(m){ return !!m&&m.slot!=null&&m.status!=='out'&&m.status!=='resting'&&!m.making&&!m.gift&&roomOpen()&&S.placing==null; }
+  function canBox(m){ return !!m&&!RET[m.id]&&m.slot!=null&&m.status!=='out'&&m.status!=='resting'&&!m.making&&!m.gift&&roomOpen()&&S.placing==null; }
   function boxKey(m){ return [m.id,m.egg?1:0,S.noSide?1:0,m.evolve_ready?1:0].join('.'); }
   /* before the spots are drawn: whose picture should be out of its spot */
   function boxWant(){ var m=S.pick!=null&&M(S.pick); if(box&&box.busy) return;
@@ -473,7 +476,112 @@
       toast(m.egg?'Your egg drops into '+chanS()+' dungeon. Watch it hatch!':help?nameOf(m)+' jumps in to help '+(channel()||'the streamer')+'!':m.evolve_ready?nameOf(m)+' jumps in. Watch it evolve on stream!':nameOf(m)+' jumps into '+chanS()+' dungeon!'); soon(1500); })
     .catch(function(e){ shut.then(function(){ if(b){ b.busy=false; if(S.noSide&&box===b){ boxShutUp(b); box=null; } else boxOpen(b); } lastCamp=''; draw(); });
       toast(errText(e),true); soon(300); }); }
-  window.addEventListener('scroll',function(){ if(box) boxPlace(box); },true); window.addEventListener('resize',function(){ if(box) boxPlace(box); });
+  window.addEventListener('scroll',function(){ if(box) boxPlace(box); retPlaceAll(); },true); window.addEventListener('resize',function(){ if(box) boxPlace(box); retPlaceAll(); });
+
+
+  /* ---------------------------------------------------------------- coming home: the send, played backwards
+     Whoever was out is remembered with the XP and level they left with (OUTS, kept in this browser so it still works
+     after a reload). When the server says they're back, their crate comes down from above, lid shut, label on, and
+     waits: "Click to open". Opening it brings up the Pets tab, the lid lifts on the sleeping creature, it hops back to
+     its spot, then the XP it earned flies out of the crate into its bar. A level gained flashes once: LEVEL UP.
+     Until its crate is opened a spot shows it as still away, with the level and XP it left with (retView). */
+  var RET={}, OUTS=(function(){ if(DEMO) return {}; try{ var o=JSON.parse(lsGet('cdOut')||'{}'), t=Date.now(), k; for(k in o) if(!o[k]||t-(o[k].t||0)>3*864e5) delete o[k]; return o; }catch(e){ return {}; } })();
+  function retSave(){ if(!DEMO) lsSet('cdOut',JSON.stringify(OUTS)); }
+  function retPct(x){ var a=x.xp_from|0, b=x.xp_next; if(!b) return 100; return Math.max(0,Math.min(100,100*((x.xp|0)-a)/Math.max(1,b-a))); }
+  function retNote(m){ var id=m.id;
+    if(m.egg||m.fresh||m.slot==null){ if(OUTS[id]&&!RET[id]){ delete OUTS[id]; retSave(); } return; }
+    if(m.status==='out'){ if(!OUTS[id]){ OUTS[id]={xp:m.xp|0,xp_from:m.xp_from|0,xp_next:m.xp_next||0,level:m.level|0,side:m.side||(S.helping[id]?'help':'attack'),t:Date.now()}; retSave(); } return; }
+    if(OUTS[id]&&!RET[id]){ var o=OUTS[id]; RET[id]={id:id,old:o,view:{level:o.level|0,pct:retPct(o),max:!o.xp_next},home:false,xp:false,stage:'new',el:null}; } }
+  function retTidy(by){ for(var id in RET) if(!by[id]||by[id].slot==null) retEnd(RET[id],true); }
+  function retView(m){ var r=RET[m.id]; return r?r.view:{level:m.level|0,pct:xpPct(m),max:!m.xp_next}; }
+  function retEnd(r,quiet){ if(r.el&&r.el.parentNode) r.el.parentNode.removeChild(r.el); delete RET[r.id]; delete OUTS[r.id]; retSave(); if(!quiet){ lastCamp=''; draw(); } }
+  /* where a crate stands: over its spot when the Pets tab is showing, else along the top of the store (or the bottom of the stream) */
+  function retSpot(r){ var m=M(r.id), sp=m&&spotOf(r.id), q=sp&&sp.getBoundingClientRect();
+    if(q&&q.width){ var over=!pane.classList.contains('fixed')&&!r.up; return {x:Math.round(q.left+q.width/2),y:Math.round(over?q.top+146:Math.max(150,q.top-40)),over:over,spot:true}; }
+    var host=pane.closest('.pstore'), h=host&&host.getBoundingClientRect(), k=m&&m.slot!=null?m.slot:0;
+    if(h&&h.width) return {x:Math.round(h.left+h.width*(k+.5)/5),y:Math.round(h.top-4),over:false};
+    var st=document.getElementById('stream'), t=st&&st.getBoundingClientRect();
+    if(t&&t.width) return {x:Math.round(Math.max(66,Math.min(innerWidth-66,t.left+t.width*(k+.5)/5))),y:Math.round(t.bottom-6),over:true};
+    return {x:Math.round(innerWidth/2),y:Math.round(innerHeight*.6),over:true}; }
+  function retPlace(r){ if(!r.el) return null; var a=retSpot(r); r.el.classList.toggle('over',a.over||!a.spot); r.el.style.transform='translate('+a.x+'px,'+a.y+'px)'; return a; }
+  function retPlaceAll(){ for(var id in RET) retPlace(RET[id]); }
+  function retSync(){ var n=0; for(var id in RET){ var r=RET[id]; if(!r.el&&M(r.id)) retMake(r,n++); else retPlace(r); } }
+  function retLabel(r){ var side=r.old.side, name=String(me()||'you');
+    return '<span class="tblabel'+(side==='help'?' help':' atk')+'">'+(side==='help'?HEART:SKULL)+'<small>FROM</small><b>'+esc(name)+'</b><i></i></span>'; }
+  function retMake(r,nth){ crateArt(); var m=M(r.id), n=Math.min(camp.cs,96), el=document.createElement('div'); r.el=el; r.stage='fall';
+    el.className='tbox ret shut';
+    el.innerHTML='<span class="tbopen" aria-hidden="true">Click to open</span><button type="button" class="tbcrate" aria-label="'+esc(nameOf(m))+' is back. Click to open"><span class="tblidup"></span><span class="tbin"><span class="tbpet">'+dozy(m,n,'','sleep')+'</span></span><span class="tblid">'+retLabel(r)+'</span><span class="tbdust l"></span><span class="tbdust r"></span></button>';
+    el.querySelector('.tbcrate').addEventListener('click',function(){ retOpen(r); });
+    document.body.appendChild(el); var a=retPlace(r), crate=el.querySelector('.tbcrate'), nb=el.querySelector('.tblabel b'), lab=el.querySelector('.tblabel');
+    var room=lab.clientWidth-12-(lab.querySelector('.tico')?lab.querySelector('.tico').getBoundingClientRect().width+6:0); if(nb.scrollWidth>room&&room>0) nb.style.fontSize=Math.max(8,Math.floor(15*room/nb.scrollWidth))+'px';
+    /* the send-off backwards: down from above the page, a heavy landing, dust */
+    anim(crate,[{transform:'translateY(-'+(a.y+90)+'px) rotate(-7deg) scale(.96,1.06)',easing:'cubic-bezier(.5,0,.9,.6)'},{transform:'translateY(0) scale(1.1,.86)',offset:.74,easing:'ease-out'},{transform:'translateY(-9px) scale(.97,1.04)',offset:.87,easing:'ease-in'},{transform:'none'}],{duration:760,delay:(nth||0)*170,fill:'backwards'})
+      .then(function(){ if(RET[r.id]!==r||r.stage!=='fall') return; r.stage='ready'; el.classList.add('ready'); });
+    setTimeout(function(){ [].forEach.call(el.querySelectorAll('.tbdust'),function(d,i){ anim(d,[{opacity:.9,transform:'none'},{opacity:0,transform:'translate('+(i?18:-18)+'px,-10px) scale(1.9)'}],{duration:340,easing:'ease-out'}); }); },still?0:(nth||0)*170+560); }
+  function retFrame(){ return new Promise(function(ok){ requestAnimationFrame(function(){ setTimeout(ok,0); }); }); }
+  function retOpen(r){ if(RET[r.id]!==r||(r.stage!=='ready'&&r.stage!=='fall')) return; r.stage='open';
+    var el=r.el, crate=el.querySelector('.tbcrate'), pet=el.querySelector('.tbpet'); el.classList.remove('ready'); el.classList.add('opening'); crate.disabled=true;
+    /* bring the Pets tab up, and slide the crate over to its own spot */
+    if(phone()&&sideNow()!=='rewards') X.sideTab('rewards',true);
+    if(ptNow()!=='team') X.pTab('team');
+    S.pick=null; S.spot=null; draw();
+    retFrame().then(function(){ r.up=true; /* on a phone the crate waits over the spot: lift it clear, so the hop home shows */ el.style.transition='transform .38s cubic-bezier(.3,1.25,.45,1)'; var was=el.style.transform; retPlace(r); return boxWait(el.style.transform===was?0:400); })
+    .then(function(){ el.style.transition='';
+      /* the lid lifts */
+      el.classList.remove('shut');
+      anim(el.querySelector('.tblid'),[{transform:'none'},{transform:'scaleY(0)'}],{duration:170,easing:'cubic-bezier(.5,0,.8,.4)'});
+      anim(el.querySelector('.tblidup'),[{transform:'skewX(-7deg) scaleY(0)',opacity:1},{transform:'skewX(-7deg) scaleY(1.25)',opacity:1,offset:.7},{transform:'skewX(-7deg)',opacity:1}],{duration:240,delay:120,easing:'ease-out',fill:'backwards'});
+      anim(crate,[{transform:'none'},{transform:'translateY(-5px) scale(.97,1.04)'},{transform:'none'}],{duration:240,delay:120,easing:'ease-out'});
+      return boxWait(760); })
+    .then(function(){ /* ...and it hops back to its spot, still asleep */
+      var to=whoRect(r.id), q=pet.getBoundingClientRect(); if(!to||!q.width) return;
+      var dx=to.left+to.width/2-(q.left+q.width/2), dy=to.top+to.height/2-(q.top+q.height/2);
+      return anim(pet,[{transform:'none',easing:'cubic-bezier(.3,0,.5,1)'},{transform:'translate('+dx*.5+'px,'+(Math.min(dy,0)-38)+'px) scale(1.08)',offset:.45,easing:'cubic-bezier(.5,0,.8,.6)'},{transform:'translate('+dx+'px,'+dy+'px)'}],{duration:400,fill:'forwards'}); })
+    .then(function(){ r.home=true; r.xp=true; pet.style.visibility='hidden'; lastCamp=''; draw();
+      var sp=spotOf(r.id), w=sp&&sp.querySelector('.who'); anim(w,[{transform:'scale(1.16,.8)'},{transform:'translateY(-6px) scale(.95,1.07)'},{transform:'none'}],{duration:280,easing:'ease-out'});
+      return boxWait(320); })
+    .then(function(){ return retXp(r); })
+    .then(function(){ return boxWait(520); })
+    .then(function(){ el.classList.add('bye'); return anim(crate,[{transform:'none',opacity:1},{transform:'translateY(6px) scale(1.05,.92)',opacity:1,offset:.3},{transform:'translateY(-26px) scale(.5)',opacity:0}],{duration:320,easing:'ease-in',fill:'forwards'}); })
+    .then(function(){ if(RET[r.id]===r) retEnd(r); },function(){ if(RET[r.id]===r) retEnd(r); }); }
+  /* the XP it earned: sparks burst out of the crate, then stream into its bar one after another */
+  function retXp(r){ var m=M(r.id); if(!m) return Promise.resolve();
+    var o=r.old, v=r.view, ups=o.level&&m.level?Math.max(0,(m.level|0)-(o.level|0)):0, end=xpPct(m)/100, start=v.pct/100;
+    var same=(o.xp_next||0)===(m.xp_next||0)&&(o.xp_from|0)===(m.xp_from|0);
+    if(!ups&&!same&&end<start) start=v.pct=0;
+    var units=ups?(1-start)+(ups-1)+end:Math.max(0,end-start), gain=m.last&&m.last.xp!=null?(m.last.xp|0):Math.max(0,(m.xp|0)-(o.xp|0));
+    if(!gain&&m.last&&m.last.lines) gain=m.last.lines.reduce(function(a,x){ return a+(x[2]?0:(x[1]|0)); },0);
+    if(units<=0.0005&&!gain){ v.level=m.level|0; v.pct=end*100; v.max=!m.xp_next; return Promise.resolve(); }
+    var n=still?1:Math.max(4,Math.min(14,Math.round((gain||60)/14))), cr=r.el.querySelector('.tbcrate').getBoundingClientRect(), cx=cr.left+cr.width/2, cy=cr.top+cr.height*.45, chain=Promise.resolve(), all=[];
+    if(gain) retPop('+'+gain+' XP',cx,cr.top-30,'xp');
+    function bar(){ return document.querySelector('[data-xp="'+r.id+'"]'); }
+    function show(){ var b=bar(), l=document.querySelector('[data-lv="'+r.id+'"]'); if(b){ b.style.width=v.pct.toFixed(1)+'%'; } if(l&&v.level) l.textContent='Lv '+v.level; }
+    function add(u){ /* one spark's worth, a level at a time */
+      return new Promise(function(done){ (function go(){
+        var room=1-v.pct/100;
+        if(ups>0&&u>=room-1e-6){ u-=room; v.pct=100; show(); ups--;
+          setTimeout(function(){ v.level=(v.level|0)+1; v.pct=0; retLevelUp(r); var b=bar(); if(b){ b.style.transition='none'; show(); void b.offsetWidth; b.style.transition=''; } else show(); setTimeout(go,still?0:420); },still?0:240); return; }
+        v.pct=Math.min(ups>0?100:end*100,v.pct+u*100); show(); done(); })(); }); }
+    for(var i=0;i<n;i++) (function(i){ all.push(retSpark(cx,cy,bar,i*75).then(function(){ var b=bar(), t=b&&b.parentNode; anim(t,[{filter:'brightness(2.2)'},{filter:'none'}],{duration:220});
+      chain=chain.then(function(){ return add(units/n); }); return chain; })); })(i);
+    return Promise.all(all).then(function(){ return chain; }).then(function(){ v.level=(m.level|0)||v.level; v.pct=end*100; v.max=!m.xp_next; show(); }); }
+  function retSpark(x,y,bar,delay){ var d=document.createElement('i'); d.className='txporb'; d.style.left=x+'px'; d.style.top=y+'px'; document.body.appendChild(d);
+    var ox=(Math.random()-.5)*110, oy=-30-Math.random()*60;
+    return anim(d,[{transform:'translate(0,0) scale(.3)',opacity:0},{transform:'translate('+ox*.7+'px,'+oy*.8+'px) scale(1.2)',opacity:1,offset:.6},{transform:'translate('+ox+'px,'+oy+'px) scale(1)',opacity:1}],{duration:300,delay:delay,easing:'ease-out',fill:'both'})
+      .then(function(){ var b=bar(), t=b&&b.parentNode.getBoundingClientRect(), tx=t&&t.width?t.left+t.width/2-x:ox, ty=t&&t.width?t.top+t.height/2-y:oy+40;
+        return anim(d,[{transform:'translate('+ox+'px,'+oy+'px) scale(1)',opacity:1},{transform:'translate('+tx+'px,'+ty+'px) scale(.6)',opacity:1}],{duration:380,easing:'cubic-bezier(.6,0,.9,.5)',fill:'forwards'}); })
+      .then(function(){ if(d.parentNode) d.parentNode.removeChild(d); }); }
+  function retPop(text,x,y,cls){ var d=document.createElement('span'); d.className='tretpop '+cls; d.textContent=text; d.style.left=x+'px'; d.style.top=y+'px'; document.body.appendChild(d);
+    var big=cls==='lv';
+    return anim(d,big?[{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-60%) scale(1.25)',opacity:1,offset:.18},{transform:'translate(-50%,-60%) scale(1)',opacity:1,offset:.3},{transform:'translate(-50%,-75%) scale(1)',opacity:1,offset:.75},{transform:'translate(-50%,-130%) scale(1)',opacity:0}]
+      :[{transform:'translate(-50%,-30%) scale(.5)',opacity:0},{transform:'translate(-50%,-100%) scale(1.1)',opacity:1,offset:.25},{transform:'translate(-50%,-140%) scale(1)',opacity:1,offset:.7},{transform:'translate(-50%,-190%) scale(1)',opacity:0}],{duration:big?1500:1700,easing:'ease-out',fill:'both'})
+      .then(function(){ if(d.parentNode) d.parentNode.removeChild(d); }); }
+  /* one flash, the words, a hop */
+  function retLevelUp(r){ var sp=spotOf(r.id), q=sp&&sp.getBoundingClientRect(); if(!q||!q.width) return; var w=sp.querySelector('.who'), wr=w&&w.getBoundingClientRect();
+    var f=document.createElement('i'); f.className='tlvflash'; sp.appendChild(f); anim(f,[{opacity:.95},{opacity:0}],{duration:520,easing:'ease-out',fill:'forwards'}).then(function(){ if(f.parentNode) f.parentNode.removeChild(f); });
+    anim(w,[{transform:'none'},{transform:'translateY(-12px) scale(.94,1.1)',offset:.4},{transform:'scale(1.12,.86)',offset:.75},{transform:'none'}],{duration:420,easing:'ease-out'});
+    var l=sp.querySelector('.tlv'); anim(l,[{transform:'scale(1)'},{transform:'scale(1.7)',color:'#fff'},{transform:'scale(1)'}],{duration:420,easing:'ease-out'});
+    retPop('LEVEL UP',q.left+q.width/2,wr&&wr.width?wr.top+wr.height*.35:q.top+q.height*.45,'lv'); }
 
   /* ---------------------------------------------------------------- joining the team: drag a card onto a spot, or Add to team.
      Add to team goes straight in when there's an empty spot; with a full team you pick who it swaps with. */
@@ -776,6 +884,6 @@
   /* ---------------------------------------------------------------- start */
   var demo=null;
   window.CDTEAM={S:S,draw:draw,stateIn:stateIn,poll:poll,api:api,setDemo:function(d){ demo=d; }};
-  if(DEMO){ var s=document.createElement('script'); s.src=BASE+'team-demo.js?v='+VER+'.10'; s.onload=function(){ if(window.CDTEAM_DEMO){ demo=window.CDTEAM_DEMO(stateIn,X); } }; document.head.appendChild(s); }
+  if(DEMO){ var s=document.createElement('script'); s.src=BASE+'team-demo.js?v='+VER+'.11'; s.onload=function(){ if(window.CDTEAM_DEMO){ demo=window.CDTEAM_DEMO(stateIn,X); } }; document.head.appendChild(s); }
   else { var wait=function(){ if(me()) poll(); else setTimeout(wait,1500); }; setTimeout(wait,800); }
 })();
